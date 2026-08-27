@@ -4,14 +4,16 @@
 
 ```text
 Contract: KnowledgePromotionDecision@v1
-Parent: WAEP-LEARNING-SYSTEM-V1 Definition Correction-1
+Parent: WAEP-LEARNING-SYSTEM-V1 Definition Correction-2
+Supersedes contract semantics in: Definition Correction-1
 Implementation: NOT AUTHORIZED
 ```
 
 ## Purpose
 
 Authorize admission of an immutable Knowledge Candidate version into the
-Knowledge Plane. Promotion does not activate runtime use.
+Knowledge Plane. Promotion does not activate runtime use or grant Execution
+Authority.
 
 ## Schema
 
@@ -33,6 +35,17 @@ contentDigest: ""
 supersedesDecisionRef: null
 ```
 
+## Resolution
+
+```yaml
+resolutionKey:
+  contractType: KnowledgePromotionDecision@v1
+  subjectRef: ""
+  subjectVersion: ""
+```
+
+Ambiguous heads fail closed (INV-LRN-021).
+
 ## Rules
 
 1. Canonical contract identity is version-fixed: `KnowledgePromotionDecision@v1`.
@@ -40,5 +53,7 @@ supersedesDecisionRef: null
 3. A Promotion Decision for version N does not apply to version N+1.
 4. `PROMOTE*` requires a referenced Validation Decision of `VALID` or
    `VALID_WITH_CONDITIONS` for the same candidate version.
-5. Promotion ≠ ACTIVE, ≠ Runtime Binding, ≠ CURRENT, ≠ Execution authority.
-6. Append-only.
+5. Promotion ≠ Runtime Effective ACTIVE, ≠ Runtime Binding, ≠ CURRENT,
+   ≠ Execution authority.
+6. Confidence thresholds must not auto-promote (INV-LRN-028).
+7. Append-only.

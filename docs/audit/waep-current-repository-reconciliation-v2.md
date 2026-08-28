@@ -7,7 +7,7 @@ Reconciliation: WAEP-CURRENT-REPOSITORY-RECONCILIATION-V2
 Date: 2026-08-28 JST
 Source Main Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
 Mode: DOCS / GOVERNANCE RECONCILIATION
-Correction: COMPATIBILITY CORRECTION-1 APPLIED
+Correction: COMPATIBILITY CORRECTION-2 APPLIED
 Runtime Mutation: NOT AUTHORIZED
 Ready: NOT AUTHORIZED
 Merge: NOT AUTHORIZED
@@ -42,9 +42,9 @@ Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
 Latest Included Merge: PR #18
 ```
 
-このSHAは本Reconciliationの入力Snapshotである。
-
 Reconciliation branchはこのSHAから直接作成した。
+
+Review直前にもmainが同SHAであることを再確認する。
 
 ## 2. PR #13 Status Synchronization
 
@@ -56,20 +56,13 @@ Merge Commit: bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
 Definition State: LOCKED / CANONICAL ON MAIN
 ```
 
-旧main上の次の表記はSTALEである。
-
-```text
-PR #13: OPEN / DRAFT / NOT MERGED
-Next Gate: PR #13 READY GO / HOLD
-```
-
 PR #14で作成されたPost-Merge synchronization内容をCurrent Main基準へ移植する。
 
 Definition semanticsは変更しない。
 
-## 3. PR #14 Re-Evaluation
+READMEとLearning READMEでは、`Definition Merge Commit`と`Repository Exact Baseline`を分離する。
 
-PR #14はCurrent Mainに対して次の状態である。
+## 3. PR #14 Re-Evaluation
 
 ```text
 State: OPEN / DRAFT
@@ -84,8 +77,6 @@ PR #14のPR #13 Merge confirmationとPost-Merge status correctionはCurrent evid
 
 一方でbranch baselineはCurrent Mainより古い。
 
-判定は次とする。
-
 ```text
 Semantic Content: VALID FOR REUSE
 Branch Baseline: STALE
@@ -94,8 +85,6 @@ Disposition: RECONCILE VALID CONTENT INTO V2 BRANCH
 ```
 
 ## 4. PR #9 Reconciliation
-
-PR #9はCurrent Mainに対して次の状態である。
 
 ```text
 State: OPEN / DRAFT
@@ -109,26 +98,26 @@ Merge Base: 4d46d93a43835f5d5e718a7ab952586e68a4601e
 
 旧PR #9を直接Merge targetとして扱わない。
 
-PR #9のCandidate資産は、LOCKED Learning Systemとの互換性確認を行ってCurrent Mainへ再配置する。
+PR #9資産は、LOCKED Learning Systemとの互換性確認後にCurrent Main基準へ再配置する。
 
 ### 4.1 Source Blob Preserved
 
-次の5資産はsource blob identityを保持する。
+次の3資産はsource blob identityを保持する。
 
 ```text
 docs/architecture/portfolio-architecture-v1.md
 docs/governance/repository-role-registry-v1.md
-docs/governance/knowledge-classification-v1.md
-docs/roadmap/waep-roadmap-v1.md
 knowledge/registry/README.md
 ```
 
-### 4.2 Compatibility Corrected
+### 4.2 Compatibility / Status Corrected
 
-次の2資産はLOCKED Learning Systemとの整合性確保のためCompatibility Correctionを行う。
+次の4資産はCurrent Canonical semanticsとの整合性または自己Status明確化のためCorrectionする。
 
 ```text
+docs/governance/knowledge-classification-v1.md
 docs/governance/knowledge-promotion-gate-v1.md
+docs/roadmap/waep-roadmap-v1.md
 templates/knowledge-record-v1.md
 ```
 
@@ -138,19 +127,17 @@ templates/knowledge-record-v1.md
 
 Current Reconciliationでは同PathをCompatibility Noticeに変更する。
 
-Canonical templateは次とする。
+Canonical templateは`templates/knowledge-record-content-v1.md`とする。
 
-```text
-templates/knowledge-record-content-v1.md
-```
-
-旧Promotion GateのL0-L5は、Knowledge Record stored authorityではなくDerived Portfolio Maturityとして明示する。
+旧Promotion GateのL0-L5はDerived Portfolio Maturityとして明示する。
 
 Authoritative Promotionは`KnowledgePromotionDecision@v1`とCanonical Decision Resolverに従う。
 
-Historical PR #9の原文はPR #9 branchにEvidenceとして保持する。
+Knowledge ClassificationとRoadmapにはPROPOSED / Candidateであることをファイル自身にも明記する。
 
-Compatibility CorrectionはPortfolio Definition Lockを意味しない。
+Historical PR #9原文はPR #9 branchにEvidenceとして保持する。
+
+これらのCorrectionはPortfolio Definition Lockを意味しない。
 
 ## 5. PR #15 / #16 / #17 Dependency Recalculation
 
@@ -199,13 +186,11 @@ Ahead: 3
 Behind: 0
 ```
 
-したがって#16はHistorical Predecessorとして扱う。
+#16はHistorical Predecessorとする。
 
 DKCのCurrent Candidate Lineは#17とする。
 
 ## 6. Canonical Relationship
-
-Portfolio FoundationとLearning Systemは別のDefinition Stateを持つ。
 
 ```text
 Portfolio Foundation: DEFINITION CANDIDATE
@@ -218,7 +203,7 @@ Learning Definition LockはPortfolio Foundationを自動LOCKしない。
 
 CandidateとLOCKED Definitionが衝突する場合はLOCKED Definitionを優先し、Candidate側をHOLDまたはCompatibility Correctionする。
 
-詳細は`docs/architecture/canonical-source-relationship-v1.md`に分離する。
+詳細は`docs/architecture/canonical-source-relationship-v1.md`に記録する。
 
 ## 7. Current-State Index
 
@@ -230,11 +215,9 @@ docs/audit/waep-current-state-index-v2.md
 
 旧`waep-current-state-reconciliation-v1.md`はHistorical Snapshotとして保持する。
 
-旧Snapshotを削除または書き換えない。
-
 ## 8. Independent Reconciliation Review
 
-Compatibility Correction後のexact branch headを対象に独立再確認する。
+Correction-2後のexact branch headを対象に独立再確認する。
 
 Reviewは別commitで記録する。
 
@@ -252,4 +235,4 @@ Repository WRITE for this reconciliation
   != Cross-Repository Mutation
 ```
 
-本作業ではRuntime、M365、SharePoint、Entra、Customer Production Mutationを行わない。
+Runtime、M365、SharePoint、Entra、Customer Production Mutationは行わない。

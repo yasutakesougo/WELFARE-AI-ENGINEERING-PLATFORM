@@ -62,22 +62,20 @@ Historical PR #9 branchは原文Evidenceとして保持する。
 
 ## PR #9 Compatibility Resolution
 
-Current Reconciliationでは、PR #9のCandidate資産を2群に分ける。
-
 ### Source Blob Preserved
 
 ```text
 docs/architecture/portfolio-architecture-v1.md
 docs/governance/repository-role-registry-v1.md
-docs/governance/knowledge-classification-v1.md
-docs/roadmap/waep-roadmap-v1.md
 knowledge/registry/README.md
 ```
 
-### Compatibility Corrected
+### Compatibility / Status Corrected
 
 ```text
+docs/governance/knowledge-classification-v1.md
 docs/governance/knowledge-promotion-gate-v1.md
+docs/roadmap/waep-roadmap-v1.md
 templates/knowledge-record-v1.md
 ```
 
@@ -87,7 +85,9 @@ Current ReconciliationではCompatibility Noticeへ置換する。
 
 Canonical immutable templateは`templates/knowledge-record-content-v1.md`である。
 
-Promotion GateのL0-L5はDerived Portfolio Maturityとして定義し、Knowledge Record stored authorityとして扱わない。
+Promotion GateのL0-L5はDerived Portfolio Maturityとして定義する。
+
+ClassificationとRoadmapには、PROPOSED / Candidateであることをファイル自身にも明記する。
 
 ## PR Dependency Resolution
 

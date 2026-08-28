@@ -8,7 +8,7 @@ import {
   repositoryObservationFixtures,
   sliceAFixtures,
 } from './fixtures';
-import { evaluateShadow } from './shadowEvaluator';
+import { evaluateShadow, SLICE_A_SEARCH_POLICY_CEILING } from './shadowEvaluator';
 import { trustAnchorHealth } from './trustRegistry';
 
 export interface SelfCheckFailure {
@@ -45,12 +45,23 @@ export function runSliceASelfCheck(): readonly SelfCheckFailure[] {
     'unregistered containment pass rejected',
     'trusted config mutable exact ref rejected',
     'trusted config unknown authority root rejected',
+    'data-zone authority semantic mismatch rejected',
+    'unregistered data-zone decision ref rejected',
   ];
   const shadowFixtureNames = new Set(sliceAFixtures.map((fixture) => fixture.name));
   for (const name of requiredTrustFixtures) {
     if (!shadowFixtureNames.has(name)) failures.push(failure(`trust fixture ${name}`, 'present', 'missing'));
   }
+  if (!shadowFixtureNames.has('search bound exceeds policy ceiling')) {
+    failures.push(failure('search policy ceiling fixture', 'present', 'missing'));
+  }
   if (trustAnchorHealth() !== 'ALLOW') failures.push(failure('synthetic trust registry health', 'ALLOW', trustAnchorHealth()));
+
+  for (const [key, value] of Object.entries(SLICE_A_SEARCH_POLICY_CEILING)) {
+    if (!Number.isFinite(value) || !Number.isInteger(value) || value <= 0) {
+      failures.push(failure(`search policy ceiling ${key}`, 'finite positive integer', String(value)));
+    }
+  }
 
   const expectedRepositoryFixtureIds = [
     'repo-observation-dirty',

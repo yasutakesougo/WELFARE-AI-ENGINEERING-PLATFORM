@@ -7,8 +7,8 @@ Definition State: LOCKED / CANONICAL ON MAIN
 Human Definition Lock: GO
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Definition Merge Commit: bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
-Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
-Repository Current Main / PR #19 Merge Commit: 7998a83c22bf8e61d725da61cca0f797690ad561
+Historical Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+Repository Current Main: ebc13ef072a861a53043687af13d9b2c548c73ce
 Implementation: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
@@ -16,27 +16,77 @@ Automatic Runtime Distribution: NOT AUTHORIZED
 PR #13: MERGED
 ```
 
-`Definition Merge Commit`は、PR #13によるLearning Definitionの正本化点を示す。
+`Definition Merge Commit` is the canonicalization point for the locked Learning
+Definition.
 
-`Reconciliation Source Baseline`は、Reconciliation V2が開始された時点の
-historical anchorを示す。
+`Historical Reconciliation Source Baseline` is the earlier Reconciliation V2
+anchor and is not Current Main.
 
-`Repository Current Main / PR #19 Merge Commit`は、PR #19を含むCurrent Repository
-Stateを示す。
+`Repository Current Main` is the current repository-state observation baseline
+established by WAEP-CURRENT-REPOSITORY-RECONCILIATION-V3.
 
-両者を同一のidentityとして扱わない。
+These identities must not be collapsed into one authority identity.
 
 | Path | Role |
 | --- | --- |
-| `waep-learning-system-v1.md` | Definition Correction-3（LOCKED / canonical on main） |
+| `waep-learning-system-v1.md` | Definition Correction-3 (LOCKED / canonical on main) |
 | `contracts/` | External Decision Contracts |
 | `reviews/post-merge-reconciliation.md` | PR #13 Post-Merge Reconciliation |
 | `reviews/definition-lock-go.md` | Human Definition Lock GO archive |
 | `reviews/independent-definition-final-re-review-4.md` | Final Re-Review-4 PASS archive |
 | `projections/registry-projection-v1.md` | Derived Registry Projection compatibility |
 
-Next implementation-definition candidateはSlice A — Learning Event Contractである。
+## Active Learning-Scope Candidates
 
-Slice AはPR #15に存在するが、Current Repository BaselineとのReconciliationが必要である。
+### Slice A — Learning Event Contract
 
-Implementation Startは認可されていない。
+PR #15 remains an OPEN / DRAFT Implementation Definition candidate.
+
+```text
+Review: PASS WITH CORRECTIONS
+P0 / P1 / P2: 0 / 4 / 5
+Current-main relation: diverged / ahead 1 / behind 13
+Next work: baseline reconciliation + Implementation Definition Correction-1
+Implementation Start: NOT AUTHORIZED
+```
+
+### DEVELOPMENT-KNOWLEDGE-COMPOUND-V1
+
+PR #17 is the active DKC source line. PR #16 is its historical predecessor and
+is not a parallel merge target.
+
+```text
+PR #17 head: 332d671eea5d268998fdaef551eac0ed9ca2ace8
+Current-main relation: diverged / ahead 4 / behind 13
+Correction-2: complete on source branch
+Independent Definition Re-Review-2: CORRECTION REQUIRED
+P0 / P1 / P2: 0 / 2 / 1
+Review-1 findings: 9 / 9 CLOSED
+Re-Review-1 findings: 3 / 3 CLOSED
+Next work: current-main reconciliation + Definition Correction-3
+Definition Lock: NOT AUTHORIZED
+Implementation Start: NOT AUTHORIZED
+Automatic Knowledge Promotion: PROHIBITED
+```
+
+The Re-Review-2 result must be published as its own review evidence before it is
+used as a canonical branch-state transition. Current-State documentation records
+the independent assessment without manufacturing closure evidence.
+
+## Governance Dependency
+
+`WAEP-AUTHORITY-CLAIM-RESOLUTION-CONTRACT-V1` Correction-3 is present on main
+with a recorded Human Definition Lock. A post-merge automated Codex review left
+ten unresolved review threads (`P1`-tagged 7, `P2`-tagged 3).
+
+```text
+Post-Lock Independent Review: REQUIRED
+Implementation Reliance on Authority Contract Correction-3: HOLD
+Runtime Enforcement: NOT AUTHORIZED
+```
+
+This does not silently revoke the historical lock. Any semantic change requires
+a new Definition Correction cycle.
+
+Current repository-state details are tracked in
+`docs/audit/waep-current-state-index-v3.md`.

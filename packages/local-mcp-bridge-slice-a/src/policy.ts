@@ -4,11 +4,12 @@ import type {
   DataZoneDecision,
   DependencyEntry,
   ObservationAccessClass,
-  TrustedConfigurationValidationRecord,
 } from './contracts';
 import {
   isImmutableConfigurationExactRef,
-  isPermittedDataZoneAuthorityRef,
+  resolveDataZoneAuthority,
+  resolveDataZoneDecision,
+  resolveTrustedConfiguration,
   resolveTrustedContainment,
   resolveTrustedDecision,
   type TrustedDecisionClass,
@@ -53,9 +54,8 @@ function stricterAccessClass(a: ObservationAccessClass, b: ObservationAccessClas
   return accessRank[a] >= accessRank[b] ? a : b;
 }
 
-export function validateTrustedConfiguration(
-  validation: TrustedConfigurationValidationRecord | undefined,
-): boolean {
+export function validateTrustedConfigurationRef(registryRef: string | undefined): boolean {
+  const validation = resolveTrustedConfiguration(registryRef);
   if (!validation) return false;
   if (!validation.configurationIdentity.trim()) return false;
   if (!isImmutableConfigurationExactRef(validation.configurationExactRef)) return false;
@@ -63,25 +63,34 @@ export function validateTrustedConfiguration(
   if (validation.configurationAuthorityState !== 'VALID') return false;
   if (!validation.configurationAuthorityRef?.trim()) return false;
   if (validation.configurationAuthorityRef === validation.configurationIdentity) return false;
-  if (!isPermittedDataZoneAuthorityRef(validation.configurationAuthorityRef)) return false;
+  if (!resolveDataZoneAuthority(validation.configurationAuthorityRef)) return false;
   if (!validation.targetScopeMatch) return false;
   if (validation.authorityCycleDetected) return false;
   if (!validation.validatedAt.trim()) return false;
   return true;
 }
 
+function authorityRecordMatchesDecision(decision: DataZoneDecision): boolean {
+  const authorityRecord = resolveDataZoneAuthority(decision.dataZoneDecisionRef);
+  if (!authorityRecord) return false;
+  return authorityRecord.dataZone === decision.dataZone &&
+    authorityRecord.dataZoneSource === decision.dataZoneSource &&
+    authorityRecord.targetScope === decision.targetScope &&
+    authorityRecord.scopeIdentity === decision.scopeIdentity &&
+    authorityRecord.authorityClass === decision.dataZoneAuthority;
+}
+
 function validateDecisionAuthority(decision: DataZoneDecision): 'AUTHORITATIVE' | 'CONSTRAINT_ONLY' | 'INVALID' {
   switch (decision.dataZoneSource) {
     case 'LOCKED_POLICY':
     case 'EXPLICIT_AUTHORITY_DECISION':
-      return decision.dataZoneAuthority === 'AUTHORITATIVE' &&
-        isPermittedDataZoneAuthorityRef(decision.dataZoneDecisionRef)
+      return decision.dataZoneAuthority === 'AUTHORITATIVE' && authorityRecordMatchesDecision(decision)
         ? 'AUTHORITATIVE'
         : 'INVALID';
     case 'TRUSTED_CONFIGURATION':
       return decision.dataZoneAuthority === 'AUTHORITATIVE' &&
-        isPermittedDataZoneAuthorityRef(decision.dataZoneDecisionRef) &&
-        validateTrustedConfiguration(decision.trustedConfigurationValidation)
+        authorityRecordMatchesDecision(decision) &&
+        validateTrustedConfigurationRef(decision.trustedConfigurationRef)
         ? 'AUTHORITATIVE'
         : 'INVALID';
     case 'UNTRUSTED_METADATA':
@@ -102,16 +111,19 @@ function decisionTargetsRequest(decision: DataZoneDecision, context: DataAccessC
   }
 }
 
-export function evaluateDataAccessDecisions(
-  decisions: readonly DataZoneDecision[] | undefined,
+export function evaluateDataAccessDecisionRefs(
+  decisionRefs: readonly string[] | undefined,
   context: DataAccessContext,
 ): AuthorityResult {
-  if (!decisions?.length) return 'HOLD';
+  if (!decisionRefs?.length) return 'HOLD';
 
   let authoritativeCount = 0;
   let effectiveClass: ObservationAccessClass = 'ALLOW_OBSERVE';
 
-  for (const decision of decisions) {
+  for (const registryRef of decisionRefs) {
+    const decision = resolveDataZoneDecision(registryRef);
+    if (!decision) return 'HOLD';
+    if (decision.registryRef !== registryRef) return 'HOLD';
     if (!decisionTargetsRequest(decision, context)) return 'HOLD';
     if (!decision.classifiedAt.trim()) return 'HOLD';
     if (!decision.decisionEvidence.length) return 'HOLD';

@@ -36,6 +36,17 @@ export interface ApprovedRootBinding {
   authorityRef: string;
 }
 
+export interface TrustedConfigurationValidationRecord {
+  configurationIdentity: string;
+  configurationExactRef: string;
+  integrityResult: 'PASS' | 'FAIL' | 'UNVERIFIABLE';
+  configurationAuthorityRef: string | null;
+  configurationAuthorityState: 'VALID' | 'INVALID' | 'UNRESOLVED' | 'EXPIRED';
+  targetScopeMatch: boolean;
+  authorityCycleDetected: boolean;
+  validatedAt: string;
+}
+
 export interface DataZoneDecision {
   dataZone: DataZone;
   dataZoneSource:
@@ -51,6 +62,7 @@ export interface DataZoneDecision {
   decisionEvidence: readonly string[];
   observationAccessClass: ObservationAccessClass;
   accessPolicyRef: string | null;
+  trustedConfigurationValidation?: TrustedConfigurationValidationRecord;
 }
 
 export interface DependencyEntry {
@@ -74,7 +86,7 @@ export interface ShadowRequest {
   scopeResult: AuthorityResult;
   authorityResult: AuthorityResult;
   dependencyResult: AuthorityResult;
-  dataZoneDecision?: DataZoneDecision;
+  dataZoneDecisions?: readonly DataZoneDecision[];
   preAccessEligibility?: PreAccessEligibility;
   rootBinding?: ApprovedRootBinding;
   observedRootIdentity?: string;

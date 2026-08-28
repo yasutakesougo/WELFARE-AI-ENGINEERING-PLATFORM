@@ -77,6 +77,7 @@ export interface TrustedConfigurationValidationRecord {
 }
 
 export interface DataZoneDecision {
+  registryRef: string;
   dataZone: DataZone;
   dataZoneSource:
     | 'LOCKED_POLICY'
@@ -93,7 +94,7 @@ export interface DataZoneDecision {
   decisionEvidence: readonly string[];
   observationAccessClass: ObservationAccessClass;
   accessPolicyRef: string | null;
-  trustedConfigurationValidation?: TrustedConfigurationValidationRecord;
+  trustedConfigurationRef?: string;
 }
 
 export interface DependencyEntry {
@@ -232,7 +233,7 @@ export interface ShadowRequest {
   scopeDecisionRef: string;
   authorityDecisionRef: string;
   dependencyEntries: readonly DependencyEntry[];
-  dataZoneDecisions?: readonly DataZoneDecision[];
+  dataZoneDecisionRefs?: readonly string[];
   preAccessEligibility?: PreAccessEligibility;
   containmentEvidenceRef?: string;
   searchBounds?: SearchBounds;

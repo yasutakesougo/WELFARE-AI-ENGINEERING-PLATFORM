@@ -29,6 +29,7 @@ PR Ready:           NOT AUTHORIZED BY THIS ARTIFACT
 Merge:              NOT AUTHORIZED BY THIS ARTIFACT
 Deploy:             NOT AUTHORIZED BY THIS ARTIFACT
 Automatic Knowledge Promotion: NOT AUTHORIZED BY THIS ARTIFACT
+Definition Start: GO (DKC-MSR-ARCHITECTURE-DESIGN-V1 drafting authorized)
 ```
 
 ## 0. Authority Boundary
@@ -989,11 +990,17 @@ Research Evidence Re-Review:              CLOSED
 Human Research Evidence Acceptance: GO (recorded)
 Archive: docs/research/reviews/human-research-evidence-acceptance-go.md
 
+Definition Start: GO (recorded)
+Archive: docs/architecture/reviews/dkc-msr-architecture-definition-start-go.md
+Definition Artifact: docs/architecture/dkc-msr-architecture-design-v1.md
+Definition State: DRAFT / DEFINITION IN PROGRESS
+
 Next Gate:
   DKC-MSR-ARCHITECTURE-DESIGN-V1
-  Definition Start
-  Decision: GO / HOLD
+  Independent Definition Review-1
 
+Definition Start GO
+  != Definition Lock
 Definition Start GO
   != Implementation Start
 
@@ -1041,6 +1048,7 @@ PR Ready:                 NOT AUTHORIZED
 Merge:                    NOT AUTHORIZED
 Deploy:                   NOT AUTHORIZED
 Automatic Knowledge Promotion: NOT AUTHORIZED
-Next Gate:                DKC-MSR-ARCHITECTURE-DESIGN-V1 Definition Start GO / HOLD
+Next Gate:                DKC-MSR-ARCHITECTURE-DESIGN-V1 Independent Definition Review-1
+Definition Start:         GO
 Repository Mutation beyond acceptance-status documentation: NOT AUTHORIZED BY THIS REPORT
 ```

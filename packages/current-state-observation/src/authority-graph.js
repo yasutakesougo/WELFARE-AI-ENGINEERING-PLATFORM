@@ -21,6 +21,12 @@ export function validateAuthorityDecisionGraph(decisions, validationId = 'GRAPH-
 
   for (const decision of decisions) {
     if (!decision?.decisionId) continue;
+    for (const field of ['decisionType', 'repositoryIdentity', 'targetIdentity', 'action', 'authorityDomain', 'effectiveAt']) {
+      if (typeof decision[field] !== 'string' || decision[field].length === 0) findings.push(`DECISION_FIELD_MISSING:${decision.decisionId}:${field}`);
+    }
+    if (!Object.hasOwn(decision, 'targetRevisionIdentity')) findings.push(`DECISION_FIELD_MISSING:${decision.decisionId}:targetRevisionIdentity`);
+    if (!decision.scope || typeof decision.scope !== 'object') findings.push(`DECISION_SCOPE_MISSING:${decision.decisionId}`);
+    if (decision.conditions !== undefined && (!Array.isArray(decision.conditions) || decision.conditions.some((conditionId) => typeof conditionId !== 'string' || conditionId.length === 0))) findings.push(`DECISION_CONDITIONS_INVALID:${decision.decisionId}`);
     if (decision.actorAuthorized !== true) findings.push(`DECISION_ACTOR_AUTHORITY_UNRESOLVED:${decision.decisionId}`);
     if (typeof decision.actorIdentity !== 'string' || decision.actorIdentity.length === 0) findings.push(`DECISION_ACTOR_IDENTITY_MISSING:${decision.decisionId}`);
     const basis = decision.actorAuthorityBasis;
@@ -50,6 +56,7 @@ export function validateAuthorityDecisionGraph(decisions, validationId = 'GRAPH-
       if (decision.authorityDomain !== referenced.authorityDomain
         || decision.repositoryIdentity !== referenced.repositoryIdentity
         || decision.action !== referenced.action
+        || !sameJsonIdentity(decision.scope, referenced.scope)
         || !targetsOverlap(decision.targetIdentity, referenced.targetIdentity)) {
         findings.push(`DECISION_CROSS_DOMAIN_EDGE:${decision.decisionId}->${referencedId}`);
       }

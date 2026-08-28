@@ -1,0 +1,13 @@
+{
+  "name": "@waep/current-state-observation",
+  "version": "0.0.0-slice-a",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "shadow": "node bin/shadow-evaluate.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

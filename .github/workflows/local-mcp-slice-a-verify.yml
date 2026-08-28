@@ -1,0 +1,36 @@
+name: WAEP Local MCP Slice A Verify
+
+on:
+  push:
+    branches:
+      - impl/local-mcp-execution-bridge-slice-a
+    paths:
+      - 'packages/local-mcp-bridge-slice-a/**'
+      - '.github/workflows/local-mcp-slice-a-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: packages/local-mcp-bridge-slice-a
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+      - name: Setup pinned Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: packages/local-mcp-bridge-slice-a/.nvmrc
+          cache: npm
+          cache-dependency-path: packages/local-mcp-bridge-slice-a/package-lock.json
+      - name: Install pinned dependencies
+        run: npm ci
+      - name: Strict typecheck
+        run: npm run typecheck
+      - name: Synthetic verification
+        run: npm run verify

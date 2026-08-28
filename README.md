@@ -3,8 +3,13 @@ Cross-repository AI engineering, knowledge capitalization, governance, and welfa
 
 ## Learning System
 
-`WAEP-LEARNING-SYSTEM-V1` Definition Correction-3 lives under
+Learning and development-knowledge definitions live under
 [`docs/learning/`](docs/learning/).
+
+| Definition | Revision | State |
+| --- | --- | --- |
+| `WAEP-LEARNING-SYSTEM-V1` | Definition Correction-3 | LOCKED |
+| `DEVELOPMENT-KNOWLEDGE-COMPOUND-V1` | Definition Correction-1 | Re-Review-1 pending |
 
 ```text
 Revision: Definition Correction-3

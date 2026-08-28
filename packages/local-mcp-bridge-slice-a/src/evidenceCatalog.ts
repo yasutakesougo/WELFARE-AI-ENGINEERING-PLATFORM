@@ -17,6 +17,9 @@ const staticEvidenceIds = [
   'CONTRACT:SearchObservationSummary',
   'POLICY:TrustedDecisionRegistry',
   'POLICY:TrustedContainmentRegistry',
+  'POLICY:DataZoneDecisionRegistry',
+  'POLICY:DataZoneAuthoritySemanticBinding',
+  'POLICY:TrustedConfigurationRegistry',
   'POLICY:PreAccessEligibility',
   'POLICY:DataZoneTargetBinding',
   'POLICY:DataZoneAccessMapping',
@@ -24,9 +27,11 @@ const staticEvidenceIds = [
   'POLICY:TrustedConfigurationImmutableRef',
   'POLICY:DependencyExactBinding',
   'POLICY:SearchBoundsFinitePositiveInteger',
+  'POLICY:SearchBoundsPolicyCeiling',
   'SELF_CHECK:ObservationPlaneSeparation',
   'SELF_CHECK:ProcessFieldAllowlist',
   'SELF_CHECK:AcceptanceEvidenceResolution',
+  'SELF_CHECK:TrustRegistryResolution',
 ] as const;
 
 export const knownEvidenceIds: ReadonlySet<string> = new Set([

@@ -9,12 +9,23 @@ function resolutionMatchesObservation(resolution, observation) {
 }
 
 export function buildPreActionAuthorityValidation({
-  validationId, validatedAt, observation, claim, initialAuthorityResolution, preActionAuthorityResolution,
+  validationId, validatedAt, observation, claim, claimEvents, initialAuthorityResolution, preActionAuthorityResolution,
 }) {
   const findings = [];
   if (typeof validationId !== 'string' || validationId.length === 0) findings.push('PREACTION_VALIDATION_ID_MISSING');
   if (typeof validatedAt !== 'string' || Number.isNaN(new Date(validatedAt).getTime())) findings.push('PREACTION_VALIDATED_AT_INVALID');
   const binding = validateClaimBinding(observation, claim);
+  const acquired = Array.isArray(claimEvents)
+    ? claimEvents.find((event) => event?.eventType === 'CLAIM_ACQUIRED' && event.claimId === claim?.claimId && event.gateObservationId === claim?.gateObservationId)
+    : null;
+  const acquiredAt = acquired?.occurredAt ? new Date(acquired.occurredAt).getTime() : NaN;
+  const validationTime = new Date(validatedAt).getTime();
+  const initialResolutionTime = new Date(initialAuthorityResolution?.resolvedAt).getTime();
+  const preActionResolutionTime = new Date(preActionAuthorityResolution?.resolvedAt).getTime();
+  if (!acquired || Number.isNaN(acquiredAt)) findings.push('PREACTION_CLAIM_ACQUISITION_UNRESOLVED');
+  else if (!Number.isNaN(validationTime) && acquiredAt > validationTime) findings.push('PREACTION_VALIDATION_BEFORE_CLAIM');
+  if (!Number.isNaN(initialResolutionTime) && !Number.isNaN(acquiredAt) && initialResolutionTime > acquiredAt) findings.push('INITIAL_AUTHORITY_AFTER_CLAIM');
+  if (!Number.isNaN(preActionResolutionTime) && !Number.isNaN(validationTime) && preActionResolutionTime > validationTime) findings.push('PREACTION_RESOLUTION_AFTER_VALIDATION');
   if (binding.result !== 'PASS') findings.push('CLAIM_BINDING_NOT_PASS');
   if (initialAuthorityResolution?.authorityResolutionId !== observation?.authorityResolutionId
     || initialAuthorityResolution?.authorityResolutionId !== claim?.authorityResolutionId) findings.push('INITIAL_AUTHORITY_RESOLUTION_BINDING_MISMATCH');
@@ -37,6 +48,7 @@ export function buildPreActionAuthorityValidation({
     action: observation?.validForAction,
     gateObservationId: observation?.gateObservationId,
     claimId: claim?.claimId,
+    authorityResolutionId: preActionAuthorityResolution?.authorityResolutionId ?? null,
     initialAuthorityResolutionId: initialAuthorityResolution?.authorityResolutionId ?? null,
     preActionAuthorityResolutionId: preActionAuthorityResolution?.authorityResolutionId ?? null,
     currentAuthorityPolicyRevisionIdentity: preActionAuthorityResolution?.authorityPolicyRevisionIdentity ?? null,
@@ -68,6 +80,7 @@ export function evaluateActionEligibility({
     mutationAuthorizedByThisResolver: false,
     binding,
     claimHistory,
+    authorityResolutionId: preActionAuthorityValidation?.authorityResolutionId ?? null,
     initialAuthorityResolutionId: initialAuthorityResolution?.authorityResolutionId ?? null,
     preActionAuthorityResolutionId: preActionAuthorityValidation?.preActionAuthorityResolutionId ?? null,
     preActionTechnicalResult,

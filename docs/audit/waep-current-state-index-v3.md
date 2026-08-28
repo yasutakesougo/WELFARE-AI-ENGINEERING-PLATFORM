@@ -253,7 +253,9 @@ must not be promoted to PASS by this Index.
 
 ```text
 Repository Reconciliation V3: READ-ONLY COMPLETE
-Current-State Correction V3: IN PROGRESS ON FEATURE BRANCH
+Current-State Correction V3: COMPLETE ON FEATURE BRANCH
+Current-State Correction Branch: docs/waep-current-state-correction-v3
+PR Publication: NOT AUTHORIZED BY CURRENT-STATE CORRECTION GO
 Portfolio Foundation: DEFINITION CANDIDATE / REVIEW REQUIRED
 Learning System: LOCKED / CANONICAL ON MAIN
 Authority Claim Resolution: LOCKED HISTORY + POST-LOCK REVIEW REQUIRED
@@ -265,7 +267,8 @@ Automatic Knowledge Promotion: PROHIBITED
 Ready / Merge / Deploy / Runtime / LIVE WRITE: NOT AUTHORIZED BY THIS CORRECTION
 ```
 
-Next platform-level gate after Current-State Correction publication is:
+Next platform-level review after this correction is published through a separate
+publication gate:
 
 ```text
 WAEP-AUTHORITY-CLAIM-RESOLUTION-CONTRACT-V1

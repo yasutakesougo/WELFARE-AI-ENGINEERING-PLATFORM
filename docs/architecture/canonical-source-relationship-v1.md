@@ -144,8 +144,11 @@ PR #16 DKC Correction-1
 PR #17 DKC Correction-2
   = active source line
   = stale relative to current main
-  = current-main reconciliation required
-  = Definition Correction-3 required by Independent Re-Review-2
+  = repository-recorded next gate remains Re-Review-2 PENDING
+  = external independent assessment against exact head says CORRECTION REQUIRED
+  = that assessment is NOT repository Authority until published as review evidence
+  = after review evidence publication, current-main reconciliation is required
+  = Definition Correction-3 is the expected correction candidate if the assessment is adopted
 
 PR #15 Slice A Learning Event
   = active Implementation Definition candidate
@@ -158,7 +161,8 @@ PR #21 CSOC Implementation Correction-2
   = governance baseline reconciliation required before Independent Re-Review-2
 ```
 
-Candidate status does not grant implementation or execution authority.
+Candidate status or external review assessment does not grant implementation or
+execution authority.
 
 ## Precedence
 
@@ -176,6 +180,9 @@ stale. It does not itself revoke an exact Human Authority Decision.
 
 Candidate documents and old PR bodies must not override a later current
 Authority Decision or applicable locked Definition.
+
+An external independent assessment does not become repository Authority until
+it is published and processed through the applicable review/gate path.
 
 ## Conflict Handling
 

@@ -28,8 +28,13 @@ export const CLAIM_HISTORY_RESULT = Object.freeze({
   UNRESOLVED: 'UNRESOLVED',
 });
 
-export const TECHNICAL_RESULT = Object.freeze({ PASS: 'PASS', HOLD: 'HOLD', FAIL: 'FAIL' });
-export const ACTION_ELIGIBILITY = Object.freeze({ ELIGIBLE: 'ELIGIBLE', NO_MUTATION: 'NO_MUTATION' });
+export const TECHNICAL_RESULT = Object.freeze({
+  PASS: 'PASS', HOLD: 'HOLD', FAIL: 'FAIL',
+});
+
+export const ACTION_ELIGIBILITY = Object.freeze({
+  ELIGIBLE: 'ELIGIBLE', NO_MUTATION: 'NO_MUTATION',
+});
 
 export function immutableRecord(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -40,7 +45,9 @@ export function immutableRecord(value) {
 }
 
 export function requireNonEmptyString(value, fieldName) {
-  if (typeof value !== 'string' || value.length === 0) throw new TypeError(`${fieldName} must be a non-empty string`);
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new TypeError(`${fieldName} must be a non-empty string`);
+  }
   return value;
 }
 
@@ -61,9 +68,13 @@ function canonicalize(value) {
   return value;
 }
 
-export function canonicalIdentityString(value) { return JSON.stringify(canonicalize(value)); }
+export function canonicalIdentityString(value) {
+  return JSON.stringify(canonicalize(value));
+}
+
 export function sameJsonIdentity(left, right) {
-  try { return canonicalIdentityString(left) === canonicalIdentityString(right); } catch { return false; }
+  try { return canonicalIdentityString(left) === canonicalIdentityString(right); }
+  catch { return false; }
 }
 
 export function validateAuthorityPolicyRevisionIdentity(identity) {

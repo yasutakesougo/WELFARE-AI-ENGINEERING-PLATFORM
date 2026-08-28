@@ -4,7 +4,7 @@
 
 ```text
 Audit Date: 2026-08-29 JST
-Live Resync: post DKC Human Lock GO + CSOC Independent Re-Review-2 PASS
+Live Resync: post DKC-MSR Independent Definition Review-1 + DKC post-lock tip verify
 Repository: yasutakesougo/WELFARE-AI-ENGINEERING-PLATFORM
 Branch: main
 Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
@@ -79,9 +79,15 @@ Material Unknowns: 0
 DKC-MSR-ARCHITECTURE-DESIGN-V1:
 Issue #31 / OPEN
 PR #28 / OPEN / DRAFT
+Tip: 5491d03e406bbbd2bbf9ecf82893ab76b3b1f01e
+Content Baseline Commit: 34cc4e0f257c47b0a792415bb91d914b74bf4122
+Content Baseline Blob: 87e3799cce22ff4465105842b45f612dc7f336a0
 Definition Start: GO
+Independent Definition Review-1: CORRECTION REQUIRED
+P0 / P1 / P2: 0 / 3 / 2
+Lockable: NO
 Definition State: DRAFT / NOT LOCKED
-Next Gate: Independent Definition Review-1 / PENDING
+Next Gate: Definition Correction-1
 Implementation Start: NOT AUTHORIZED
 Dependency Addition: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
@@ -94,12 +100,15 @@ PR #28は本Indexの観測対象のみである。本Reconciliation線から #28
 ```text
 Active PR: #30
 State: OPEN / DRAFT
-Tip: 978e60850274c743b12111ef29346a074b1108fa
+Tip: 4daad84a71dc1bd4f1c87cd5e5fe55d6deeac23a
+Locked Artifact Restore Commit: 978e60850274c743b12111ef29346a074b1108fa
 Reviewed Commit: 0a423a374eb1edb2f0b786dbe8aa1ad4c157384b
 Revision: Definition Correction-2
-Current-main relation: ahead 7 / behind 0
+Current-main relation: ahead 8 / behind 0
 Definition Blob: a17ede815d9c9f3efc4292e9db8d24edca19b9d3
 Submission Contract Blob: 26c9764abf41106b9faba5bd5f5bb25323961b7f
+Human Lock Record Blob: 15c9d391f6efdd2efddad7dab8db84abfe9cad39
+Post-Lock Identity Verification: PASS
 Current-main reconciliation: COMPLETE / semantic change NONE
 Independent Definition Re-Review-2: PASS
 Independent Definition Re-Review-3: PASS / LOCKABLE
@@ -109,6 +118,7 @@ P0 / P1 / P2: 0 / 0 / 0
 Next Gate: Implementation Start GO / HOLD
 Implementation Start: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
+Observed Scope PR: #35 / Independent Scope Review-1 CORRECTION REQUIRED
 ```
 
 旧PR #17はCLOSED / UNMERGED / HISTORICAL SOURCE / SUPERSEDED BY #30である。
@@ -162,10 +172,12 @@ Implementation Start: NOT AUTHORIZED
 | #22 | CLOSED / MERGED | current main; Authority Claim Resolution lock canonicalized |
 | #26 | CLOSED / UNMERGED | MSR predecessor; superseded by #27 |
 | #27 | OPEN / DRAFT | active accepted MSR Research Evidence line |
-| #28 | OPEN / DRAFT | DKC-MSR Architecture Definition Start; Review-1 PENDING |
+| #28 | OPEN / DRAFT | DKC-MSR Architecture; Review-1 CORRECTION REQUIRED |
 | #29 | OPEN / DRAFT | Current-State Reconciliation V3 |
 | #30 | OPEN / DRAFT | active DKC current-main line; LOCKED / Human Lock GO |
 | #32 | OPEN / DRAFT | active CSOC current-main line; Re-Review-2 PASS |
+| #34 | OPEN / DRAFT | stacked DKC-MSR line on #30 (separate identity from #28) |
+| #35 | OPEN / DRAFT | DKC Implementation Scope V1; Scope Review-1 CORRECTION REQUIRED |
 
 ## Repository Hygiene Result
 
@@ -211,26 +223,29 @@ UNKNOWN / HOLD != PASS
 ## Remaining Open Gates
 
 ```text
-PR #29: Ready GO / HOLD
+PR #29: Ready GO recorded (Merge GO / HOLD separate; not authorized)
 PR #30: Implementation Start GO / HOLD
 PR #32: Ready GO / HOLD
-PR #28: Independent Definition Review-1 / PENDING
+PR #28: Definition Correction-1 (Review-1 CORRECTION REQUIRED closed as review gate)
+PR #35: DKC-IMPLEMENTATION-SCOPE-V1 Scope Correction-1
 ```
 
-DKC Human Definition LockとCSOC Independent Execution Evidenceは完了済みであり、Remaining Open Gatesから除外する。
+DKC Human Definition Lock、CSOC Independent Execution Evidence、および
+DKC-MSR Independent Definition Review-1（CORRECTION REQUIRED）は完了済みであり、
+Review-1 PENDINGとしては Remaining Open Gates に残さない。
 
 ## Current Gate
 
 ```text
-Repository Reconciliation: V3 LIVE RESYNC APPLIED
+Repository Reconciliation: V3 LIVE RESYNC APPLIED (post Review-1)
 Portfolio Foundation: DEFINITION CANDIDATE / REVIEW REQUIRED
 Learning System: LOCKED / CANONICAL ON MAIN
 Authority Claim Resolution: LOCKED / CANONICAL ON MAIN
 MSR Research Evidence: ACCEPTED / DESIGN INPUT ELIGIBLE
 DKC: LOCKED / HUMAN DEFINITION LOCK GO
-DKC-MSR Architecture: DEFINITION START GO / REVIEW-1 PENDING
+DKC-MSR Architecture: REVIEW-1 CORRECTION REQUIRED / CORRECTION-1 NEXT
 CSOC Slice A: RE-REVIEW-2 PASS / READY GO-HOLD PENDING
-Ready: NOT AUTHORIZED BY THIS INDEX
+PR #29 Ready: GO (Merge NOT AUTHORIZED)
 Merge: NOT AUTHORIZED BY THIS INDEX
 Deploy: NOT AUTHORIZED
 Runtime / LIVE WRITE: NOT AUTHORIZED

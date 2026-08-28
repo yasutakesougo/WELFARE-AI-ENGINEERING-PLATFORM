@@ -5,7 +5,7 @@
 ```text
 Record: WAEP-CURRENT-STATE-RECONCILIATION-V3
 Audit Date: 2026-08-29 JST
-Live Resync: post DKC Human Lock GO + CSOC Independent Re-Review-2 PASS
+Live Resync: post DKC-MSR Independent Definition Review-1 + DKC post-lock tip verify
 Source Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Source Latest Merge: PR #22
 Current-State PR: #29 / OPEN / DRAFT
@@ -54,10 +54,13 @@ Human Definition LockはGOで完了し、DefinitionはLOCKEDである。
 ```text
 Active PR: #30 / OPEN / DRAFT
 Current-Main Baseline: ebc13ef072a861a53043687af13d9b2c548c73ce
-Tip: 978e60850274c743b12111ef29346a074b1108fa
+Tip: 4daad84a71dc1bd4f1c87cd5e5fe55d6deeac23a
+Locked Artifact Restore Commit: 978e60850274c743b12111ef29346a074b1108fa
 Reviewed Commit: 0a423a374eb1edb2f0b786dbe8aa1ad4c157384b
 Definition Blob: a17ede815d9c9f3efc4292e9db8d24edca19b9d3
 Submission Contract Blob: 26c9764abf41106b9faba5bd5f5bb25323961b7f
+Human Lock Record Blob: 15c9d391f6efdd2efddad7dab8db84abfe9cad39
+Post-Lock Identity Verification: PASS
 Independent Definition Re-Review-2: PASS
 Independent Definition Re-Review-3: PASS / LOCKABLE
 Human Definition Lock: GO
@@ -67,7 +70,7 @@ P0 / P1 / P2: 0 / 0 / 0
 
 次GateはImplementation Start GO / HOLDである。
 
-Implementation StartはNOT AUTHORIZEDである。
+Implementation StartはNOT AUTHORIZEDである。 Observed Scope PR #35は Independent Scope Review-1 CORRECTION REQUIREDである。
 
 ## 4. MSR Gap / Architecture Result
 
@@ -90,9 +93,15 @@ DKC coreを再Correctionせず、MSR固有のprovenance / linking / inference / 
 DKC-MSR-ARCHITECTURE-DESIGN-V1
 Issue: #31 / OPEN
 PR: #28 / OPEN / DRAFT
+Tip: 5491d03e406bbbd2bbf9ecf82893ab76b3b1f01e
+Content Baseline Commit: 34cc4e0f257c47b0a792415bb91d914b74bf4122
+Content Baseline Blob: 87e3799cce22ff4465105842b45f612dc7f336a0
 Definition Start: GO
+Independent Definition Review-1: CORRECTION REQUIRED
+P0 / P1 / P2: 0 / 3 / 2
+Lockable: NO
 Definition State: DRAFT / NOT LOCKED
-Next Gate: Independent Definition Review-1 / PENDING
+Next Gate: Definition Correction-1
 Implementation Start: NOT AUTHORIZED
 ```
 
@@ -125,10 +134,12 @@ Ready / Merge / Deploy / Runtime ActivationはNOT AUTHORIZEDである。
 
 ```text
 PR #27: MSR Research Evidence / ACCEPTED / Draft
-PR #28: DKC-MSR Architecture Definition Start / Review-1 PENDING / Draft
+PR #28: DKC-MSR Architecture / Review-1 CORRECTION REQUIRED / Correction-1 next / Draft
 PR #29: Current-State Reconciliation V3 / Draft
 PR #30: DKC Correction-2 current-main line / LOCKED / Draft
 PR #32: CSOC Correction-2 current-main line / Re-Review-2 PASS / Draft
+PR #34: stacked DKC-MSR line on #30 / separate identity / Draft
+PR #35: DKC Implementation Scope V1 / Scope Review-1 CORRECTION REQUIRED / Draft
 Issue #31: DKC-MSR Architecture Definition Start GO
 ```
 
@@ -160,22 +171,23 @@ UNKNOWN / HOLD != PASS
 ## 9. Remaining Open Gates
 
 ```text
-PR #29: Ready GO / HOLD
+PR #29: Ready GO recorded (Merge GO / HOLD separate; not authorized)
 PR #30: Implementation Start GO / HOLD
 PR #32: Ready GO / HOLD
-PR #28: Independent Definition Review-1 / PENDING
+PR #28: Definition Correction-1
+PR #35: DKC-IMPLEMENTATION-SCOPE-V1 Scope Correction-1
 ```
 
-DKC Human Definition LockとCSOC Independent Execution Evidenceは完了済みであり、Remaining Open Gatesから除外する。
+DKC Human Definition Lock、CSOC Independent Execution Evidence、および
+DKC-MSR Independent Definition Review-1は完了済みであり、Review-1 PENDINGとしては残さない。
 
 ## 10. Current Gate
 
 ```text
 WAEP-CURRENT-STATE-RECONCILIATION-V3
 Recommended Mutation Sequence: EXECUTED
-Live Current-State Resync: APPLIED
-PR #29: OPEN / DRAFT
-Ready: NOT AUTHORIZED
+Live Current-State Resync: APPLIED (post Review-1)
+PR #29 Ready: GO
 Merge: NOT AUTHORIZED
 Deploy: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED

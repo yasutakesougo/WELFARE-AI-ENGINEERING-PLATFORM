@@ -27,7 +27,7 @@ function decisionApplicable(decision, context) {
 }
 
 function lifecycleEdgeEffective(sourceDecision, context) {
-  return decisionApplicable(sourceDecision, context) && timeActive(sourceDecision, context.now);
+  return decisionApplicable(sourceDecision, context) && timeActive(sourceDecision, context.resolvedAt);
 }
 
 function contextFindings(context) {
@@ -87,7 +87,7 @@ export function resolveAuthority(context) {
   }
 
   const applicable = context.decisions.filter((decision) =>
-    decisionApplicable(decision, context) && timeActive(decision, context.now) && !suppressedIds.has(decision.decisionId));
+    decisionApplicable(decision, context) && timeActive(decision, context.resolvedAt) && !suppressedIds.has(decision.decisionId));
 
   if (applicable.length === 0) {
     return resolutionRecord(context, graph, [], AUTHORITY_RESULT.UNRESOLVED, 'NO_APPLICABLE_ACTIVE_DECISION');

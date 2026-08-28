@@ -1,10 +1,10 @@
 # Registry Projection V1 (Derived)
 
-Aligned to `WAEP-LEARNING-SYSTEM-V1` Definition Correction-2 §20.
+Aligned to `WAEP-LEARNING-SYSTEM-V1` Definition Correction-3 §20.
 
 ```text
 Derived Projection only.
-Not an Authority Source (INV-LRN-030, AC-34, AC-35).
+Not an Authority Source (INV-LRN-030, AC-34, AC-35, AC-44).
 ```
 
 ## Purpose
@@ -28,11 +28,23 @@ derived:
   enforcementCandidate: ""
   lifecycleState: ""           # never ACTIVE as lifecycle
   runtimeBindingByTarget: []   # BOUND|UNBOUND|DENIED|HELD|NOT_ELIGIBLE
+  lastVerified: ""             # display only; derived from effective verifiedAt
 resolution:
   resolvedAt: ""
   resolverVersion: ""
   decisionRefs: []
   resolutionState: OK|STALE|UNKNOWN|AMBIGUOUS|INVALID_CHAIN|MISSING_DEPENDENCY|EXPIRED
+```
+
+## Last Verified
+
+Registry `Last Verified` is **not** an Authority Source and must not be
+trusted as Correction-3 `verifiedAt`.
+
+If displayed, derive from:
+
+```text
+effective KnowledgeVerificationDecision.verifiedAt
 ```
 
 ## Precedence
@@ -51,6 +63,7 @@ Runtime Authority.
 ```text
 Projection maturity → Execution Authority
 Projection verificationState alone → Runtime Binding
+Projection lastVerified alone → CURRENT freshness authority
 Stale projection → CURRENT or ACTIVE claim
 Mutating Knowledge Record to mirror projection fields
 ```

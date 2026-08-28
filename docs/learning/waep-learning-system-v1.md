@@ -4,24 +4,33 @@
 
 ```text
 Definition: WAEP-LEARNING-SYSTEM-V1
-Revision: Definition Correction-2
-Supersedes: Definition Correction-1
-Trigger: Independent Definition Re-Review-2
-Re-Review-2 Result: P0 = 0 / P1 = 5 / P2 = 5
+Revision: Definition Correction-3
+Supersedes: Definition Correction-2
+Trigger: Independent Definition Re-Review-3
+Re-Review-3 Result: P0 = 0 / P1 = 2 / P2 = 2
+Architecture Centerline: RETAINED
 Definition Lock: DENIED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Runtime Authorization: NO CHANGE
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-Next Gate: Independent Definition Re-Review-3
+Next Gate: Independent Definition Final Re-Review-4
 ```
 
 This document is **definition only**. It does not authorize implementation,
 persistence, Agent Control Plane wiring, runtime distribution, registry
 migration, or production policy mutation.
 
-Correction-2 does **not** change the Architecture Centerline.
+Correction-3 does **not** change the Architecture. Correction-2 boundaries
+remain:
+
+```text
+Knowledge Record does not own Authority.
+Knowledge Lifecycle != Runtime Target State
+Knowledge Available != Execution Authority
+Decision ambiguity → fail closed
+```
 
 ---
 
@@ -50,7 +59,7 @@ Knowledge Available
 WAEP's current Authority also separates Knowledge Available / Knowledge
 Promoted from Execution Authority.
 
-Correction-2 centerline (Architecture Centerline retained):
+Architecture Centerline (retained through Correction-3):
 
 ```text
 Immutable Knowledge Content
@@ -81,9 +90,11 @@ Only Canonical Decision Resolver output is Derived State.
 
 ---
 
-## 2. Correction-2 Scope
+## 2. Correction Scope
 
-Correction-2 addresses Independent Definition Re-Review-2 findings:
+### 2.1 Correction-2 (retained)
+
+Correction-2 addressed Independent Definition Re-Review-2 findings:
 
 | Priority | ID | Topic |
 | --- | --- | --- |
@@ -98,18 +109,29 @@ Correction-2 addresses Independent Definition Re-Review-2 findings:
 | P2-4 | LRN-EVIDENCE-INDEPENDENCE-001 | Evidence independence authority |
 | P2-5 | LRN-SUPERSESSION-ORDER-001 | Exclusive Supersession ordering |
 
-Additionally defines Compatibility Rules with the existing WAEP Knowledge
-Registry, Maturity Model, and Failure Knowledge Format.
-
 Correction-1 content for Validation, Promotion, Circular Self-Reinforcement,
 Learning Event Provenance, LABS→CORE boundary, and Knowledge Poisoning Defense
-is retained unless superseded below.
+remains retained unless superseded.
+
+### 2.2 Correction-3 Scope
+
+Correction-3 addresses **only** Independent Definition Re-Review-3 residuals:
+
+| Priority | ID | Topic |
+| --- | --- | --- |
+| P1-1 | LRN-PAYLOAD-RESOLUTION-001 | LearningPayloadReleaseDecision Canonical Resolution Identity |
+| P1-2 | LRN-CURRENT-TIME-SEMANTICS-001 | CURRENT maximumAge Canonical Time Semantics |
+| P2-1 | LRN-EFFECTIVENESS-SCOPE-001 | KnowledgeEffectivenessDecision Canonical Evaluation Scope |
+| P2-2 | LRN-DECISION-SCHEMA-CONSISTENCY-001 | KnowledgeEffectivenessDecision Common Authority Field Mapping |
+
+Correction-3 does **not** add new Control Plane, Lifecycle, Promotion, or
+Runtime Authority.
 
 ---
 
 ## 3. Non-goals / Execution Boundary
 
-Correction-2 is Definition only. The following remain **not** authorized:
+Correction-3 is Definition only. The following remain **not** authorized:
 
 ```text
 Decision Store implementation
@@ -215,21 +237,28 @@ WAEP must not implicitly elevate UNKNOWN to PASS.
 
 ### 4.5 Decision Resolution Contract Invariants
 
-All Decision Contracts share:
+All Decision Contracts share (Correction-3 Final Rules):
 
 ```text
-append-only
-immutable decision content
-explicit supersession
-subject version binding
-authority reference required
-ambiguous head fails closed
-missing dependency fails closed
-expired authority fails closed
+Resolution key is contract-defined.
+One Authority Domain has one canonical key definition.
+Decision records are append-only.
+Decision content is immutable.
+Supersession is explicit.
+Timestamps do not select Authority Head.
+Multiple unresolved heads fail closed.
+Missing dependency fails closed.
+Expired authority fails closed.
+Policy ambiguity fails closed.
+Projection is never Authority Source.
+authorityRef is the common Authority identity field.
 ```
 
 Authority Resolution must not depend solely on timestamps inside Decision
 Records.
+
+Audit timestamps (`decidedAt`) must not substitute for missing semantic
+freshness timestamps such as `verifiedAt` (INV-LRN-036).
 
 ---
 
@@ -320,7 +349,7 @@ AND Verification = CURRENT | CURRENT_WITH_CONDITIONS
 AND Runtime Binding = BOUND
 AND no unresolved authority conflict
 AND all binding conditions satisfied
-AND CURRENT freshness policy is satisfied (§12)
+AND CURRENT freshness policy is satisfied (§11)
 ```
 
 Therefore:
@@ -456,12 +485,19 @@ contractVersion         fixed contract identity + version
 subjectRef              knowledge or candidate identity (as applicable)
 subjectVersion          immutable bound version (as applicable)
 decisionVersion         decision record version (append-only)
-authorityRef            who/what decided
+authorityRef            common Authority actor identity (INV-LRN-035)
 evidenceRefs            supporting evidence identities
-decidedAt               audit timestamp (not sole head selector)
+decidedAt               audit timestamp (not sole head selector; not freshness anchor)
 conditions              optional constraints
 contentDigest           digest of canonical decision facts
 supersedesDecisionRef   prior decision in chain (when applicable)
+```
+
+Optional role metadata may clarify actor function without replacing identity:
+
+```yaml
+authorityRole: EFFECTIVENESS_EVALUATOR   # example only
+# authorityRole != authorityRef
 ```
 
 Decision Records are append-only. Correction creates a new decision that
@@ -609,12 +645,14 @@ INVALIDATED
 HOLD
 ```
 
-### 11.1 Verification Policy
+### 11.1 Verification Policy Identity
 
-Minimum policy:
+Correction-3 canonicalizes Verification Policy identity. Top-level
+`policyVersion` is **not** used.
 
 ```yaml
 verificationPolicy:
+  policyRef: ""
   policyVersion: ""
   knowledgeClass: ""
   expiryRequired: true|false
@@ -622,18 +660,81 @@ verificationPolicy:
   reverificationTriggers: []
 ```
 
-### 11.2 Runtime Resolution of freshness
-
-Even if a CURRENT Decision exists, Knowledge is **not** Runtime Eligible when:
+Policy missing / conflict fails closed:
 
 ```text
-validUntil expired
-OR maximumAge exceeded
-OR mandatory reverification trigger unresolved
-OR verification Decision conflict exists
+policyRef missing when policy required
+policyVersion missing
+policy cannot be resolved
+policy version conflict
+  → MISSING_DEPENDENCY or AMBIGUOUS
+  → NOT_CURRENT
+  → NOT RUNTIME ELIGIBLE
 ```
 
-Derived states may be:
+### 11.2 Canonical Time Semantics
+
+`KnowledgeVerificationDecision@v1` requires `verifiedAt`.
+
+```text
+verifiedAt  = verification freshness anchor
+decidedAt   = authority decision audit timestamp
+```
+
+`verifiedAt`, `validFrom`, `validUntil`, and `decidedAt` are absolute instants.
+Recommended representation: UTC ISO 8601 (e.g. `2026-08-28T00:00:00Z`).
+
+Runtime Resolver must not vary expiry by local timezone.
+
+### 11.3 maximumAge Evaluation
+
+```text
+age = evaluationInstant - verifiedAt
+
+age > maximumAge
+  → CURRENT_EXPIRED
+  → NOT RUNTIME ELIGIBLE
+```
+
+When Verification Policy requires `maximumAge` and `verifiedAt` is missing:
+
+```text
+MISSING_DEPENDENCY
+  → NOT_CURRENT
+  → NOT RUNTIME ELIGIBLE
+```
+
+Do **not** substitute `decidedAt` for missing `verifiedAt` (INV-LRN-036).
+
+### 11.4 CURRENT Resolution Order
+
+Canonical Resolver evaluates in this order:
+
+```text
+1. Resolve one effective Verification Decision head.
+2. Require CURRENT or CURRENT_WITH_CONDITIONS.
+3. Resolve Verification Policy.
+4. Evaluate validFrom.
+5. Evaluate validUntil.
+6. Evaluate: evaluationInstant - verifiedAt <= maximumAge
+7. Evaluate mandatory reverification triggers.
+8. Evaluate conditions.
+9. Only then derive CURRENT eligibility.
+```
+
+Any of the following fails closed:
+
+```text
+UNKNOWN
+AMBIGUOUS
+MISSING_DEPENDENCY
+INVALID_CHAIN
+EXPIRED
+```
+
+WAEP must not elevate UNKNOWN or STALE Authority into an executable state.
+
+Derived states may include:
 
 ```text
 CURRENT_EXPIRED
@@ -683,14 +784,59 @@ Allowed Learning Payload
 Learning Event
 ```
 
-### 12.2 Fail-Closed
+### 12.2 Canonical Resolution Identity
 
-For production-sensitive sources:
+Authority Subject is the **Release target Payload**, not the Source.
+
+```yaml
+resolutionKey:
+  contractType: LearningPayloadReleaseDecision@v1
+  payloadRef: ""
+  payloadDigest: ""
+  destinationLearningPlane: ""
+```
+
+These three values form the Release Authority Domain. Consumer-specific
+Resolution Identity variation is forbidden (INV-LRN-031, AC-37).
+
+Source identity is Provenance only:
+
+```yaml
+source:
+  sourceRef: ""
+  sourceRevision: ""
+  sourceClassification: ""
+```
+
+Same Source with different Payload content or Destination is a different
+Release Authority.
+
+Destination Separation:
 
 ```text
-Missing Release Decision
-  = Ingestion Prohibited
+ALLOW for Destination A
+  ≠ ALLOW for Destination B
 ```
+
+### 12.3 Resolution Failure
+
+Any of the following prevents Release Authority:
+
+```text
+payloadRef missing
+payloadDigest missing
+destinationLearningPlane missing
+conflicting effective heads
+invalid supersession chain
+```
+
+```text
+Resolution failure
+  → HOLD
+  → INGESTION PROHIBITED
+```
+
+For production-sensitive sources, Missing Decision has the same result.
 
 Successful redaction alone does **not** mean ALLOW.
 
@@ -723,6 +869,61 @@ Do not store authoritative confidence on Knowledge Records.
 
 Separate Effectiveness Observation from Decision.
 
+### 14.1 Canonical Evaluation Scope
+
+Every Effectiveness Decision **must** include:
+
+```yaml
+evaluationScopeRef: ""
+```
+
+`evaluationScopeRef` identifies which evaluation series a Decision belongs to
+for the same Knowledge / Runtime Target.
+
+Resolution Key (fixed):
+
+```yaml
+resolutionKey:
+  contractType: KnowledgeEffectivenessDecision@v1
+  subjectRef: ""
+  subjectVersion: ""
+  runtimeTargetRef: ""
+  evaluationScopeRef: ""
+```
+
+`measurementWindow` must **not** be used as an implicit Resolution Identity.
+
+Example scopes:
+
+```text
+post-deployment-30d
+ci-regression-rate
+review-finding-rate
+pilot-site-a
+cross-repository-validation
+```
+
+Updating Measurement Window within the same `evaluationScopeRef` requires
+explicit supersession of the prior Decision. Distinct evaluation purposes use
+distinct scopes.
+
+### 14.2 Common Authority Field
+
+Effectiveness uses the common Authority identity field:
+
+```text
+authorityRef
+```
+
+Correction-2 `evaluationAuthorityRef` is replaced. Optional:
+
+```yaml
+authorityRole: EFFECTIVENESS_EVALUATOR
+# authorityRole != authorityRef
+```
+
+### 14.3 Authority Boundary
+
 Effectiveness Decision is an observation evaluation. Alone it cannot perform:
 
 ```text
@@ -733,7 +934,8 @@ Runtime Binding
 Execution Authorization
 ```
 
-Effectiveness results may trigger re-Validation.
+Effectiveness results may trigger re-Validation. Correction-3 does not
+strengthen Effectiveness Authority.
 
 See `docs/learning/contracts/knowledge-effectiveness-decision-v1.md`.
 
@@ -941,8 +1143,8 @@ Enforcement Candidate
 Required Fields historically include Maturity, Validation Result, Verification
 State, Supersession State, Last Verified.
 
-After Correction-2, these must **not** be Authoritative Stored Fields on the
-Knowledge Record.
+After Correction-2 / Correction-3, these must **not** be Authoritative Stored
+Fields on the Knowledge Record.
 
 ### 20.1 Registry Projection
 
@@ -958,6 +1160,7 @@ derived:
   verificationState: ""
   supersessionState: ""
   enforcementCandidate: ""
+  lastVerified: ""             # derived display only; see §20.3
 resolution:
   resolvedAt: ""
   resolverVersion: ""
@@ -981,6 +1184,21 @@ Authority.
 
 WAEP information-source priority already places Current Authority / Current
 Decision above Knowledge Registry.
+
+### 20.3 Last Verified vs verifiedAt
+
+Correction-3 does not change the Registry Projection model.
+
+Registry `Last Verified` must **not** be trusted as the same Authority Source
+as Correction-3 `verifiedAt`.
+
+If a display value is required on Registry Projection, derive it from:
+
+```text
+effective KnowledgeVerificationDecision.verifiedAt
+```
+
+(AC-44).
 
 ---
 
@@ -1108,6 +1326,22 @@ INV-LRN-029  Expired CURRENT verification is not runtime eligible.
 INV-LRN-030  Derived Registry Projection is not an Authority Source.
 ```
 
+### 24.4 Correction-3 invariants
+
+```text
+INV-LRN-031  Learning Payload Release Authority uses one canonical
+             payload + destination resolution identity.
+INV-LRN-032  CURRENT freshness uses verifiedAt as the canonical
+             maximumAge time anchor.
+INV-LRN-033  Verification Policy identity ambiguity fails closed.
+INV-LRN-034  Effectiveness Decision resolution uses explicit
+             evaluationScopeRef.
+INV-LRN-035  All canonical Decision Contracts expose Authority identity
+             through the common authorityRef field.
+INV-LRN-036  Audit timestamps must not substitute for missing semantic
+             freshness timestamps.
+```
+
 ---
 
 ## 25. Acceptance Criteria
@@ -1146,7 +1380,7 @@ AC-22  Lifecycle / Supersession / Runtime Binding consistency rules are defined.
 AC-23  Learning Event duplicate / replay cannot artificially increase evidence strength.
 ```
 
-### 25.3 Correction-2 ACs
+### 25.3 Correction-2 ACs (retained)
 
 ```text
 AC-24  Canonical Decision Resolution produces one deterministic
@@ -1169,6 +1403,21 @@ AC-34  Existing Knowledge Registry authority-like fields are treated
        as derived projections, not canonical authority.
 AC-35  Registry Projection conflict or staleness fails closed.
 AC-36  Maturity level does not grant execution authority.
+```
+
+### 25.4 Correction-3 ACs
+
+```text
+AC-37  LearningPayloadReleaseDecision resolution identity is fixed
+       to payloadRef + payloadDigest + destinationLearningPlane.
+AC-38  CURRENT maximumAge is evaluated from verifiedAt.
+AC-39  Missing verifiedAt when maximumAge is required fails closed.
+AC-40  Verification Policy identity is canonical and unambiguous.
+AC-41  KnowledgeEffectivenessDecision requires evaluationScopeRef.
+AC-42  Effectiveness resolution key includes evaluationScopeRef.
+AC-43  KnowledgeEffectivenessDecision uses common authorityRef.
+AC-44  Registry Last Verified is a derived projection of canonical
+       Verification Decision evidence, not an Authority Source.
 ```
 
 ---
@@ -1211,32 +1460,63 @@ AC-36  Maturity level does not grant execution authority.
 
 Registry / Maturity / Failure compatibility: §20–§22, INV-030, AC-34..36.
 
+### 26.3 Re-Review-3 → Correction-3
+
+| Finding | Correction |
+| --- | --- |
+| LRN-PAYLOAD-RESOLUTION-001 | §12.2–12.3, INV-031, AC-37 |
+| LRN-CURRENT-TIME-SEMANTICS-001 | §11.1–11.4, INV-032/033/036, AC-38..40 |
+| LRN-EFFECTIVENESS-SCOPE-001 | §14.1, INV-034, AC-41/42 |
+| LRN-DECISION-SCHEMA-CONSISTENCY-001 | §7, §14.2, INV-035, AC-43 |
+
+Registry Last Verified projection: §20.3, AC-44.
+
 ---
 
-## 27. Definition Correction-2 Verdict
+## 27. Lock Preparation
+
+After Correction-3, no further Architecture Correction is added.
+
+Final Re-Review-4 confirms only:
+
+```text
+P0 = 0
+P1 = 0
+Canonical Decision keys deterministic
+CURRENT time semantics deterministic
+Authority fields consistent
+All unresolved states fail closed
+Existing Registry remains projection-only
+No new execution authority introduced
+```
+
+If residual P2 items remain and are limited to Editorial / Documentation issues
+that do not affect Runtime Authority, Sensitive Data Boundary, Knowledge
+Integrity, or Rollback Safety, they may be separated from Definition Lock
+judgment.
+
+---
+
+## 28. Definition Correction-3 Verdict
 
 ```text
 WAEP-LEARNING-SYSTEM-V1
-Definition Correction-2
+Definition Correction-3
 Architecture Centerline: RETAINED
-Canonical Decision Resolver: DEFINED
-Knowledge Lifecycle / Runtime State: SEPARATED
-Knowledge Immutability: CORRECTED
-RESTORE Eligibility: CORRECTED
-Production Payload Release: EXTERNALIZED
-Confidence Authority: REMOVED FROM V1
-Effectiveness Decision: DEFINED
-CURRENT Freshness: DEFINED
-Evidence Independence: EXTERNALIZED
-Exclusive Supersession: ORDERED
-Legacy Registry Compatibility: DEFINED
+Payload Release Resolution: CANONICALIZED
+CURRENT Time Semantics: CANONICALIZED
+Verification Policy Identity: CANONICALIZED
+Effectiveness Evaluation Scope: CANONICALIZED
+Decision Authority Field: NORMALIZED
 Definition Lock: DENIED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
-Next Gate: Independent Definition Re-Review-3
+Automatic Knowledge Promotion: PROHIBITED
+Automatic Runtime Distribution: NOT AUTHORIZED
+Next Gate: Independent Definition Final Re-Review-4
 ```
 
-Until Re-Review-3 passes and Definition Lock is granted:
+Until Final Re-Review-4 passes and Definition Lock is granted:
 
 ```text
 Implementation Start     = NOT AUTHORIZED

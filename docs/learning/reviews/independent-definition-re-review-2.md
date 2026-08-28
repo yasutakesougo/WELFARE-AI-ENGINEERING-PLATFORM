@@ -20,7 +20,8 @@ Next: WAEP-LEARNING-SYSTEM-V1 Definition Correction-2
 
 This file archives the Independent Definition Re-Review-2 result that triggered
 Definition Correction-2. Correction mapping lives in
-`docs/learning/waep-learning-system-v1.md` §26.2.
+`docs/learning/waep-learning-system-v1.md` §26.2 (historical).
+Correction-2 was superseded by Definition Correction-3.
 
 ---
 

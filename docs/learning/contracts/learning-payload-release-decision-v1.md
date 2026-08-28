@@ -4,14 +4,15 @@
 
 ```text
 Contract: LearningPayloadReleaseDecision@v1
-Parent: WAEP-LEARNING-SYSTEM-V1 Definition Correction-2
+Parent: WAEP-LEARNING-SYSTEM-V1 Definition Correction-3
+Supersedes contract semantics in: Definition Correction-2
 Implementation: NOT AUTHORIZED
 ```
 
 ## Purpose
 
 Decide whether a payload generated from Production or Sensitive Source may be
-ingested into the Learning Plane (INV-LRN-025, AC-28).
+ingested into the Learning Plane (INV-LRN-025 / INV-LRN-031, AC-28 / AC-37).
 
 ```text
 Redaction success ≠ ALLOW
@@ -24,12 +25,13 @@ Missing Release Decision (production-sensitive) = Ingestion Prohibited
 decisionId: "LPRD-..."
 contractVersion: "LearningPayloadReleaseDecision@v1"
 decisionVersion: "1"
+subject:
+  payloadRef: ""
+  payloadDigest: ""
 source:
   sourceRef: ""
   sourceRevision: ""
   sourceClassification: ""
-payloadRef: ""
-payloadDigest: ""
 destination:
   learningPlane: ""
   permittedUses: []
@@ -51,16 +53,38 @@ contentDigest: ""
 | DENY | Ingestion prohibited |
 | HOLD | No ingestion until authority resolves |
 
-## Resolution
+## Canonical Resolution Identity
+
+Authority Subject is the Release target Payload (not Source).
 
 ```yaml
 resolutionKey:
   contractType: LearningPayloadReleaseDecision@v1
-  subjectRef: ""           # typically sourceRef or payloadRef per policy
-  subjectVersion: ""       # sourceRevision or payloadDigest binding
+  payloadRef: ""
+  payloadDigest: ""
+  destinationLearningPlane: ""
 ```
 
-Ambiguous heads fail closed (INV-LRN-021).
+These three values form one Release Authority Domain.
+
+- Source fields are Provenance only.
+- Same Source with different Payload or Destination ⇒ different Authority.
+- `ALLOW` for Destination A does **not** imply `ALLOW` for Destination B.
+
+## Resolution Failure
+
+```text
+payloadRef missing
+payloadDigest missing
+destinationLearningPlane missing
+conflicting effective heads
+invalid supersession chain
+  → HOLD
+  → INGESTION PROHIBITED
+```
+
+Ambiguous heads and missing production-sensitive Decisions fail closed
+(INV-LRN-021 / INV-LRN-031).
 
 ## Rules
 
@@ -71,3 +95,4 @@ Ambiguous heads fail closed (INV-LRN-021).
 4. Append-only; corrections create a new superseding decision.
 5. Credentials / secrets / personal / child / family / customer production data
    remain prohibited as reusable Knowledge content (INV-LRN-010 / 017).
+6. Authority identity uses common `authorityRef` (INV-LRN-035).

@@ -2,6 +2,12 @@
   "name": "@waep/local-mcp-bridge-slice-a",
   "private": true,
   "version": "0.0.0-slice-a",
+  "engines": {
+    "node": "22.23.1"
+  },
+  "devDependencies": {
+    "typescript": "5.9.2"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "verify": "tsc -p tsconfig.verify.json && node .slice-a-verify/verify.js"

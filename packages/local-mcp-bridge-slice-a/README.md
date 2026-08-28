@@ -1,6 +1,6 @@
 # WAEP Local MCP Execution Bridge — Slice A
 
-Status: Implementation Correction-2 candidate under `WAEP-LOCAL-MCP-EXECUTION-BRIDGE-V1`.
+Status: Implementation Correction-3 candidate under `WAEP-LOCAL-MCP-EXECUTION-BRIDGE-V1`.
 
 Scope:
 
@@ -9,7 +9,10 @@ Scope:
 - Shadow evaluator
 - `OBSERVE_ONLY / SHADOW_EVALUATION`
 - Trusted synthetic decision / containment registries
-- Verified dependency and data-zone policy evaluation
+- Registry-bound Data Zone decisions
+- Registry-bound Trusted Configuration validation
+- Verified dependency evaluation
+- Explicit Search Policy ceilings
 - AC-01 through AC-55 evidence-level traceability
 
 Explicitly excluded:
@@ -31,7 +34,10 @@ Core invariants:
 - Shadow policy results never synthesize `ObservationResult` values.
 - Caller-supplied `verificationState=VERIFIED` cannot create authority; Shadow requests carry registry references, not caller-constructed verified decisions.
 - Containment `PASS` is accepted only from the internal synthetic containment registry.
-- Trusted configuration requires an immutable `sha256:<64-hex>` or `commit:<40-hex>` pin and a permitted external authority root.
+- Data Zone semantics are resolved from an internal registry; a permitted authority ref cannot be rebound to different caller-supplied classification semantics.
+- Trusted Configuration validation is resolved from an internal registry; caller-supplied `integrityResult=PASS` is not accepted.
+- Trusted Configuration requires an immutable `sha256:<64-hex>` or `commit:<40-hex>` pin and a registered external authority root.
+- Search bounds must be finite positive integers and must not exceed the explicit Slice A policy ceilings.
 - Process observation exposes a fixed numeric resource allowlist; arbitrary string-keyed resource output is not permitted.
 - Local observation contracts never resolve remote current state by themselves.
 
@@ -52,5 +58,7 @@ npm run verify
 ```
 
 `npm run verify` compiles the synthetic-only verification target and runs the Slice A self-check. The generated `.slice-a-verify/` directory is temporary verification output and is not part of the bridge runtime.
+
+A verification-only GitHub Actions workflow may run the same three commands against the exact branch HEAD. It does not connect to MCP, a local PC, or production data.
 
 The acceptance registry is evidence-bound: every `IMPLEMENTED` AC must resolve to concrete Contract / Policy / Fixture / Self-check evidence IDs, while runtime filesystem criteria remain explicitly `DEFERRED_BY_DEFINITION` rather than being counted as PASS.

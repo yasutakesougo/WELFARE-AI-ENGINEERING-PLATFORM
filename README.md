@@ -9,53 +9,32 @@ Repository: yasutakesougo/WELFARE-AI-ENGINEERING-PLATFORM
 Branch: main
 Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Latest Main Merge: PR #22
-Reconciliation Record: WAEP-CURRENT-STATE-RECONCILIATION-V3
+Current-State Reconciliation: PR #29 / OPEN / DRAFT
 ```
 
 Current Main SHAはRepository Stateの観測identityである。
 
 Current Main SHA自体はDefinition LockまたはExecution Authorityを付与しない。
 
-## Portfolio Foundation
+## Locked Definitions on Main
 
-WAEPは、複数リポジトリの役割、Knowledge Flow、Knowledge Classification、Promotion Gate、Roadmapを上位レベルで整理する。
-
-PR #9由来のPortfolio Foundation資産はDefinition Candidateとして扱う。
-
-```text
-Portfolio Foundation: DEFINITION CANDIDATE
-PR #9 relation to current main: diverged / ahead 8 / behind 20
-Independent Portfolio Review: REQUIRED
-Definition Lock: NOT AUTHORIZED
-Cross-Repository Mutation: NOT AUTHORIZED
-```
-
-## Learning System
-
-`WAEP-LEARNING-SYSTEM-V1` Definition Correction-3は、PR #13でmainへマージ済みである。
+### WAEP-LEARNING-SYSTEM-V1
 
 ```text
 Revision: Definition Correction-3
-Independent Definition Final Re-Review-4: PASS
-Human Definition Lock: GO
 Definition State: LOCKED / CANONICAL ON MAIN
+Human Definition Lock: GO
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Definition Merge Commit: bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
-Repository Current Main: ebc13ef072a861a53043687af13d9b2c548c73ce
-Architecture Centerline: LOCKED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
-Automatic Runtime Distribution: NOT AUTHORIZED
 ```
 
-Definition Merge CommitとRepository Current Mainを同一identityとして扱わない。
-
-## Authority Claim Resolution
-
-`WAEP-AUTHORITY-CLAIM-RESOLUTION-CONTRACT-V1` Definition Correction-3はPR #22でmainへマージ済みである。
+### WAEP-AUTHORITY-CLAIM-RESOLUTION-CONTRACT-V1
 
 ```text
+Revision: Definition Correction-3
 Independent Definition Re-Review-3: PASS / LOCKABLE
 Human Definition Lock: GO
 Definition State: LOCKED
@@ -69,50 +48,78 @@ Definition LockはImplementation StartまたはRuntime Enforcementを意味し�
 
 ## Active Development Lines
 
+### MSR Research / Architecture
+
 ```text
-MSR Research:
-PR #27 / OPEN DRAFT
-Research Evidence ACCEPTED
-Design Input Eligibility AUTHORIZED
-Next: DKC-MSR-ARCHITECTURE-DESIGN-V1 Definition Start GO / HOLD
-
-DKC:
-PR #17 / OPEN DRAFT
-Definition Correction-2
-current-main relation: diverged / ahead 4 / behind 13
-Next: baseline reconciliation, then Independent Definition Re-Review-2
-
-CSOC Slice A:
-PR #21 / OPEN DRAFT
-Implementation Correction-2
-current-main relation: diverged / ahead 6 / behind 3
-Next: baseline reconciliation, then Independent Implementation Re-Review-2
+Research PR: #27 / OPEN / DRAFT
+Research Evidence: ACCEPTED
+Design Input Eligibility: AUTHORIZED
+Gap Analysis Issue #25: COMPLETED
+Result: NO DKC BASE DEFINITION CHANGE REQUIRED
+Architecture Extension: REQUIRED
+DKC-MSR-ARCHITECTURE-DESIGN-V1: Issue #31 / Definition Start GO
+Next: Independent Definition Review-1
+Implementation Start: NOT AUTHORIZED
 ```
 
 Research Evidence AcceptanceはTechnology AdoptionまたはImplementation Authorityを意味しない。
 
-## Canonical Relationship
-
-Portfolio FoundationとLearning Systemは、同一のAuthority状態ではない。
+### DEVELOPMENT-KNOWLEDGE-COMPOUND-V1
 
 ```text
-Portfolio Foundation Candidate
-  != Locked Learning Definition
-
-Locked Learning Definition
-  != Portfolio Definition Lock
-
-Knowledge Available
-  != Execution Authority
+Active PR: #30 / OPEN / DRAFT
+Revision: Definition Correction-2
+Current-main reconciliation: COMPLETE
+Definition Blob: a17ede815d9c9f3efc4292e9db8d24edca19b9d3
+Independent Definition Re-Review-2: PASS
+Independent Definition Re-Review-3: PASS / LOCKABLE
+Definition State: UNLOCKED / LOCKABLE
+Next: Human Definition Lock GO / HOLD
+Implementation Start: NOT AUTHORIZED
+Automatic Knowledge Promotion: PROHIBITED
 ```
 
-詳細は `docs/architecture/canonical-source-relationship-v1.md` を参照する。
+旧PR #17はHistorical SourceとしてCLOSED / UNMERGEDである。
+
+### CSOC-IMPL-SLICE-A
+
+```text
+Active PR: #32 / OPEN / DRAFT
+Revision: Implementation Correction-2
+Current-main reconciliation: COMPLETE
+Package Tree: 9671c3bce237efa444d1c5e7e462182d2e506583
+Static Correction Closure: 4 / 4 PASS
+Independent Implementation Re-Review-2: HOLD
+P0 / P1 / P2: 0 / 1 / 0
+Open P1: CSOC-IMPL-INDEPENDENT-EXECUTION-EVIDENCE-001
+Next: independent exact-artifact test + typecheck verification
+Ready / Merge / Deploy / Runtime Activation: NOT AUTHORIZED
+```
+
+旧PR #21はHistorical SourceとしてCLOSED / UNMERGEDである。
+
+Source actorの`69 tests passed / tsc --noEmit passed`はlocal evidenceとして保持する。
+
+独立実行証拠がないためPASSへ昇格させない。
+
+## Portfolio Foundation
+
+```text
+Portfolio Foundation: DEFINITION CANDIDATE
+Source PR #9: OPEN / DRAFT / stale
+Independent Portfolio Review: REQUIRED
+Definition Lock: NOT AUTHORIZED
+Cross-Repository Mutation: NOT AUTHORIZED
+```
 
 ## Current State
 
-Current-Stateの判断には `docs/audit/waep-current-state-index-v3.md` を使用する。
+Current-State判断には次を使用する。
 
-Reconciliation evidenceは `docs/audit/waep-current-state-reconciliation-v3.md` を使用する。
+```text
+docs/audit/waep-current-state-index-v3.md
+docs/audit/waep-current-state-reconciliation-v3.md
+```
 
 旧Snapshotや旧PR bodyの状態表記は、より新しいexact-state evidenceより優先しない。
 

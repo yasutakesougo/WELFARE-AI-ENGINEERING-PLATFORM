@@ -2,14 +2,20 @@
 
 Cross-repository AI engineering, knowledge capitalization, governance, and welfare DX platform.
 
-## Current Repository Baseline
+## Repository Baseline and Current Main
 
 ```text
 Repository: yasutakesougo/WELFARE-AI-ENGINEERING-PLATFORM
 Branch: main
-Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
-Baseline Meaning: repository-state reconciliation anchor
+Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+PR #19 Merge Commit / Current Main: 7998a83c22bf8e61d725da61cca0f797690ad561
+Baseline Meaning: source baseline and historical reconciliation anchor
 ```
+
+`Reconciliation Source Baseline`はWAEP-CURRENT-REPOSITORY-RECONCILIATION-V2の
+historical anchorであり、現在のmainのSHAではない。
+
+`PR #19 Merge Commit / Current Main`は現在のRepository Stateを示す。
 
 Repository baselineは、Definition LockやExecution Authorityを付与しない。
 
@@ -37,7 +43,8 @@ Human Definition Lock: GO
 Definition State: LOCKED / CANONICAL ON MAIN
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Definition Merge Commit: bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
-Repository Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+Repository Current Main: 7998a83c22bf8e61d725da61cca0f797690ad561
 Architecture Centerline: LOCKED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
@@ -48,7 +55,10 @@ PR #13: MERGED
 
 Definition Merge CommitはLearning Systemの正本化点を示す。
 
-Repository Exact Baselineは、PR #18までを含む現在のRepository状態を示す。
+Reconciliation Source Baselineは、PR #19以前のReconciliation V2における
+historical anchorを示す。
+
+Repository Current Mainは、PR #19 Merge Commitを含む現在のRepository状態を示す。
 
 ## Canonical Relationship
 

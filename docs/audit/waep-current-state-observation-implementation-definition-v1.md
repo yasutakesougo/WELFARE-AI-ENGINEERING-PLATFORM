@@ -4,7 +4,7 @@
 
 ```text
 Definition: WAEP-CURRENT-STATE-OBSERVATION-IMPLEMENTATION-DEFINITION-V1
-Revision: Implementation Scope Correction-1
+Revision: Implementation Scope Correction-2
 Parent Definition: WAEP-CURRENT-STATE-OBSERVATION-CONTRACT-V1
 Parent Revision: Definition Correction-6
 Parent Source Baseline Commit: 5c55d9383a34915c45619429d7e24488ade75337
@@ -21,7 +21,7 @@ Repository Migration: NOT AUTHORIZED
 Ready / Merge / Deploy: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 External Mutation: NOT AUTHORIZED
-Next Gate: CSOC-IMPL-SLICE-A Independent Scope Re-Review-1
+Next Gate: CSOC-IMPL-SLICE-A Independent Scope Re-Review-2
 ```
 
 This document defines a candidate implementation slice against the locked
@@ -40,7 +40,7 @@ Historical Lock Transition SHA
 
 Current Authoritative Parent Artifact
   = LOCKED + Human Definition Lock GO + Implementation Start GO
-  = current parent authority for this Correction-1
+  = current parent authority for this Correction-2
 ```
 
 ```text
@@ -54,12 +54,32 @@ Implementation Start GO
   != External Mutation
 ```
 
-Source revision for this apply:
+Source and correction lineage:
 
 ```text
 Source Revision: Implementation Scope Draft-1
 Source SHA-256: 2f11ce5e76d17736d957ef8b998f8c5413b45d2fa3e02dea07da6ece2dd75a68
-Apply: Implementation Scope Correction-1
+Prior Revision: Implementation Scope Correction-1
+Prior SHA-256: f44c8f9ede0ac5493f69b48572373a2521caf161508f5dcab97c008fb0c38991
+Apply: Implementation Scope Correction-2
+```
+
+Correction-2 preserves the Re-Review-1 closures for claim/retry and
+governance-test boundary. It restores Draft-1 mandatory kernel requirements
+that Correction-1 unintentionally removed or weakened. It does not reopen
+those closed findings and does not authorize implementation code.
+
+Finding:
+
+```text
+Finding:
+CSOC-IMPL-SCOPE-PRESERVATION-001
+
+Severity:
+P1
+
+Closure Status:
+CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
 ```
 
 ## 1. Slice identity
@@ -101,31 +121,32 @@ remote provider, persistence engine, runtime, or mutation mechanism:
 
 ## 3. Included scope
 
-### 3.1 Contract records and value validation
+### 3.1 Versioned record contracts
 
-The slice includes type definitions, constructors or parsers, and deterministic
-validation for:
+The slice MUST provide deterministic in-memory implementation, including type
+definitions, constructors or parsers, and validation, for these explicit
+versioned record contracts:
 
 ```text
-Observation records
-GateBoundObservation records
-Freshness verification records
-Claim records
-Authority-result records
-Mutation-eligibility records
-Terminal-outcome records
-Logical action identity
-attemptGeneration
-Repository identity and source-class values
-Observation interval, consistency, and failure-evidence fields
+RepositoryObservation@v1
+PullRequestObservation@v1
+BranchRelationObservation@v1
+GateBoundObservation@v1
+GateFreshnessVerification@v1
+GateUseClaim@v1
+TerminalOutcome@v1
 ```
+
+These `@v1` names are the normative Slice-A contract binding. Generic family
+labels such as "observation records" or "claim records" are descriptive only
+and MUST NOT replace the versioned contracts.
 
 Record construction and validation are in-memory and side-effect-free. A
 constructor or parser may accept a complete input value and return either a
-valid record or a structured failure. It must not fetch, infer, or fill missing
-fields.
+valid record or a structured failure. It MUST NOT fetch, infer, or fill
+missing fields.
 
-The kernel must preserve the parent-contract separations:
+The kernel MUST preserve the parent-contract separations:
 
 ```text
 Current State       != Stored Snapshot
@@ -138,31 +159,173 @@ Freshness           != Claim
 Terminal outcome    != Mutation eligibility
 ```
 
-### 3.2 Distinct state and record families
-
-The slice must keep the following as distinct states and records. One record
-must not silently acquire the semantics of another.
+The slice MUST keep the following as distinct states and records. One record
+MUST NOT silently acquire the semantics of another.
 
 ```text
-Observation
-Gate-bound observation
-Freshness verification
-Claim
+RepositoryObservation@v1
+PullRequestObservation@v1
+BranchRelationObservation@v1
+GateBoundObservation@v1
+GateFreshnessVerification@v1
+GateUseClaim@v1
+TerminalOutcome@v1
 Authority result
 Mutation eligibility
-Terminal outcome
 ```
 
-A gate-bound observation carries the immutable gate-critical evidence set
-required by the parent contract. It must not later mutate into a freshness
+A `GateBoundObservation@v1` carries the immutable gate-critical evidence set
+required by the parent contract. It MUST NOT later mutate into a freshness
 projection, a claim projection, or a terminal-outcome projection.
 
 A later adapter may consume kernel outputs. That consumption is outside Slice A
 and is not authorized by this definition.
 
-### 3.3 Claim and retry semantics
+### 3.2 Minimum validation fields
 
-Finding:
+The slice MUST validate, as applicable to each versioned record, at least the
+following fields. Absence of an applicable required field is a structured
+failure, not an inferred success.
+
+```text
+observationId
+observationStartedAt
+observationCompletedAt
+observationSource
+sourceClass
+observationResult
+identityBefore
+identityAfter
+consistencyResult
+evidenceReferences
+retrievalProvenance
+logicalMutationId
+attemptGeneration
+gateCriticalEvidence
+authorityDecisionRef
+```
+
+Applicable also includes the parent-contract identity and result fields already
+required by the locked parent, including repository identity, source class,
+observation interval, consistency, and failure-evidence fields. Those parent
+requirements remain in force.
+
+`logicalMutationId` and `attemptGeneration` MUST be explicit on claim,
+mutation-eligibility, and terminal-outcome related records. A missing
+`attemptGeneration` MUST NOT be generated by the kernel.
+
+### 3.3 Append-only, identity, and supersession checks
+
+The slice MUST provide pure, side-effect-free checks that enforce:
+
+```text
+same observationId reuse rejection
+original observation preservation
+supersedesObservationId
+correctsObservationId
+stable repository identity precedence
+composite identity movement → INVALIDATED / HOLD
+sourceClass / provenance / evidence traceability
+```
+
+Normative rules:
+
+```text
+Existing observation record: MUST NOT be rewritten
+Same observationId reuse:    PROHIBITED
+Later state:                 new observation record
+Correction / succession:     explicit supersedesObservationId
+                             or correctsObservationId only
+```
+
+Identity comparison MUST prefer stable `repositoryId` over owner/name.
+Owner and repository name remain display and fallback reconciliation data.
+
+If composite `identityBefore` and `identityAfter` differ, or an equivalent
+documented consistency verification fails:
+
+```text
+consistencyResult = INVALIDATED
+observationResult = INVALIDATED
+gate result = HOLD
+```
+
+The invalidated record is preserved. The consumer MUST retry with a new
+observation or remain `HOLD`. A single timestamp is not a substitute for the
+observation interval.
+
+`sourceClass`, `retrievalProvenance`, and `evidenceReferences` MUST remain
+traceable. The kernel MUST NOT treat missing provenance as sufficient
+authority or as a complete observation.
+
+### 3.4 Freshness verification invariants
+
+Freshness is a separate append-only `GateFreshnessVerification@v1` record.
+It MUST NOT be collapsed into the gate-bound observation, the claim, or the
+terminal outcome.
+
+Freshness status MUST be one of:
+
+```text
+FRESH
+EXPIRED
+INVALIDATED
+UNVERIFIABLE
+```
+
+No other freshness status is permitted.
+
+A freshness verification MUST:
+
+```text
+compare every required immutable gateCriticalEvidence item
+match source-native version / optimistic-concurrency tokens when available
+fail closed if required evidence is missing, contradictory, or ambiguous
+```
+
+Normative separations:
+
+```text
+TTL alone != FRESH
+technical freshness != authority
+earlier verification records remain byte-for-byte unchanged
+ambiguous required evidence → HOLD
+```
+
+An earlier `GateFreshnessVerification@v1` record MUST remain byte-for-byte
+unchanged. A later verification is a new record. `FRESH` does not grant
+authority, mutation eligibility, or retry authority.
+
+### 3.5 Claim, terminal state, and retry semantics
+
+The slice MUST implement the provider-neutral claim/terminal state model on
+`GateUseClaim@v1` and `TerminalOutcome@v1`:
+
+```text
+AVAILABLE
+CLAIMED
+TERMINAL_CONSUMED_SUCCESS
+TERMINAL_INVALIDATED
+TERMINAL_NOT_AUTHORIZED
+TERMINAL_NO_MUTATION
+TERMINAL_OUTCOME_UNKNOWN
+```
+
+Mandatory invariants:
+
+```text
+successful claims per observation <= 1
+mutation attempts per observation <= 1
+active mutation attempts per logicalMutationId + attemptGeneration <= 1
+terminal state → never AVAILABLE again
+ambiguous outcome → TERMINAL_OUTCOME_UNKNOWN and HOLD
+```
+
+A terminal state MUST NOT return to `AVAILABLE`. Ambiguous or unknown
+terminal evidence MUST be recorded as `TERMINAL_OUTCOME_UNKNOWN` and MUST
+fail closed to `HOLD`.
+
+Finding retained from Re-Review-1:
 
 ```text
 Finding:
@@ -172,10 +335,10 @@ Severity:
 P1
 
 Closure Status:
-CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
+CLOSED / RETAINED
 ```
 
-Losing claimant semantics are explicit:
+Losing claimant semantics remain explicit and mandatory:
 
 ```text
 CLAIM_REJECTED
@@ -185,7 +348,7 @@ CLAIM_REJECTED
 → winning attemptのterminal outcomeを待つ
 ```
 
-A new executable attempt must not be started while the winning attempt is in
+A new executable attempt MUST NOT be started while the winning attempt is in
 any of the following states:
 
 ```text
@@ -214,7 +377,7 @@ or:
 reconciliation proves a new attempt is safe
 ```
 
-Every new execution attempt must use a new:
+Every new execution attempt MUST use a new:
 
 ```text
 attemptGeneration
@@ -229,14 +392,22 @@ CLAIM_REJECTED
 NEW_OBSERVATION_REQUIRED
   != immediate retry authorized
   != permission to start a concurrent executable attempt
+
+terminal state
+  != AVAILABLE
 ```
 
-The kernel may record `CLAIM_REJECTED` and return `HOLD` or `NOT_AUTHORIZED`.
-It must not start, schedule, or imply a follow-on executable attempt.
+The kernel MAY record `CLAIM_REJECTED` and MUST return `HOLD` or
+`NOT_AUTHORIZED`. It MUST NOT start, schedule, or imply a follow-on
+executable attempt.
 
-### 3.4 Runtime domain validation versus governance traceability
+`logicalMutationId` plus `attemptGeneration` uniqueness is a kernel
+invariant. A later distributed coordination adapter may enforce it across
+processes; Slice A MUST still reject in-memory violations of the same rule.
 
-Finding:
+### 3.6 Mandatory behavioral testing and governance split
+
+Finding retained from Re-Review-1:
 
 ```text
 Finding:
@@ -246,10 +417,10 @@ Severity:
 P2
 
 Closure Status:
-CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
+CLOSED / RETAINED
 ```
 
-Validation coverage is split:
+Validation coverage remains split:
 
 ```text
 Runtime Domain Validation:
@@ -259,12 +430,24 @@ Governance Traceability:
 CSOC-C6-V48
 ```
 
-`CSOC-C1-V17` through `CSOC-C5-V47` are parent-contract runtime/domain
-scenarios. Slice A may implement them as deterministic kernel behavioral
-tests against in-memory values. Scenario titles and expected results remain
-those of the locked parent contract; this definition does not rename them.
+Slice A MUST provide table-driven or equivalent deterministic kernel
+behavioral tests for `CSOC-C1-V17` through `CSOC-C5-V47` against in-memory
+values. Scenario titles and expected results remain those of the locked
+parent contract; this definition does not rename them.
 
-`CSOC-C6-V48` is governance traceability. It may be verified by:
+Where a scenario has both an authorizing path and a fail-closed path, the
+tests MUST include both:
+
+```text
+positive result
++
+fail-closed result
+```
+
+`MUST` is the acceptance requirement. Slice A implementation MUST NOT omit
+these contract behavioral tests.
+
+`CSOC-C6-V48` is governance traceability only. It MAY be verified by:
 
 ```text
 documentation verification
@@ -274,8 +457,14 @@ definition-level governance test
 ```
 
 Do not add a production or domain API solely for `CSOC-C6-V48`.
+`CSOC-C6-V48` MUST NOT be treated as a runtime/domain kernel behavioral test.
 
 ```text
+CSOC-C1-V17 through CSOC-C5-V47
+  = mandatory runtime/domain behavioral tests
+  = table-driven or equivalent
+  = positive + fail-closed assertions where applicable
+
 CSOC-C6-V48
   != runtime/domain kernel behavioral test
   != production/domain API requirement
@@ -304,7 +493,7 @@ Ready / Merge / Deploy
 ```
 
 Test doubles are not production evidence of distributed atomicity. A test
-double may exercise kernel inputs and outputs in memory. It must not be
+double MAY exercise kernel inputs and outputs in memory. It MUST NOT be
 cited as proof that a later claim, lock, or mutation protocol is atomic.
 
 ```text
@@ -324,7 +513,8 @@ Public API
 packages/current-state-observation-kernel/src/index.ts
         ▼
 CSOC-IMPL-SLICE-A kernel
-pure domain records, validation, and state semantics
+@versioned records, validation, append-only checks,
+freshness, claim/terminal invariants, structured result
         ▼
 Structured result
 PASS / HOLD / NOT_AUTHORIZED / INVALIDATED /
@@ -335,13 +525,13 @@ UNVERIFIABLE / PARTIAL / FAILED
 Future adapter, persistence, or executor slice
 ```
 
-The slice may return a structured result such as `PASS`, `HOLD`,
+The slice MAY return a structured result such as `PASS`, `HOLD`,
 `NOT_AUTHORIZED`, `INVALIDATED`, `UNVERIFIABLE`, `PARTIAL`, or `FAILED`,
-but it must not turn that result into an external action.
+but it MUST NOT turn that result into an external action.
 
 ### 5.2 Serialization policy
 
-In-memory values that cross the public API must use:
+In-memory values that cross the public API MUST use:
 
 ```text
 JSON-compatible representation
@@ -350,7 +540,7 @@ explicit string enums
 SHA / repository identity = strings
 ```
 
-Missing or unavailable values must not be auto-completed.
+Missing or unavailable values MUST NOT be auto-completed.
 
 Forbidden coercions:
 
@@ -363,12 +553,12 @@ repository state inference
 authority inference
 ```
 
-An unavailable field remains unavailable. The structured result must carry
+An unavailable field remains unavailable. The structured result MUST carry
 the failure or partial classification required by the parent contract.
 
 ### 5.3 Error and structured-result policy
 
-Expected contract failure is not throw-only. The public API must be able to
+Expected contract failure is not throw-only. The public API MUST be able to
 return a structured result that at least distinguishes:
 
 ```text
@@ -381,7 +571,7 @@ PARTIAL
 FAILED
 ```
 
-A structured failure or non-pass result may also carry:
+A structured failure or non-pass result MAY also carry:
 
 ```text
 code
@@ -395,7 +585,7 @@ retryability
 Exceptions are permitted only for programmer error or an impossible
 invariant violation. Contract-expected states such as `HOLD`,
 `NOT_AUTHORIZED`, `PARTIAL`, `FAILED`, `INVALIDATED`, and `UNVERIFIABLE`
-must be represented as structured results.
+MUST be represented as structured results.
 
 ```text
 Expected contract failure
@@ -442,13 +632,21 @@ npm --prefix packages/current-state-observation-kernel run typecheck
 
 Serialization and error-reporting policy: resolved in §5.2 and §5.3
 No external I/O or mutation in Slice A: required and retained
+Versioned @v1 record contracts: required and restored
+Minimum validation fields: required and restored
+Append-only / identity / supersession checks: required and restored
+Freshness invariants: required and restored
+Claim / terminal state model and invariants: required and restored
+logicalMutationId + attemptGeneration invariants: required and restored
+C1–C5 table-driven behavioral tests with positive + fail-closed: required
+C6-V48: governance traceability only
 ```
 
 The current repository is documentation-only and does not expose an existing
 package manifest or test runner. That fact remains a scope-decision input.
-This Correction-1 names the authorized new substrate above. It must not be
+This Correction-2 names the authorized new substrate above. It MUST NOT be
 read as permission to create that substrate before Independent Scope
-Re-Review-1 returns `GO`.
+Re-Review-2 returns `GO`.
 
 ```text
 Named package/runtime substrate
@@ -466,7 +664,7 @@ The next gate must record a decision against this exact revision:
 Decision: GO | HOLD
 Decision Target: CSOC-IMPL-SLICE-A
 Decision Definition: WAEP-CURRENT-STATE-OBSERVATION-IMPLEMENTATION-DEFINITION-V1
-Decision Revision: Implementation Scope Correction-1
+Decision Revision: Implementation Scope Correction-2
 Parent Semantic Baseline: 29ad48d7fc3080d16c966dc9a13cd3213584d7bd4f73e2964961d1e1c9cae7fb
 Current Authoritative Parent Artifact SHA-256: ebeebd54422c8402812478fcb2b011cbe1f8f2d19a69b3be3b2a63135f81f3be
 Historical Lock Transition SHA: 26147297b3382181bc7acc69b81427a984c3aaf8fe0aaae8da8f82f375f9345b
@@ -480,19 +678,22 @@ Test Paths / Commands:
 External I/O: NONE for Slice A
 Repository / SharePoint / M365 Mutation: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
-P1 CSOC-IMPL-CLAIM-RETRY-SEMANTICS-001: <CLOSED | OPEN | HOLD>
-P2 CSOC-IMPL-GOVERNANCE-TEST-BOUNDARY-001: <CLOSED | OPEN | HOLD>
+P1 CSOC-IMPL-CLAIM-RETRY-SEMANTICS-001: CLOSED / RETAINED
+P2 CSOC-IMPL-GOVERNANCE-TEST-BOUNDARY-001: CLOSED / RETAINED
+P1 CSOC-IMPL-SCOPE-PRESERVATION-001: <CLOSED | OPEN | HOLD>
 Reason: <evidence-backed decision>
 ```
 
 `GO` authorizes only the included scope after all required preconditions are
-recorded and Independent Scope Re-Review-1 closes both findings. `HOLD` is
-required if the target, toolchain, paths, test boundary, claim/retry
+recorded and Independent Scope Re-Review-2 closes
+`CSOC-IMPL-SCOPE-PRESERVATION-001`. `HOLD` is required if the restored
+Draft-1 kernel requirements, toolchain, paths, test boundary, claim/retry
 semantics, governance-test boundary, or any required evidence remains
-unknown, contradictory, or unavailable.
+unknown, contradictory, unavailable, or weakened.
 
-The author of this Correction-1 must not promote findings to `CLOSED` or
-promote the slice to `Scope GO`.
+The author of this Correction-2 MUST NOT promote
+`CSOC-IMPL-SCOPE-PRESERVATION-001` to `CLOSED` and MUST NOT promote the
+slice to `Scope GO`.
 
 ## 8. Current decision state
 
@@ -500,13 +701,16 @@ promote the slice to `Scope GO`.
 CSOC-IMPL-SLICE-A:
 CORRECTED / AWAITING INDEPENDENT SCOPE RE-REVIEW
 
-Implementation Scope Correction-1:
+Implementation Scope Correction-2:
 COMPLETE WHEN APPLIED
 
 P1 CSOC-IMPL-CLAIM-RETRY-SEMANTICS-001:
-CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
+CLOSED / RETAINED
 
 P2 CSOC-IMPL-GOVERNANCE-TEST-BOUNDARY-001:
+CLOSED / RETAINED
+
+P1 CSOC-IMPL-SCOPE-PRESERVATION-001:
 CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
 
 Implementation Code:
@@ -525,5 +729,5 @@ External Mutation:
 NOT AUTHORIZED
 
 Next Gate:
-CSOC-IMPL-SLICE-A Independent Scope Re-Review-1
+CSOC-IMPL-SLICE-A Independent Scope Re-Review-2
 ```

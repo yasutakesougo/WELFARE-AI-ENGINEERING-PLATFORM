@@ -101,9 +101,11 @@ as evidence rather than silently rewritten.
 ```text
 DKC / PR #17:
   Definition Correction-2 source line
-  current-main reconciliation required
-  Independent Re-Review-2 result: CORRECTION REQUIRED
-  next work: Definition Correction-3
+  repository-recorded next gate: Independent Definition Re-Review-2 PENDING
+  external independent assessment against exact head: CORRECTION REQUIRED
+  assessment publication as repository review evidence: NOT YET DONE
+  current-main reconciliation required after review evidence publication
+  likely next correction candidate: Definition Correction-3
   Definition Lock: NOT AUTHORIZED
   Implementation Start: NOT AUTHORIZED
 

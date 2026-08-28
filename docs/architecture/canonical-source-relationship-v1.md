@@ -2,77 +2,123 @@
 
 ## Purpose
 
-Portfolio FoundationとWAEP-LEARNING-SYSTEM-V1の正本関係を明示する。
+Define the canonical relationship among Portfolio Foundation,
+`WAEP-LEARNING-SYSTEM-V1`, Authority governance, and current repository state.
 
-両者のDefinition StateとAuthorityを混同しない。
+These states and authorities must not be conflated.
 
 ## Repository Anchors
 
 ```text
 Repository: yasutakesougo/WELFARE-AI-ENGINEERING-PLATFORM
 Branch: main
-Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
-PR #19 Merge Commit / Current Main: 7998a83c22bf8e61d725da61cca0f797690ad561
+Historical Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
+Current Main Source: PR #22 Merge Commit
+Current-State Index: docs/audit/waep-current-state-index-v3.md
 ```
 
-`Reconciliation Source Baseline`は、WAEP-CURRENT-REPOSITORY-RECONCILIATION-V2の
-historical anchorである。
+`Historical Reconciliation Source Baseline` is the earlier
+WAEP-CURRENT-REPOSITORY-RECONCILIATION-V2 anchor.
 
-`PR #19 Merge Commit / Current Main`は、現在のRepository Stateの観測基準である。
+`Current Main Exact SHA` is the repository-state observation baseline for
+WAEP-CURRENT-REPOSITORY-RECONCILIATION-V3.
 
-これらのSHA自体はDefinition Lock、Implementation Start、Ready、Merge、Deploy、
-Runtime Authorityを付与しない。
+Neither SHA grants Definition Lock, Implementation Start, Ready, Merge, Deploy,
+Runtime, or external mutation authority.
 
 ## Portfolio Foundation
 
-PR #9由来のPortfolio FoundationはDefinition Candidateである。
+PR #9-derived Portfolio Foundation remains a Definition Candidate.
 
-Current Reconciliationでは、Current Main基準へCandidate資産を再配置する。
-
-LOCKED Learning Systemと衝突しない資産はsource blobを保持する。
-
-LOCKED Learning Systemと衝突または曖昧性がある資産はCompatibility Correctionを行う。
-
-Historical PR #9 contentはPR #9 branchにEvidenceとして残す。
+Compatible Portfolio assets may be reconciled into later current-main branches.
+Historical PR #9 content remains evidence on its original branch.
 
 ```text
 State: DEFINITION CANDIDATE
 Independent Portfolio Review: REQUIRED
 Definition Lock: NOT AUTHORIZED
+Direct Merge of stale PR #9: HOLD
 ```
+
+Portfolio Foundation Candidate does not override a locked canonical Definition.
 
 ## Learning System
 
-WAEP-LEARNING-SYSTEM-V1 Definition Correction-3は、独立レビューとHuman Definition Lockを経てPR #13でmainへマージされた。
+`WAEP-LEARNING-SYSTEM-V1` Definition Correction-3 passed independent review,
+received Human Definition Lock GO, and was merged through PR #13.
 
 ```text
 Definition State: LOCKED / CANONICAL ON MAIN
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Definition Merge Commit: bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
+Repository Current Main: ebc13ef072a861a53043687af13d9b2c548c73ce
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
+Automatic Knowledge Promotion: PROHIBITED
 ```
 
-Learning SystemのLOCKED semanticsはLearning scopeにおけるCanonical Definitionである。
+The Learning System locked semantics remain canonical for Learning scope.
+Later repository commits do not silently rewrite that lock.
+
+## Authority Claim Resolution Contract
+
+`WAEP-AUTHORITY-CLAIM-RESOLUTION-CONTRACT-V1` Definition Correction-3 has a
+recorded Human Definition Lock decision and was merged through PR #22.
+
+```text
+Revision: Definition Correction-3
+Historical Independent Re-Review-3: PASS / LOCKABLE
+Human Definition Lock: GO
+Definition State: LOCKED by recorded Human decision
+PR #22: MERGED
+PR #22 Merge Commit: ebc13ef072a861a53043687af13d9b2c548c73ce
+Implementation Start: NOT AUTHORIZED
+Runtime Enforcement: NOT AUTHORIZED
+```
+
+A post-merge automated Codex review left ten unresolved review threads on the
+published artifacts (`P1`-tagged 7, `P2`-tagged 3).
+
+The relationship rule is:
+
+```text
+Historical Human Lock Decision
+  = retained as exact historical authority evidence
+
+Post-Lock new finding
+  != automatic lock revocation
+  != automatic Definition correction
+  != implementation authorization
+
+Unresolved post-lock semantic finding
+  -> independent triage required
+  -> implementation reliance HOLD
+  -> if correction is required, start a new Definition Correction cycle
+```
+
+The locked Correction-3 artifact and lock record must not be silently rewritten
+to close later findings.
 
 ## Compatibility Rule
 
-Portfolio Foundation CandidateはLOCKED Learning Systemを上書きしない。
+Portfolio Foundation Candidate does not overwrite the locked Learning System.
+The locked Learning System does not automatically lock Portfolio Foundation.
 
-LOCKED Learning SystemはPortfolio Foundation Candidateを自動的にLOCKしない。
-
-Portfolio Candidateの旧schemaがLOCKED Learning semanticsと衝突する場合は、旧Candidateを優先しない。
+If an old Portfolio Candidate schema conflicts with locked Learning semantics,
+the old Candidate does not take precedence.
 
 ```text
 LOCKED Canonical Definition
   > incompatible Definition Candidate
 ```
 
-具体的には、Immutable Knowledge Record自身に`maturity`、`ACTIVE`、`CURRENT`、Lifecycle authorityを保存しない。
+Immutable Knowledge Record content does not itself own `maturity`, `ACTIVE`,
+`CURRENT`, Lifecycle authority, Validation authority, or Runtime authority.
 
-Portfolio-level L0-L5 maturityはDerived Projectionとして扱う。
-
-Authoritative Promotionは`KnowledgePromotionDecision@v1`とCanonical Decision Resolverに従う。
+Portfolio-level L0-L5 maturity is a Derived Projection.
+Authoritative Promotion follows the applicable external Decision Contract and
+Canonical Decision Resolver.
 
 ```text
 Portfolio Definition State
@@ -86,42 +132,86 @@ Knowledge Promotion Candidate
   != Execution Authority
 ```
 
+## Active Candidate Relationship
+
+Current candidate lines are subordinate to current locked definitions and later
+Current Authority.
+
+```text
+PR #16 DKC Correction-1
+  = historical predecessor
+
+PR #17 DKC Correction-2
+  = active source line
+  = stale relative to current main
+  = current-main reconciliation required
+  = Definition Correction-3 required by Independent Re-Review-2
+
+PR #15 Slice A Learning Event
+  = active Implementation Definition candidate
+  = stale relative to current main
+  = baseline reconciliation + Correction-1 required
+
+PR #21 CSOC Implementation Correction-2
+  = active implementation candidate
+  = current main is newer by three commits
+  = governance baseline reconciliation required before Independent Re-Review-2
+```
+
+Candidate status does not grant implementation or execution authority.
+
 ## Precedence
 
-WAEP内で状態が競合する場合は次の順序を使用する。
+When WAEP state claims conflict, use the following order:
 
 1. Current Authority / Current Decision
-2. LOCKED Canonical Definition
+2. LOCKED Canonical Definition applicable to the subject and revision
 3. Current Repository State at exact SHA
 4. Verified Evidence
-5. Definition Candidate
+5. Definition / Implementation Candidate
 6. Historical Review / PR body / stale snapshot
 
-候補文書や旧PR bodyは、LOCKED Definitionまたは現在のGitHub metadataを上書きしない。
+A current repository observation may establish that a document or PR state is
+stale. It does not itself revoke an exact Human Authority Decision.
+
+Candidate documents and old PR bodies must not override a later current
+Authority Decision or applicable locked Definition.
 
 ## Conflict Handling
 
-CandidateとLOCKED Definitionの不一致を推論で解消しない。
+Do not resolve Candidate-versus-locked-Definition conflicts by inference.
 
-不一致を検出した場合はHOLDまたはCompatibility Correctionとする。
+```text
+Conflict / unresolved identity / stale evidence
+  -> HOLD or explicit reconciliation
+  != PASS
+```
 
-Compatibility CorrectionはCandidateのLockを意味しない。
+Compatibility Correction does not mean Candidate Lock.
 
-LOCKED Definition semanticsを変更する必要がある場合は、新しいDefinition Correction cycleへ戻す。
+If a locked Definition's semantics require change, start a new Definition
+Correction cycle. Preserve the prior locked artifact and decision evidence.
+
+If a later review detects findings against a locked artifact, record and triage
+them explicitly. Do not silently rewrite historical review or lock records.
 
 ## Execution Boundary
 
-このRelationship定義は次を認可しない。
+This Relationship document and WAEP-CURRENT-STATE-CORRECTION-V3 do not authorize:
 
 ```text
+Definition Lock for a new revision
 Implementation Start
 Ready
 Merge
 Deploy
 Runtime Binding
+Runtime Enforcement
 LIVE WRITE
 M365 Mutation
 SharePoint Mutation
 Entra Mutation
 Customer Production Mutation
 ```
+
+Automatic Knowledge Promotion remains PROHIBITED.

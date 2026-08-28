@@ -1,0 +1,22 @@
+{
+  "name": "@waep/current-state-observation-kernel",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CSOC-IMPL-SLICE-A pure domain kernel. No I/O, persistence, or mutation execution.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

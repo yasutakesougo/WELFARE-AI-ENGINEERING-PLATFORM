@@ -1,21 +1,11 @@
-import type {
-  AuthorityResult,
-  SearchBounds,
-  ShadowRequest,
-  ShadowResult,
-} from './contracts';
-import { evaluateDataAccessDecisions } from './policy';
-
-const ALLOWED_CAPABILITIES = new Set([
-  'repository.observe',
-  'filesystem.read',
-  'filesystem.list',
-  'filesystem.search',
-  'process.observe_limited',
-  'test_result.read_sanitized',
-  'log.read_sanitized',
-  'evidence.emit',
-]);
+import type { AuthorityResult, SearchBounds, ShadowRequest, ShadowResult } from './contracts';
+import { isDefinitionCapability } from './definitionRegistry';
+import {
+  evaluateContainmentEvidence,
+  evaluateDataAccessDecisions,
+  evaluateDependencyEntries,
+  evaluateVerifiedDecision,
+} from './policy';
 
 const MUTATION_CAPABILITIES = new Set([
   'evidence.persist',
@@ -31,8 +21,8 @@ const MUTATION_CAPABILITIES = new Set([
   'desktop.control',
 ]);
 
-function isPositiveFinite(value: number): boolean {
-  return Number.isFinite(value) && value > 0;
+function isPositiveFiniteInteger(value: number): boolean {
+  return Number.isFinite(value) && Number.isInteger(value) && value > 0;
 }
 
 export function validateSearchBounds(bounds: SearchBounds | undefined): AuthorityResult {
@@ -45,7 +35,7 @@ export function validateSearchBounds(bounds: SearchBounds | undefined): Authorit
     bounds.maxResults,
     bounds.timeoutMs,
     bounds.maxOutputBytes,
-  ].every(isPositiveFinite)
+  ].every(isPositiveFiniteInteger)
     ? 'ALLOW'
     : 'DENY';
 }
@@ -56,29 +46,39 @@ function combine(results: readonly AuthorityResult[]): AuthorityResult {
   return 'ALLOW';
 }
 
-export function evaluateShadow(request: ShadowRequest): ShadowResult {
-  const definitionCapabilityResult: AuthorityResult =
-    request.definitionAllowsCapability && ALLOWED_CAPABILITIES.has(request.capability)
-      ? 'ALLOW'
-      : 'DENY';
+function needsDataAccessEvaluation(capability: string): boolean {
+  return capability.startsWith('filesystem.') || capability === 'test_result.read_sanitized' || capability === 'log.read_sanitized';
+}
 
+export function evaluateShadow(request: ShadowRequest): ShadowResult {
+  const capabilityDefined = isDefinitionCapability(request.capability);
+  const definitionCapabilityResult: AuthorityResult = capabilityDefined ? 'ALLOW' : 'DENY';
   const mutationDenied = MUTATION_CAPABILITIES.has(request.capability);
+
+  const scopeResult = evaluateVerifiedDecision(request.scopeDecision, request.targetIdentity);
+  const authorityResult = evaluateVerifiedDecision(request.authorityDecision, request.targetIdentity);
+  const dependencyResult = evaluateDependencyEntries(request.dependencyEntries);
+
   const runtimeStateResult: AuthorityResult =
-    request.runtimeState === 'OBSERVE_ONLY' && !mutationDenied ? 'ALLOW' : 'DENY';
+    request.runtimeState === 'OBSERVE_ONLY' && capabilityDefined && !mutationDenied ? 'ALLOW' : 'DENY';
 
   let dataAccessResult: AuthorityResult = 'ALLOW';
-  if (request.capability.startsWith('filesystem.') || request.capability.includes('read')) {
+  if (needsDataAccessEvaluation(request.capability)) {
     if (request.preAccessEligibility === 'INELIGIBLE') dataAccessResult = 'DENY';
-    else if (request.preAccessEligibility === 'UNKNOWN' || request.preAccessEligibility === undefined)
+    else if (request.preAccessEligibility === 'UNKNOWN' || request.preAccessEligibility === undefined) {
       dataAccessResult = 'HOLD';
-    else dataAccessResult = evaluateDataAccessDecisions(request.dataZoneDecisions);
+    } else {
+      dataAccessResult = evaluateDataAccessDecisions(request.dataZoneDecisions, {
+        targetIdentity: request.targetIdentity,
+        repositoryIdentity: request.repositoryIdentity,
+        approvedRootIdentity: request.approvedRootIdentity,
+      });
+    }
   }
 
   let containmentResult: AuthorityResult = 'ALLOW';
   if (request.capability.startsWith('filesystem.')) {
-    if (!request.rootBinding || !request.observedRootIdentity) containmentResult = 'DENY';
-    else if (request.rootBinding.resolvedIdentity !== request.observedRootIdentity) containmentResult = 'DENY';
-    else if (request.targetContainmentResult !== 'PASS') containmentResult = 'DENY';
+    containmentResult = evaluateContainmentEvidence(request.containmentEvidence, request.targetIdentity);
   }
 
   let boundsResult: AuthorityResult = 'ALLOW';
@@ -88,9 +88,9 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
 
   const effectiveResult = combine([
     definitionCapabilityResult,
-    request.scopeResult,
-    request.authorityResult,
-    request.dependencyResult,
+    scopeResult,
+    authorityResult,
+    dependencyResult,
     dataAccessResult,
     runtimeStateResult,
     containmentResult,
@@ -104,35 +104,50 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
         ? 'MUTATION_CAPABILITY_DENIED'
         : definitionCapabilityResult === 'DENY'
           ? 'CAPABILITY_NOT_DEFINED'
-          : containmentResult === 'DENY'
-            ? 'CONTAINMENT_NOT_PROVEN'
-            : boundsResult === 'DENY'
-              ? 'INVALID_SEARCH_BOUNDS'
-              : dataAccessResult === 'DENY'
-                ? 'DATA_ACCESS_DENIED'
-                : dataAccessResult === 'HOLD'
-                  ? 'DATA_ACCESS_HOLD'
-                  : 'POLICY_OR_AUTHORITY_BLOCK';
+          : scopeResult !== 'ALLOW'
+            ? 'SCOPE_DECISION_NOT_VERIFIED_ALLOW'
+            : authorityResult !== 'ALLOW'
+              ? 'AUTHORITY_DECISION_NOT_VERIFIED_ALLOW'
+              : dependencyResult !== 'ALLOW'
+                ? 'DEPENDENCY_NOT_VERIFIED_ALLOW'
+                : containmentResult === 'DENY'
+                  ? 'CONTAINMENT_NOT_PROVEN'
+                  : boundsResult === 'DENY'
+                    ? 'INVALID_SEARCH_BOUNDS'
+                    : dataAccessResult === 'DENY'
+                      ? 'DATA_ACCESS_DENIED'
+                      : dataAccessResult === 'HOLD'
+                        ? 'DATA_ACCESS_HOLD'
+                        : 'POLICY_OR_AUTHORITY_BLOCK';
 
   return {
     requestId: request.requestId,
     capability: request.capability,
     targetIdentity: request.targetIdentity,
     definitionCapabilityResult,
-    scopeResult: request.scopeResult,
-    authorityResult: request.authorityResult,
+    scopeResult,
+    authorityResult,
     dataAccessResult,
-    dependencyResult: request.dependencyResult,
+    dependencyResult,
     runtimeStateResult,
-    observationResult: effectiveResult === 'ALLOW' ? 'COMPLETE' : effectiveResult === 'HOLD' ? 'PARTIAL' : 'FAILED',
+    containmentResult,
+    boundsResult,
+    shadowEvaluationResult: effectiveResult,
     effectiveResult,
+    observationPerformed: false,
+    observationResult: null,
     wouldExecute: effectiveResult === 'ALLOW',
     executionPerformed: false,
     blockReason,
     evidence: [
       `capability:${request.capability}`,
+      `scope:${scopeResult}`,
+      `authority:${authorityResult}`,
+      `dependency:${dependencyResult}`,
       `runtime:${request.runtimeState}`,
       `effective:${effectiveResult}`,
+      'observation-performed:false',
+      'execution-performed:false',
     ],
   };
 }

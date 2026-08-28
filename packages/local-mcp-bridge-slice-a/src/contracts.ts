@@ -143,6 +143,13 @@ export interface RepositoryObservation {
   evidenceReferences: readonly string[];
 }
 
+export interface ProcessResourceSummary {
+  cpuPercent?: number;
+  residentMemoryBytes?: number;
+  threadCount?: number;
+  handleCount?: number;
+}
+
 export interface ProcessObservationLimited {
   observationId: string;
   pid: number;
@@ -150,7 +157,7 @@ export interface ProcessObservationLimited {
   executableName: string;
   state: string;
   startTime: string | null;
-  resourceSummary: Readonly<Record<string, number | string | null>>;
+  resourceSummary: Readonly<ProcessResourceSummary>;
   observationResult: ObservationResult;
   sanitized: true;
 }
@@ -222,12 +229,12 @@ export interface ShadowRequest {
   approvedRootIdentity?: string;
   targetPath?: string;
   runtimeState: RuntimeState;
-  scopeDecision: VerifiedDecision;
-  authorityDecision: VerifiedDecision;
+  scopeDecisionRef: string;
+  authorityDecisionRef: string;
   dependencyEntries: readonly DependencyEntry[];
   dataZoneDecisions?: readonly DataZoneDecision[];
   preAccessEligibility?: PreAccessEligibility;
-  containmentEvidence?: ContainmentEvidence;
+  containmentEvidenceRef?: string;
   searchBounds?: SearchBounds;
 }
 

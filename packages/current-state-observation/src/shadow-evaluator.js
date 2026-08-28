@@ -10,6 +10,7 @@ export function shadowEvaluate(scenario) {
     validatedAt: scenario.preActionAuthorityValidatedAt,
     observation: scenario.observation,
     claim: scenario.claim,
+    claimEvents: scenario.claimEvents,
     initialAuthorityResolution,
     preActionAuthorityResolution,
   });

@@ -6,17 +6,22 @@ Portfolio FoundationとWAEP-LEARNING-SYSTEM-V1の正本関係を明示する。
 
 両者のDefinition StateとAuthorityを混同しない。
 
-## Current Repository Anchor
+## Repository Anchors
 
 ```text
 Repository: yasutakesougo/WELFARE-AI-ENGINEERING-PLATFORM
 Branch: main
-Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+PR #19 Merge Commit / Current Main: 7998a83c22bf8e61d725da61cca0f797690ad561
 ```
 
-このSHAはCurrent Repository Stateの観測基準である。
+`Reconciliation Source Baseline`は、WAEP-CURRENT-REPOSITORY-RECONCILIATION-V2の
+historical anchorである。
 
-このSHA自体はDefinition Lock、Implementation Start、Ready、Merge、Deploy、Runtime Authorityを付与しない。
+`PR #19 Merge Commit / Current Main`は、現在のRepository Stateの観測基準である。
+
+これらのSHA自体はDefinition Lock、Implementation Start、Ready、Merge、Deploy、
+Runtime Authorityを付与しない。
 
 ## Portfolio Foundation
 

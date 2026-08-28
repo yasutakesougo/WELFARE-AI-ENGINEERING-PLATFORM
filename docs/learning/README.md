@@ -7,7 +7,8 @@ Definition State: LOCKED / CANONICAL ON MAIN
 Human Definition Lock: GO
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Definition Merge Commit: bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
-Repository Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
+Repository Current Main / PR #19 Merge Commit: 7998a83c22bf8e61d725da61cca0f797690ad561
 Implementation: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
@@ -17,7 +18,11 @@ PR #13: MERGED
 
 `Definition Merge Commit`は、PR #13によるLearning Definitionの正本化点を示す。
 
-`Repository Exact Baseline`は、PR #18までを含むCurrent Repository Stateを示す。
+`Reconciliation Source Baseline`は、Reconciliation V2が開始された時点の
+historical anchorを示す。
+
+`Repository Current Main / PR #19 Merge Commit`は、PR #19を含むCurrent Repository
+Stateを示す。
 
 両者を同一のidentityとして扱わない。
 

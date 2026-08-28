@@ -3,6 +3,7 @@ import type { GateUseClaimV1, KernelState, TerminalOutcomeV1, WinningAttemptPhas
 import { CONTRACT, TERMINAL_STATES } from "./types.js";
 import { rejectObservationIdReuse } from "./identity.js";
 import { appendRecord } from "./state.js";
+import { observationHasTerminalState, terminalsForObservation } from "./derived-state.js";
 
 const NON_TERMINAL_WINNER: readonly WinningAttemptPhase[] = [
   "CLAIMED",
@@ -21,13 +22,6 @@ function claimsForObservation(state: KernelState, sourceObservationId: string): 
 
 function allClaims(state: KernelState): readonly GateUseClaimV1[] {
   return state.records.filter((record): record is GateUseClaimV1 => record.contractType === CONTRACT.GateUseClaim);
-}
-
-function terminalsForObservation(state: KernelState, sourceObservationId: string): readonly TerminalOutcomeV1[] {
-  return state.records.filter(
-    (record): record is TerminalOutcomeV1 =>
-      record.contractType === CONTRACT.TerminalOutcome && record.sourceObservationId === sourceObservationId
-  );
 }
 
 function isTerminal(state: GateUseClaimV1["claimState"]): boolean {
@@ -69,17 +63,17 @@ export function attemptGateUseClaim(input: {
     (claim) => claim.claimState === "CLAIMED" && claim.claimResult === "CLAIMED"
   );
   if (successfulClaims.length >= 1) {
-    return rejectCompetingClaim();
+    return rejectCompetingClaim(input.state, input.claim);
   }
 
-  const terminals = terminalsForObservation(input.state, input.claim.sourceObservationId);
-  if (terminals.some((terminal) => terminal.claimState === "TERMINAL_CONSUMED_SUCCESS")) {
-    return fail("HOLD", {
-      classification: "MUTATION_ATTEMPTS_EXCEEDED",
-      message: "mutation attempts per observation <= 1"
-    });
-  }
-  if (terminals.some((terminal) => isTerminal(terminal.claimState))) {
+  if (observationHasTerminalState(input.state, input.claim.sourceObservationId)) {
+    const terminals = terminalsForObservation(input.state, input.claim.sourceObservationId);
+    if (terminals.some((terminal) => terminal.claimState === "TERMINAL_CONSUMED_SUCCESS")) {
+      return fail("HOLD", {
+        classification: "MUTATION_ATTEMPTS_EXCEEDED",
+        message: "mutation attempts per observation <= 1"
+      });
+    }
     return fail("HOLD", {
       classification: "TERMINAL_NEVER_AVAILABLE",
       message: "terminal state → never AVAILABLE again"
@@ -93,12 +87,12 @@ export function attemptGateUseClaim(input: {
       isActiveAttempt(claim)
   );
   if (activeSameGeneration.length >= 1) {
-    return rejectCompetingClaim();
+    return rejectCompetingClaim(input.state, input.claim);
   }
 
   const phase = input.winningAttemptPhase ?? input.claim.winningAttemptPhase;
   if (phase !== undefined && (NON_TERMINAL_WINNER as readonly string[]).includes(phase)) {
-    return rejectCompetingClaim();
+    return rejectCompetingClaim(input.state, input.claim);
   }
 
   const claimed: GateUseClaimV1 = {
@@ -114,18 +108,31 @@ export function attemptGateUseClaim(input: {
   });
 }
 
-function rejectCompetingClaim(): StructuredResult<{
+function rejectCompetingClaim(
+  state: KernelState,
+  claim: GateUseClaimV1
+): StructuredResult<{
   mutationPerformed: false;
   mutationAttempts: 0;
   record?: GateUseClaimV1;
   state?: KernelState;
 }> {
+  const rejected: GateUseClaimV1 = {
+    ...claim,
+    claimResult: "CLAIM_REJECTED",
+    claimState: "AVAILABLE"
+  };
   return fail("HOLD", {
     classification: "CLAIM_REJECTED",
     code: "CLAIM_REJECTED",
     message: "CLAIM_REJECTED → mutationPerformed=false → mutation attempts=0 → WAIT / HOLD",
     retryability: "WAIT",
-    value: { mutationPerformed: false, mutationAttempts: 0 }
+    value: {
+      mutationPerformed: false,
+      mutationAttempts: 0,
+      record: rejected,
+      state: appendRecord(state, rejected)
+    }
   });
 }
 

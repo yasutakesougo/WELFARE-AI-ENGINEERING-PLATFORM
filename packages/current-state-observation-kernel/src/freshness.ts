@@ -5,24 +5,94 @@ import type {
   GateFreshnessVerificationV1,
   KernelState
 } from "./types.js";
-import { CONTRACT } from "./types.js";
+import { CONTRACT, REQUIRED_MUTATION_VERIFICATION_PURPOSE } from "./types.js";
 import { rejectObservationIdReuse } from "./identity.js";
 import { appendRecord } from "./state.js";
 
-function itemKey(item: GateCriticalEvidenceItem): string {
-  return item.key;
+export function evidenceMemberId(item: GateCriticalEvidenceItem): string {
+  return `${item.evidenceType}|${item.sourceResource}|${item.key}`;
 }
 
 function evidenceMap(items: readonly GateCriticalEvidenceItem[]): Map<string, GateCriticalEvidenceItem> {
-  return new Map(items.map((item) => [itemKey(item), item]));
+  return new Map(items.map((item) => [evidenceMemberId(item), item]));
 }
 
-function bindMismatch(
-  field: string,
-  bound: string,
-  provided: string | undefined
-): boolean {
+function membersEqual(required: GateCriticalEvidenceItem, observed: GateCriticalEvidenceItem): boolean {
+  if (required.observedValue !== observed.observedValue) {
+    return false;
+  }
+  if (required.observedIdentity !== undefined && required.observedIdentity !== observed.observedIdentity) {
+    return false;
+  }
+  if (required.versionToken !== undefined) {
+    return observed.versionToken !== undefined && observed.versionToken === required.versionToken;
+  }
+  return true;
+}
+
+function bindMismatch(bound: string, provided: string | undefined): boolean {
   return provided !== undefined && provided.length > 0 && provided !== bound;
+}
+
+export function isApplicableFreshness(
+  record: GateFreshnessVerificationV1,
+  input: {
+    gateBoundObservationId: string;
+    logicalMutationId: string;
+    attemptGeneration: string;
+    verificationPurpose: string;
+  }
+): boolean {
+  const boundId = record.gateBoundObservationId || record.sourceObservationId;
+  return (
+    boundId === input.gateBoundObservationId &&
+    record.logicalMutationId === input.logicalMutationId &&
+    record.attemptGeneration === input.attemptGeneration &&
+    record.verificationPurpose === input.verificationPurpose
+  );
+}
+
+export function resolveLatestApplicableFreshness(
+  state: KernelState,
+  input: {
+    gateBoundObservationId: string;
+    logicalMutationId: string;
+    attemptGeneration: string;
+    verificationPurpose?: string;
+  }
+): GateFreshnessVerificationV1 | undefined {
+  const purpose = input.verificationPurpose ?? REQUIRED_MUTATION_VERIFICATION_PURPOSE;
+  const applicable: Array<{ record: GateFreshnessVerificationV1; index: number }> = [];
+  state.records.forEach((record, index) => {
+    if (record.contractType !== CONTRACT.GateFreshnessVerification) {
+      return;
+    }
+    if (
+      isApplicableFreshness(record, {
+        gateBoundObservationId: input.gateBoundObservationId,
+        logicalMutationId: input.logicalMutationId,
+        attemptGeneration: input.attemptGeneration,
+        verificationPurpose: purpose
+      })
+    ) {
+      applicable.push({ record, index });
+    }
+  });
+  if (applicable.length === 0) {
+    return undefined;
+  }
+  applicable.sort((left, right) => {
+    const byCompleted = left.record.observationCompletedAt.localeCompare(right.record.observationCompletedAt);
+    if (byCompleted !== 0) {
+      return byCompleted;
+    }
+    const byVerified = left.record.freshnessVerifiedAt.localeCompare(right.record.freshnessVerifiedAt);
+    if (byVerified !== 0) {
+      return byVerified;
+    }
+    return left.index - right.index;
+  });
+  return applicable[applicable.length - 1]?.record;
 }
 
 export function verifyGateFreshness(input: {
@@ -56,20 +126,25 @@ export function verifyGateFreshness(input: {
     });
   }
 
-  if (bindMismatch("sourceObservationId", bound.observationId, input.verification.sourceObservationId)) {
+  if (bindMismatch(bound.observationId, input.verification.sourceObservationId)) {
     return fail("HOLD", {
       classification: "FRESHNESS_BINDING_MISMATCH",
-      field: "sourceObservationId",
-      message: "freshness verification MUST bind to the GateBoundObservation@v1 identity"
+      field: "sourceObservationId"
     });
   }
-  if (bindMismatch("logicalMutationId", bound.logicalMutationId, input.verification.logicalMutationId)) {
+  if (bindMismatch(bound.observationId, input.verification.gateBoundObservationId)) {
+    return fail("HOLD", {
+      classification: "FRESHNESS_BINDING_MISMATCH",
+      field: "gateBoundObservationId"
+    });
+  }
+  if (bindMismatch(bound.logicalMutationId, input.verification.logicalMutationId)) {
     return fail("HOLD", {
       classification: "FRESHNESS_BINDING_MISMATCH",
       field: "logicalMutationId"
     });
   }
-  if (bindMismatch("attemptGeneration", bound.attemptGeneration, input.verification.attemptGeneration)) {
+  if (bindMismatch(bound.attemptGeneration, input.verification.attemptGeneration)) {
     return fail("HOLD", {
       classification: "FRESHNESS_BINDING_MISMATCH",
       field: "attemptGeneration"
@@ -89,24 +164,18 @@ export function verifyGateFreshness(input: {
   let status: GateFreshnessVerificationV1["freshnessStatus"] = "FRESH";
 
   for (const required of requiredEvidence) {
-    const found = observed.get(required.key);
+    const found = observed.get(evidenceMemberId(required));
     if (found === undefined) {
-      missingRequiredMembers.push(required.key);
+      missingRequiredMembers.push(evidenceMemberId(required));
       status = "UNVERIFIABLE";
       continue;
     }
     if (status === "UNVERIFIABLE") {
       continue;
     }
-    if (found.value !== required.value) {
+    if (!membersEqual(required, found)) {
       status = "INVALIDATED";
       break;
-    }
-    if (required.versionToken !== undefined) {
-      if (found.versionToken === undefined || found.versionToken !== required.versionToken) {
-        status = "INVALIDATED";
-        break;
-      }
     }
   }
 
@@ -114,18 +183,27 @@ export function verifyGateFreshness(input: {
     status = "UNVERIFIABLE";
   }
 
-  if (status === "FRESH" && input.verification.ttlExpired === true) {
-    status = "EXPIRED";
+  const freshnessVerifiedAt = input.verification.freshnessVerifiedAt || input.verification.observationCompletedAt;
+  if (status === "FRESH" && input.verification.freshnessExpiresAt !== undefined) {
+    if (freshnessVerifiedAt >= input.verification.freshnessExpiresAt) {
+      status = "EXPIRED";
+    }
   }
 
   const record: GateFreshnessVerificationV1 = {
     ...input.verification,
     sourceObservationId: bound.observationId,
+    gateBoundObservationId: bound.observationId,
     logicalMutationId: bound.logicalMutationId,
     attemptGeneration: bound.attemptGeneration,
     verificationPurpose: input.verification.verificationPurpose,
+    freshnessVerifiedAt,
     freshnessStatus: status,
     gateCriticalEvidence: [...input.observedEvidence],
+    gateCriticalEvidenceReferences:
+      input.verification.gateCriticalEvidenceReferences.length > 0
+        ? input.verification.gateCriticalEvidenceReferences
+        : requiredEvidence.map((item) => evidenceMemberId(item)),
     sourceNativeBindings: input.verification.sourceNativeBindings,
     evidenceComparison: {
       requiredEvidence: [...requiredEvidence],

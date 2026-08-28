@@ -11,7 +11,7 @@ import {
   preferStableRepositoryIdentity,
   rejectObservationIdReuse
 } from "../src/index.js";
-import { claimRecord, freshnessRecord, gateBound, pullRequestObservation, repositoryObservation, REPO } from "./helpers.js";
+import { claimRecord, gateBound, pullRequestObservation, repositoryObservation, seedFreshState, REPO } from "./helpers.js";
 
 interface Scenario {
   id: string;
@@ -53,17 +53,19 @@ const scenarios: Scenario[] = [
     title: "Authority GO but Technical State Invalid",
     path: "fail-closed",
     run: () => {
+      const observation = gateBound({
+        observationResult: "INVALIDATED",
+        consistencyResult: "INVALIDATED",
+        validForAction: false,
+        failureClass: "IDENTITY_MOVED",
+        unavailableFields: ["headSha"],
+        errorEvidenceReferences: ["ev-gate"],
+        retryability: "NEW_OBSERVATION_REQUIRED"
+      });
+      const seeded = seedFreshState({ observation });
       const result = evaluateMutationEligibility({
-        observation: gateBound({
-          observationResult: "INVALIDATED",
-          consistencyResult: "INVALIDATED",
-          validForAction: false,
-          failureClass: "IDENTITY_MOVED",
-          unavailableFields: ["headSha"],
-          errorEvidenceReferences: ["ev-gate"],
-          retryability: "NEW_OBSERVATION_REQUIRED"
-        }),
-        freshness: freshnessRecord(),
+        state: seeded.state,
+        observation,
         authority: { decision: "GO", authorityDecisionRef: "auth-1" }
       });
       expect(result.status).toBe("HOLD");
@@ -75,9 +77,10 @@ const scenarios: Scenario[] = [
     title: "Authority GO but Technical State Invalid",
     path: "positive",
     run: () => {
+      const seeded = seedFreshState();
       const result = evaluateMutationEligibility({
-        observation: gateBound(),
-        freshness: freshnessRecord(),
+        state: seeded.state,
+        observation: seeded.observation,
         authority: { decision: "GO", authorityDecisionRef: "auth-1" }
       });
       expect(result.status).toBe("PASS");
@@ -266,5 +269,7 @@ describe("CSOC-C1 runtime/domain behavioral tests", () => {
     expect(rejected.status).toBe("HOLD");
     expect(rejected.classification).toBe("CLAIM_REJECTED");
     expect(rejected.status).not.toBe("NOT_AUTHORIZED");
+    expect(rejected.value?.record?.claimResult).toBe("CLAIM_REJECTED");
+    expect(rejected.value?.state?.records.some((record) => "claimResult" in record && record.claimResult === "CLAIM_REJECTED")).toBe(true);
   });
 });

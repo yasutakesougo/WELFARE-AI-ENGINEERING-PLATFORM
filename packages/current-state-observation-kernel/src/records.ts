@@ -295,18 +295,37 @@ function readEvidenceItems(value: unknown, field: string): StructuredResult<Gate
       return fail("FAILED", { field: `${field}[${index}]`, classification: "INVALID_FIELD" });
     }
     const key = requiredString(entry, "key");
-    const itemValue = requiredString(entry, "value");
-    if (key.status !== "PASS" || itemValue.status !== "PASS") {
+    const evidenceType = requiredString(entry, "evidenceType");
+    const sourceResource = requiredString(entry, "sourceResource");
+    const retrievedAt = requiredIso(entry, "retrievedAt");
+    const observedValue = requiredString(entry, "observedValue");
+    if (
+      key.status !== "PASS" ||
+      evidenceType.status !== "PASS" ||
+      sourceResource.status !== "PASS" ||
+      retrievedAt.status !== "PASS" ||
+      observedValue.status !== "PASS"
+    ) {
       return fail("FAILED", { field: `${field}[${index}]`, classification: "INVALID_FIELD" });
     }
+    const observedIdentity = optionalString(entry, "observedIdentity");
     const versionToken = optionalString(entry, "versionToken");
+    if (observedIdentity.status !== "PASS") {
+      return mapFail(observedIdentity);
+    }
     if (versionToken.status !== "PASS") {
       return mapFail(versionToken);
     }
     const item: GateCriticalEvidenceItem = {
       key: key.value as string,
-      value: itemValue.value as string
+      evidenceType: evidenceType.value as string,
+      sourceResource: sourceResource.value as string,
+      retrievedAt: retrievedAt.value as string,
+      observedValue: observedValue.value as string
     };
+    if (observedIdentity.value !== undefined) {
+      item.observedIdentity = observedIdentity.value;
+    }
     if (versionToken.value !== undefined) {
       item.versionToken = versionToken.value;
     }
@@ -546,7 +565,6 @@ export function parseGateBoundObservation(input: unknown): StructuredResult<Gate
   const validForAction = requiredBoolean(object.value, "validForAction");
   const logicalMutationId = requiredString(object.value, "logicalMutationId");
   const attemptGeneration = requiredString(object.value, "attemptGeneration");
-  const consumed = requiredBoolean(object.value, "consumed");
   const gateCriticalEvidence = readEvidenceItems(object.value.gateCriticalEvidence, "gateCriticalEvidence");
   for (const part of [
     gateType,
@@ -557,7 +575,6 @@ export function parseGateBoundObservation(input: unknown): StructuredResult<Gate
     validForAction,
     logicalMutationId,
     attemptGeneration,
-    consumed,
     gateCriticalEvidence
   ]) {
     if (part.status !== "PASS") {
@@ -573,7 +590,6 @@ export function parseGateBoundObservation(input: unknown): StructuredResult<Gate
     observedHeadSha: observedHeadSha.value as string,
     authorityDecisionRef: authorityDecisionRef.value as string,
     validForAction: validForAction.value as boolean,
-    consumed: consumed.value as boolean,
     logicalMutationId: logicalMutationId.value as string,
     attemptGeneration: attemptGeneration.value as string,
     gateCriticalEvidence: gateCriticalEvidence.value as GateCriticalEvidenceItem[]
@@ -589,9 +605,12 @@ export function parseGateFreshnessVerification(input: unknown): StructuredResult
   const observationStartedAt = requiredIso(object.value, "observationStartedAt");
   const observationCompletedAt = requiredIso(object.value, "observationCompletedAt");
   const sourceObservationId = requiredString(object.value, "sourceObservationId");
+  const gateBoundObservationId = requiredString(object.value, "gateBoundObservationId");
   const logicalMutationId = requiredString(object.value, "logicalMutationId");
   const attemptGeneration = requiredString(object.value, "attemptGeneration");
   const verificationPurpose = requiredString(object.value, "verificationPurpose");
+  const freshnessVerifiedAt = requiredIso(object.value, "freshnessVerifiedAt");
+  const freshnessExpiresAt = optionalString(object.value, "freshnessExpiresAt");
   const freshnessStatus = readEnum(object.value, "freshnessStatus", [
     "FRESH",
     "EXPIRED",
@@ -599,20 +618,34 @@ export function parseGateFreshnessVerification(input: unknown): StructuredResult
     "UNVERIFIABLE"
   ]);
   const evidenceReferences = readStringArray(object.value, "evidenceReferences");
+  const gateCriticalEvidenceReferences = readStringArray(object.value, "gateCriticalEvidenceReferences");
   const retrievalProvenance = readProvenance(object.value.retrievalProvenance);
   const gateCriticalEvidence = readEvidenceItems(object.value.gateCriticalEvidence, "gateCriticalEvidence");
   const sourceNativeBindings = readEvidenceItems(object.value.sourceNativeBindings, "sourceNativeBindings");
   const evidenceComparison = readEvidenceComparison(object.value.evidenceComparison);
+  if (freshnessExpiresAt.status !== "PASS") {
+    return mapFail(freshnessExpiresAt);
+  }
+  if (freshnessExpiresAt.value !== undefined && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(freshnessExpiresAt.value)) {
+    return fail("FAILED", {
+      field: "freshnessExpiresAt",
+      classification: "INVALID_FIELD",
+      message: "freshnessExpiresAt must be an ISO-8601 UTC timestamp when present"
+    });
+  }
   const parts = [
     observationId,
     observationStartedAt,
     observationCompletedAt,
     sourceObservationId,
+    gateBoundObservationId,
     logicalMutationId,
     attemptGeneration,
     verificationPurpose,
+    freshnessVerifiedAt,
     freshnessStatus,
     evidenceReferences,
+    gateCriticalEvidenceReferences,
     retrievalProvenance,
     gateCriticalEvidence,
     sourceNativeBindings,
@@ -629,18 +662,21 @@ export function parseGateFreshnessVerification(input: unknown): StructuredResult
     observationStartedAt: observationStartedAt.value as string,
     observationCompletedAt: observationCompletedAt.value as string,
     sourceObservationId: sourceObservationId.value as string,
+    gateBoundObservationId: gateBoundObservationId.value as string,
     logicalMutationId: logicalMutationId.value as string,
     attemptGeneration: attemptGeneration.value as string,
     verificationPurpose: verificationPurpose.value as string,
+    freshnessVerifiedAt: freshnessVerifiedAt.value as string,
     freshnessStatus: freshnessStatus.value as GateFreshnessVerificationV1["freshnessStatus"],
     evidenceReferences: evidenceReferences.value as string[],
+    gateCriticalEvidenceReferences: gateCriticalEvidenceReferences.value as string[],
     retrievalProvenance: retrievalProvenance.value as RetrievalProvenance,
     gateCriticalEvidence: gateCriticalEvidence.value as GateCriticalEvidenceItem[],
     sourceNativeBindings: sourceNativeBindings.value as GateCriticalEvidenceItem[],
     evidenceComparison: evidenceComparison.value as GateFreshnessVerificationV1["evidenceComparison"]
   };
-  if (typeof object.value.ttlExpired === "boolean") {
-    record.ttlExpired = object.value.ttlExpired;
+  if (freshnessExpiresAt.value !== undefined) {
+    record.freshnessExpiresAt = freshnessExpiresAt.value;
   }
   return ok(record);
 }

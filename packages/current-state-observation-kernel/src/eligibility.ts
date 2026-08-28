@@ -3,8 +3,12 @@ import type {
   AuthorityResult,
   GateBoundObservationV1,
   GateFreshnessVerificationV1,
+  KernelState,
   MutationEligibility
 } from "./types.js";
+import { REQUIRED_MUTATION_VERIFICATION_PURPOSE } from "./types.js";
+import { resolveLatestApplicableFreshness } from "./freshness.js";
+import { derivedConsumed, observationHasTerminalState } from "./derived-state.js";
 
 export function evaluateAuthority(authority: AuthorityResult): StructuredResult<AuthorityResult> {
   if (authority.decision === "GO" && authority.authorityDecisionRef !== undefined && authority.authorityDecisionRef.length > 0) {
@@ -25,32 +29,64 @@ export function evaluateAuthority(authority: AuthorityResult): StructuredResult<
 }
 
 export function evaluateMutationEligibility(input: {
+  state: KernelState;
   observation: GateBoundObservationV1;
-  freshness?: GateFreshnessVerificationV1;
   authority: AuthorityResult;
+  requiredVerificationPurpose?: string;
+  freshness?: GateFreshnessVerificationV1;
 }): StructuredResult<MutationEligibility> {
-  if (input.freshness === undefined) {
+  const purpose = input.requiredVerificationPurpose ?? REQUIRED_MUTATION_VERIFICATION_PURPOSE;
+  const latest = resolveLatestApplicableFreshness(input.state, {
+    gateBoundObservationId: input.observation.observationId,
+    logicalMutationId: input.observation.logicalMutationId,
+    attemptGeneration: input.observation.attemptGeneration,
+    verificationPurpose: purpose
+  });
+
+  if (latest === undefined) {
     return fail("HOLD", {
       classification: "MISSING_APPLICABLE_FRESHNESS",
       message: "evaluateMutationEligibility without applicable freshness → HOLD",
       value: { eligible: false, reason: "HOLD" }
     });
   }
-  if (input.freshness.freshnessStatus !== "FRESH") {
+
+  if (input.freshness !== undefined && input.freshness.observationId !== latest.observationId) {
     return fail("HOLD", {
-      classification: "NOT_FRESH",
-      message: "only applicable FRESH verification may proceed to remaining eligibility checks",
+      classification: "OLDER_FRESH_UNUSABLE",
+      message: "later applicable non-FRESH makes an older FRESH unusable; eligibility MUST use the latest completed applicable verification",
       value: { eligible: false, reason: "HOLD" }
     });
   }
-  if (
-    input.freshness.sourceObservationId !== input.observation.observationId ||
-    input.freshness.logicalMutationId !== input.observation.logicalMutationId ||
-    input.freshness.attemptGeneration !== input.observation.attemptGeneration
-  ) {
+
+  if (latest.freshnessStatus !== "FRESH") {
     return fail("HOLD", {
-      classification: "FRESHNESS_NOT_APPLICABLE",
-      message: "freshness verification MUST bind to the same observation, logicalMutationId, and attemptGeneration",
+      classification: "NOT_FRESH",
+      message: "only the latest completed applicable FRESH verification may proceed to remaining eligibility checks",
+      value: { eligible: false, reason: "HOLD" }
+    });
+  }
+
+  if (latest.verificationPurpose !== purpose) {
+    return fail("HOLD", {
+      classification: "FRESHNESS_PURPOSE_MISMATCH",
+      message: "verificationPurpose MUST match the required action phase",
+      value: { eligible: false, reason: "HOLD" }
+    });
+  }
+
+  if (observationHasTerminalState(input.state, input.observation.observationId)) {
+    return fail("HOLD", {
+      classification: "GATE_NOT_REUSABLE",
+      message: "any TERMINAL_* state → observation not reusable",
+      value: { eligible: false, reason: "HOLD" }
+    });
+  }
+
+  if (derivedConsumed(input.state, input.observation.observationId)) {
+    return fail("HOLD", {
+      classification: "GATE_CONSUMED",
+      message: "TERMINAL_CONSUMED_SUCCESS → derived consumed = true",
       value: { eligible: false, reason: "HOLD" }
     });
   }
@@ -69,7 +105,7 @@ export function evaluateMutationEligibility(input: {
       value: { eligible: false, reason: "HOLD" }
     });
   }
-  if (!input.observation.validForAction || input.observation.consumed) {
+  if (!input.observation.validForAction) {
     return fail("HOLD", {
       classification: "GATE_NOT_VALID_FOR_ACTION",
       value: { eligible: false, reason: "HOLD" }

@@ -94,9 +94,22 @@ export interface RetrievalProvenance {
 
 export interface GateCriticalEvidenceItem {
   key: string;
-  value: string;
+  evidenceType: string;
+  sourceResource: string;
+  retrievedAt: string;
+  observedValue: string;
+  observedIdentity?: string;
   versionToken?: string;
 }
+
+export const VERIFICATION_PURPOSE = {
+  PRE_ACTION: "PRE_ACTION",
+  AUDIT: "AUDIT"
+} as const;
+
+export type VerificationPurpose = (typeof VERIFICATION_PURPOSE)[keyof typeof VERIFICATION_PURPOSE] | string;
+
+export const REQUIRED_MUTATION_VERIFICATION_PURPOSE = VERIFICATION_PURPOSE.PRE_ACTION;
 
 export interface ObservationIdentityBoundary {
   defaultBranchSha?: string;
@@ -179,7 +192,6 @@ export interface GateBoundObservationV1 extends BaseObservationFields {
   observedHeadSha: string;
   authorityDecisionRef: string;
   validForAction: boolean;
-  consumed: boolean;
   gateCriticalEvidence: GateCriticalEvidenceItem[];
   logicalMutationId: string;
   attemptGeneration: string;
@@ -191,16 +203,19 @@ export interface GateFreshnessVerificationV1 {
   observationStartedAt: string;
   observationCompletedAt: string;
   sourceObservationId: string;
+  gateBoundObservationId: string;
   logicalMutationId: string;
   attemptGeneration: string;
   verificationPurpose: string;
+  freshnessVerifiedAt: string;
+  freshnessExpiresAt?: string;
   freshnessStatus: FreshnessStatus;
   gateCriticalEvidence: GateCriticalEvidenceItem[];
+  gateCriticalEvidenceReferences: string[];
   evidenceComparison: EvidenceComparison;
   sourceNativeBindings: GateCriticalEvidenceItem[];
   evidenceReferences: string[];
   retrievalProvenance: RetrievalProvenance;
-  ttlExpired?: boolean;
 }
 
 export interface GateUseClaimV1 {

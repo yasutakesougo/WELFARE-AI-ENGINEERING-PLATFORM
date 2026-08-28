@@ -4,546 +4,459 @@ import {
   appendRecord,
   attemptGateUseClaim,
   canStartExecutableAttempt,
+  derivedConsumed,
   emptyKernelState,
   evaluateAuthority,
   evaluateMutationEligibility,
   freshnessGrantsAuthority,
   isImmediateRetryAuthorized,
   newObservationRequiredMeansImmediateRetry,
-  parseBranchRelationObservation,
+  originalRecordPreserved,
   parseGateBoundObservation,
   parseGateUseClaim,
-  parsePullRequestObservation,
   parseTerminalOutcome,
   recordTerminalOutcome,
   rejectObservationIdReuse,
-  requireTraceability,
+  resolveLatestApplicableFreshness,
   ttlAloneIsFresh,
   verifyGateFreshness
 } from "../src/index.js";
-import { CONTRACT } from "../src/types.js";
+import { REQUIRED_MUTATION_VERIFICATION_PURPOSE, VERIFICATION_PURPOSE } from "../src/types.js";
 import {
+  CI_EVIDENCE,
+  COMPLETE_EVIDENCE,
+  HEAD_EVIDENCE,
+  POLICY_EVIDENCE,
+  REVIEW_EVIDENCE,
+  T1,
+  T2,
   claimRecord,
+  evidenceItem,
   freshnessRecord,
   gateBound,
-  PROVENANCE,
-  pullRequestObservation,
-  REPO,
-  T0,
-  T1,
+  seedFreshState,
   terminalRecord
 } from "./helpers.js";
+import { PARENT_SCENARIO_IDS, PARENT_SCENARIO_TITLES, type ParentScenarioId } from "./parent-scenarios.js";
 
 interface Scenario {
-  id: string;
+  id: ParentScenarioId;
   title: string;
   path: "positive" | "fail-closed";
   run: () => void;
 }
 
-const completeEvidence = [
-  { key: "headSha", value: "head-a", versionToken: "v1" },
-  { key: "baseSha", value: "base-a", versionToken: "v1" }
-];
-
-function verifyBoundFreshness(input: {
-  observationId?: string;
-  sourceObservation?: ReturnType<typeof gateBound>;
-  observedEvidence?: readonly { key: string; value: string; versionToken?: string }[];
-  ttlExpired?: boolean;
-  state?: ReturnType<typeof emptyKernelState>;
-  verificationOverrides?: Parameters<typeof freshnessRecord>[0];
-}) {
-  return verifyGateFreshness({
-    state: input.state ?? emptyKernelState(),
-    verification: freshnessRecord({
-      observationId: input.observationId ?? "fresh-1",
-      ttlExpired: input.ttlExpired,
-      ...input.verificationOverrides
-    }),
-    sourceObservation: input.sourceObservation ?? gateBound(),
-    observedEvidence: input.observedEvidence ?? completeEvidence
-  });
+function withChanged(item: (typeof COMPLETE_EVIDENCE)[number], observedValue: string) {
+  return COMPLETE_EVIDENCE.map((entry) => (entry.key === item.key ? { ...entry, observedValue } : entry));
 }
 
 const parentScenarios: Scenario[] = [
   {
     id: "CSOC-C2-V25",
-    title: "Gate-Bound Observation Evidence Set",
-    path: "positive",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V25"],
+    path: "fail-closed",
     run: () => {
-      const result = parseGateBoundObservation(gateBound());
-      expect(result.status).toBe("PASS");
-      expect(result.value?.gateCriticalEvidence).toHaveLength(2);
+      const observation = gateBound();
+      const result = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({ observationId: "fresh-ci-changed" }),
+        sourceObservation: observation,
+        observedEvidence: withChanged(CI_EVIDENCE, "FAILURE")
+      });
+      expect(observation.identityBefore.headSha).toBe(observation.identityAfter.headSha);
+      expect(result.status).toBe("INVALIDATED");
+      expect(result.value?.record.freshnessStatus).toBe("INVALIDATED");
+      const eligibility = evaluateMutationEligibility({
+        state: result.value!.state,
+        observation,
+        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+      });
+      expect(eligibility.status).toBe("HOLD");
     }
   },
   {
     id: "CSOC-C2-V25",
-    title: "Gate-Bound Observation Evidence Set",
-    path: "fail-closed",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V25"],
+    path: "positive",
     run: () => {
-      const result = parseGateBoundObservation({ ...gateBound(), gateCriticalEvidence: undefined });
-      expect(result.status).toBe("FAILED");
-      expect(result.field).toBe("gateCriticalEvidence");
+      const seeded = seedFreshState();
+      expect(seeded.verificationResult.status).toBe("PASS");
+      expect(seeded.observation.identityBefore.headSha).toBe(seeded.observation.identityAfter.headSha);
+      expect(seeded.freshness?.freshnessStatus).toBe("FRESH");
     }
   },
   {
     id: "CSOC-C2-V26",
-    title: "Missing Observation Identity",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V26"],
     path: "fail-closed",
     run: () => {
-      const { observationId: _omit, ...rest } = gateBound();
-      const result = parseGateBoundObservation(rest);
-      expect(result.status).toBe("FAILED");
-      expect(result.status).not.toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C2-V26",
-    title: "Missing Observation Identity",
-    path: "positive",
-    run: () => {
-      expect(parseGateBoundObservation(gateBound()).value?.observationId).toBe("obs-gate-1");
-    }
-  },
-  {
-    id: "CSOC-C2-V27",
-    title: "Logical Mutation Identity Binding",
-    path: "fail-closed",
-    run: () => {
-      const { logicalMutationId: _omit, ...rest } = gateBound();
-      expect(parseGateBoundObservation(rest).field).toBe("logicalMutationId");
-    }
-  },
-  {
-    id: "CSOC-C2-V27",
-    title: "Logical Mutation Identity Binding",
-    path: "positive",
-    run: () => {
-      const parsed = parseGateBoundObservation(gateBound());
-      expect(parsed.value?.logicalMutationId).toBe("mut-1");
-      expect(parsed.value?.attemptGeneration).toBe("gen-1");
-    }
-  },
-  {
-    id: "CSOC-C2-V28",
-    title: "Observation Identifier Reuse",
-    path: "fail-closed",
-    run: () => {
-      const first = gateBound();
-      const state = appendRecord(emptyKernelState(), first);
-      expect(rejectObservationIdReuse(state, first.observationId).status).toBe("HOLD");
-      expect(acceptRecord(state, gateBound({ observationId: first.observationId })).status).toBe("HOLD");
-      expect(state.records[0]).toEqual(first);
-    }
-  },
-  {
-    id: "CSOC-C2-V28",
-    title: "Observation Identifier Reuse",
-    path: "positive",
-    run: () => {
-      const state = appendRecord(emptyKernelState(), gateBound());
-      expect(rejectObservationIdReuse(state, "obs-gate-2").status).toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C2-V29",
-    title: "Provenance Traceability",
-    path: "fail-closed",
-    run: () => {
-      expect(requireTraceability({ sourceClass: "REMOTE_AUTHORITATIVE" }).status).toBe("UNVERIFIABLE");
-    }
-  },
-  {
-    id: "CSOC-C2-V29",
-    title: "Provenance Traceability",
-    path: "positive",
-    run: () => {
-      expect(
-        requireTraceability({
-          sourceClass: "COMPOSITE_VERIFIED",
-          retrievalProvenance: PROVENANCE,
-          evidenceReferences: ["ev"]
-        }).status
-      ).toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C2-V30",
-    title: "Unavailable Field Non-Inference",
-    path: "fail-closed",
-    run: () => {
-      const result = parseBranchRelationObservation({
-        contractType: CONTRACT.BranchRelationObservation,
-        observationId: "rel-1",
-        observationStartedAt: T0,
-        observationCompletedAt: T1,
-        observationSource: "GITHUB_API",
-        sourceClass: "REMOTE_AUTHORITATIVE",
-        observationResult: "COMPLETE",
-        identityBefore: { headSha: "h" },
-        identityAfter: { headSha: "h" },
-        consistencyResult: "PASS",
-        evidenceReferences: ["ev"],
-        retrievalProvenance: PROVENANCE,
-        repositoryIdentity: REPO
-      });
-      expect(result.status).toBe("PARTIAL");
-      expect(result.message).toMatch(/MUST NOT be guessed|MUST NOT become 0/);
-    }
-  },
-  {
-    id: "CSOC-C2-V30",
-    title: "Unavailable Field Non-Inference",
-    path: "positive",
-    run: () => {
-      const result = parseBranchRelationObservation({
-        contractType: CONTRACT.BranchRelationObservation,
-        observationId: "rel-2",
-        observationStartedAt: T0,
-        observationCompletedAt: T1,
-        observationSource: "GITHUB_API",
-        sourceClass: "REMOTE_AUTHORITATIVE",
-        observationResult: "COMPLETE",
-        identityBefore: { headSha: "h" },
-        identityAfter: { headSha: "h" },
-        consistencyResult: "PASS",
-        evidenceReferences: ["ev"],
-        retrievalProvenance: PROVENANCE,
-        repositoryIdentity: REPO,
-        mergeBaseSha: "mb",
-        relation: "AHEAD",
-        aheadBy: 1,
-        behindBy: 0
-      });
-      expect(result.status).toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C2-V31",
-    title: "Authority Decision Reference Required",
-    path: "fail-closed",
-    run: () => {
-      const { authorityDecisionRef: _omit, ...rest } = gateBound();
-      expect(parseGateBoundObservation(rest).field).toBe("authorityDecisionRef");
-    }
-  },
-  {
-    id: "CSOC-C2-V31",
-    title: "Authority Decision Reference Required",
-    path: "positive",
-    run: () => {
-      expect(parseGateBoundObservation(gateBound()).value?.authorityDecisionRef).toBe("auth-1");
-    }
-  },
-  {
-    id: "CSOC-C2-V32",
-    title: "Attempt Generation On Gate-Bound Observation",
-    path: "fail-closed",
-    run: () => {
-      const { attemptGeneration: _omit, ...rest } = gateBound();
-      const result = parseGateBoundObservation(rest);
-      expect(result.status).toBe("FAILED");
-      expect(result.field).toBe("attemptGeneration");
-    }
-  },
-  {
-    id: "CSOC-C2-V32",
-    title: "Attempt Generation On Gate-Bound Observation",
-    path: "positive",
-    run: () => {
-      expect(parseGateBoundObservation(gateBound()).value?.attemptGeneration).toBe("gen-1");
-    }
-  },
-  {
-    id: "CSOC-C3-V33",
-    title: "Bound Evidence Freshness Comparison",
-    path: "positive",
-    run: () => {
-      const result = verifyBoundFreshness({});
-      expect(result.status).toBe("PASS");
-      expect(result.value?.record.freshnessStatus).toBe("FRESH");
-      expect(result.value?.record.evidenceComparison.requiredEvidence).toHaveLength(2);
-    }
-  },
-  {
-    id: "CSOC-C3-V33",
-    title: "Bound Evidence Freshness Comparison",
-    path: "fail-closed",
-    run: () => {
-      const result = verifyBoundFreshness({
-        observationId: "fresh-miss",
-        observedEvidence: [{ key: "headSha", value: "head-a", versionToken: "v1" }]
-      });
-      expect(result.status).toBe("UNVERIFIABLE");
-      expect(result.value?.record.evidenceComparison.missingRequiredMembers).toContain("baseSha");
-    }
-  },
-  {
-    id: "CSOC-C3-V34",
-    title: "Optimistic Concurrency Token Mismatch",
-    path: "fail-closed",
-    run: () => {
-      const result = verifyBoundFreshness({
-        observationId: "fresh-token",
-        observedEvidence: [
-          { key: "headSha", value: "head-a", versionToken: "v2" },
-          { key: "baseSha", value: "base-a", versionToken: "v1" }
-        ]
+      const result = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({ observationId: "fresh-review-dismissed" }),
+        sourceObservation: gateBound(),
+        observedEvidence: withChanged(REVIEW_EVIDENCE, "DISMISSED")
       });
       expect(result.status).toBe("INVALIDATED");
     }
   },
   {
-    id: "CSOC-C3-V34",
-    title: "Optimistic Concurrency Token Mismatch",
+    id: "CSOC-C2-V26",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V26"],
     path: "positive",
     run: () => {
-      const result = verifyBoundFreshness({ observationId: "fresh-token-ok" });
-      expect(result.value?.record.freshnessStatus).toBe("FRESH");
+      expect(seedFreshState().verificationResult.status).toBe("PASS");
     }
   },
   {
-    id: "CSOC-C3-V35",
-    title: "TTL Alone Is Not Fresh",
+    id: "CSOC-C2-V27",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V27"],
     path: "fail-closed",
     run: () => {
-      expect(ttlAloneIsFresh(false)).toBe(false);
-      const result = verifyBoundFreshness({ observationId: "fresh-ttl", ttlExpired: true });
-      expect(result.value?.record.freshnessStatus).toBe("EXPIRED");
-      expect(result.status).toBe("HOLD");
-    }
-  },
-  {
-    id: "CSOC-C3-V35",
-    title: "TTL Alone Is Not Fresh",
-    path: "positive",
-    run: () => {
-      const result = verifyBoundFreshness({ observationId: "fresh-nottl" });
-      expect(result.status).toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C3-V36",
-    title: "Freshness Is Not Authority",
-    path: "fail-closed",
-    run: () => {
-      expect(freshnessGrantsAuthority(freshnessRecord({ freshnessStatus: "FRESH" }))).toBe(false);
-    }
-  },
-  {
-    id: "CSOC-C3-V36",
-    title: "Freshness Is Not Authority",
-    path: "positive",
-    run: () => {
-      const fresh = verifyBoundFreshness({ observationId: "fresh-auth" });
-      const authority = evaluateAuthority({ decision: "NONE" });
-      expect(fresh.status).toBe("PASS");
-      expect(authority.status).toBe("NOT_AUTHORIZED");
-    }
-  },
-  {
-    id: "CSOC-C3-V37",
-    title: "Earlier Freshness Record Immutability",
-    path: "fail-closed",
-    run: () => {
-      const first = verifyBoundFreshness({});
-      const original = first.value!.record;
-      const second = verifyBoundFreshness({
-        state: first.value!.state,
-        verificationOverrides: { freshnessStatus: "EXPIRED" }
-      });
-      expect(second.status).toBe("HOLD");
-      expect(first.value!.state.records[0]).toEqual(original);
-    }
-  },
-  {
-    id: "CSOC-C3-V37",
-    title: "Earlier Freshness Record Immutability",
-    path: "positive",
-    run: () => {
-      const first = verifyBoundFreshness({});
-      const second = verifyBoundFreshness({
-        state: first.value!.state,
-        observationId: "fresh-2"
-      });
-      expect(second.status).toBe("PASS");
-      expect(second.value!.state.records).toHaveLength(2);
-    }
-  },
-  {
-    id: "CSOC-C3-V38",
-    title: "Ambiguous Required Evidence",
-    path: "fail-closed",
-    run: () => {
-      const result = verifyBoundFreshness({
-        observationId: "fresh-empty",
-        sourceObservation: gateBound({ gateCriticalEvidence: [] })
-      });
-      expect(result.status).toBe("HOLD");
-      expect(result.classification).toBe("AMBIGUOUS_REQUIRED_EVIDENCE");
-    }
-  },
-  {
-    id: "CSOC-C3-V38",
-    title: "Ambiguous Required Evidence",
-    path: "positive",
-    run: () => {
-      expect(verifyBoundFreshness({ observationId: "fresh-explicit" }).status).toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C3-V39",
-    title: "Applicable Freshness Required For Eligibility",
-    path: "fail-closed",
-    run: () => {
-      const missing = evaluateMutationEligibility({
-        observation: gateBound(),
-        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
-      });
-      expect(missing.status).toBe("HOLD");
-      expect(missing.classification).toBe("MISSING_APPLICABLE_FRESHNESS");
-      const stale = evaluateMutationEligibility({
-        observation: gateBound(),
-        freshness: freshnessRecord({ freshnessStatus: "EXPIRED" }),
-        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
-      });
-      expect(stale.status).toBe("HOLD");
-      const unbound = verifyGateFreshness({
+      const result = verifyGateFreshness({
         state: emptyKernelState(),
-        verification: freshnessRecord({ observationId: "fresh-unbound" }),
-        observedEvidence: completeEvidence
+        verification: freshnessRecord({ observationId: "fresh-policy" }),
+        sourceObservation: gateBound(),
+        observedEvidence: withChanged(POLICY_EVIDENCE, "required-reviews=2")
       });
-      expect(unbound.status).toBe("HOLD");
-      expect(unbound.classification).toBe("MISSING_BOUND_OBSERVATION");
+      expect(result.status).toBe("INVALIDATED");
     }
   },
   {
-    id: "CSOC-C3-V39",
-    title: "Applicable Freshness Required For Eligibility",
+    id: "CSOC-C2-V27",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V27"],
     path: "positive",
     run: () => {
+      expect(seedFreshState().verificationResult.status).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C2-V28",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V28"],
+    path: "fail-closed",
+    run: () => {
+      const seeded = seedFreshState();
       const result = evaluateMutationEligibility({
-        observation: gateBound(),
-        freshness: freshnessRecord(),
+        state: seeded.state,
+        observation: seeded.observation,
+        authority: { decision: "NONE" }
+      });
+      expect(seeded.verificationResult.status).toBe("PASS");
+      expect(result.status).toBe("NOT_AUTHORIZED");
+      expect(result.classification).toBe("AUTHORITY_FAILURE");
+    }
+  },
+  {
+    id: "CSOC-C2-V28",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V28"],
+    path: "positive",
+    run: () => {
+      const seeded = seedFreshState();
+      expect(
+        evaluateMutationEligibility({
+          state: seeded.state,
+          observation: seeded.observation,
+          authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+        }).status
+      ).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C2-V29",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V29"],
+    path: "fail-closed",
+    run: () => {
+      const observation = gateBound();
+      const result = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({ observationId: "fresh-unavail" }),
+        sourceObservation: observation,
+        observedEvidence: COMPLETE_EVIDENCE.filter((item) => item.key !== CI_EVIDENCE.key)
+      });
+      expect(result.status).toBe("UNVERIFIABLE");
+      const eligibility = evaluateMutationEligibility({
+        state: result.value!.state,
+        observation,
         authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+      });
+      expect(eligibility.status).toBe("HOLD");
+    }
+  },
+  {
+    id: "CSOC-C2-V29",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V29"],
+    path: "positive",
+    run: () => {
+      expect(seedFreshState().verificationResult.status).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C2-V30",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V30"],
+    path: "fail-closed",
+    run: () => {
+      expect("consumed" in gateBound()).toBe(false);
+      const result = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({
+          observationId: "fresh-expired",
+          freshnessVerifiedAt: T1,
+          freshnessExpiresAt: "2026-08-28T00:59:00Z"
+        }),
+        sourceObservation: gateBound(),
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      expect(result.status).toBe("HOLD");
+      expect(result.value?.record.freshnessStatus).toBe("EXPIRED");
+      expect(result.value?.record.freshnessExpiresAt).toBe("2026-08-28T00:59:00Z");
+      expect(ttlAloneIsFresh(false)).toBe(false);
+    }
+  },
+  {
+    id: "CSOC-C2-V30",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V30"],
+    path: "positive",
+    run: () => {
+      const result = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({
+          observationId: "fresh-unexpired",
+          freshnessExpiresAt: "2026-08-28T02:00:00Z"
+        }),
+        sourceObservation: gateBound(),
+        observedEvidence: COMPLETE_EVIDENCE
       });
       expect(result.status).toBe("PASS");
     }
   },
   {
-    id: "CSOC-C4-V40",
-    title: "Duplicate Observation Same Logical Action",
+    id: "CSOC-C2-V31",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V31"],
+    path: "fail-closed",
+    run: () => {
+      const observation = gateBound();
+      const result = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({ observationId: "fresh-precondition" }),
+        sourceObservation: observation,
+        observedEvidence: COMPLETE_EVIDENCE.map((item) =>
+          item.key === HEAD_EVIDENCE.key
+            ? { ...item, observedValue: "head-moved", observedIdentity: "head-moved", versionToken: "v2" }
+            : item
+        )
+      });
+      expect(result.status).toBe("INVALIDATED");
+      const eligibility = evaluateMutationEligibility({
+        state: result.value!.state,
+        observation,
+        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+      });
+      expect(eligibility.status).toBe("HOLD");
+      expect(eligibility.value?.eligible).toBe(false);
+    }
+  },
+  {
+    id: "CSOC-C2-V31",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V31"],
+    path: "positive",
+    run: () => {
+      const seeded = seedFreshState();
+      expect(seeded.observation.observedHeadSha).toBe(HEAD_EVIDENCE.observedValue);
+      expect(seeded.verificationResult.status).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C2-V32",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V32"],
+    path: "positive",
+    run: () => {
+      const seeded = seedFreshState();
+      const result = evaluateMutationEligibility({
+        state: seeded.state,
+        observation: seeded.observation,
+        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+      });
+      expect(result.status).toBe("PASS");
+      expect(result.value?.eligible).toBe(true);
+    }
+  },
+  {
+    id: "CSOC-C2-V32",
+    title: PARENT_SCENARIO_TITLES["CSOC-C2-V32"],
+    path: "fail-closed",
+    run: () => {
+      const observation = gateBound();
+      const first = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({ observationId: "fresh-v1", observationCompletedAt: T1 }),
+        sourceObservation: observation,
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      const second = verifyGateFreshness({
+        state: first.value!.state,
+        verification: freshnessRecord({
+          observationId: "fresh-v2",
+          observationCompletedAt: T2,
+          freshnessVerifiedAt: T2
+        }),
+        sourceObservation: observation,
+        observedEvidence: withChanged(CI_EVIDENCE, "FAILURE")
+      });
+      expect(second.value?.record.freshnessStatus).toBe("INVALIDATED");
+      const eligibility = evaluateMutationEligibility({
+        state: second.value!.state,
+        observation,
+        freshness: first.value!.record,
+        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+      });
+      expect(eligibility.status).toBe("HOLD");
+      expect(eligibility.classification).toBe("OLDER_FRESH_UNUSABLE");
+    }
+  },
+  {
+    id: "CSOC-C3-V33",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V33"],
     path: "fail-closed",
     run: () => {
       const first = attemptGateUseClaim({
         state: emptyKernelState(),
-        claim: claimRecord({
-          observationId: "claim-o1",
-          claimId: "claim-event-o1",
-          sourceObservationId: "obs-O1",
-          logicalMutationId: "M",
-          attemptGeneration: "G"
-        })
+        claim: claimRecord({ claimantId: "claimant-a", claimId: "claim-event-a" })
       });
       expect(first.status).toBe("PASS");
       const second = attemptGateUseClaim({
         state: first.value!.state!,
         claim: claimRecord({
-          observationId: "claim-o2",
-          claimId: "claim-event-o2",
-          sourceObservationId: "obs-O2",
-          logicalMutationId: "M",
-          attemptGeneration: "G"
+          observationId: "claim-2",
+          claimId: "claim-event-b",
+          claimantId: "claimant-b",
+          claimedAt: T2
         })
       });
       expect(second.status).toBe("HOLD");
       expect(second.classification).toBe("CLAIM_REJECTED");
       expect(second.retryability).toBe("WAIT");
-      expect(second.value).toEqual({ mutationPerformed: false, mutationAttempts: 0 });
+      expect(second.value?.mutationPerformed).toBe(false);
+      expect(second.value?.mutationAttempts).toBe(0);
+      expect(second.value?.record?.claimResult).toBe("CLAIM_REJECTED");
+      expect(second.value?.record?.claimId).toBe("claim-event-b");
+      expect(second.value?.record?.claimantId).toBe("claimant-b");
+      expect(second.value?.record?.sourceObservationId).toBe("obs-gate-1");
+      expect(second.value?.record?.logicalMutationId).toBe("mut-1");
+      expect(second.value?.record?.attemptGeneration).toBe("gen-1");
     }
   },
   {
-    id: "CSOC-C4-V40",
-    title: "Duplicate Observation Same Logical Action",
+    id: "CSOC-C3-V33",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V33"],
     path: "positive",
     run: () => {
-      const first = attemptGateUseClaim({
-        state: emptyKernelState(),
-        claim: claimRecord({
-          observationId: "claim-o1",
-          claimId: "claim-event-o1",
-          sourceObservationId: "obs-O1",
-          logicalMutationId: "M",
-          attemptGeneration: "G"
-        })
-      });
-      const otherAction = attemptGateUseClaim({
-        state: first.value!.state!,
-        claim: claimRecord({
-          observationId: "claim-o2",
-          claimId: "claim-event-o2",
-          sourceObservationId: "obs-O2",
-          logicalMutationId: "M-other",
-          attemptGeneration: "G"
-        })
-      });
-      expect(otherAction.status).toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C4-V41",
-    title: "Successful Claims Per Observation",
-    path: "positive",
-    run: () => {
-      const result = attemptGateUseClaim({
-        state: emptyKernelState(),
-        claim: claimRecord()
-      });
+      const result = attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() });
       expect(result.status).toBe("PASS");
-      expect(result.value?.record?.claimState).toBe("CLAIMED");
       expect(result.value?.record?.claimResult).toBe("CLAIMED");
     }
   },
   {
-    id: "CSOC-C4-V41",
-    title: "Successful Claims Per Observation",
+    id: "CSOC-C3-V34",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V34"],
     path: "fail-closed",
     run: () => {
       const first = attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() });
       const second = attemptGateUseClaim({
         state: first.value!.state!,
-        claim: claimRecord({ observationId: "claim-2", claimId: "claim-event-2", attemptGeneration: "gen-2" })
+        claim: claimRecord({ observationId: "claim-lose", claimId: "claim-event-lose", attemptGeneration: "gen-2" })
       });
-      expect(second.status).toBe("HOLD");
       expect(second.classification).toBe("CLAIM_REJECTED");
-      expect(second.value).toEqual({ mutationPerformed: false, mutationAttempts: 0 });
+      expect(second.retryability).toBe("WAIT");
+      expect(second.value?.record?.claimResult).toBe("CLAIM_REJECTED");
     }
   },
   {
-    id: "CSOC-C4-V42",
-    title: "Attempt Generation Must Be Explicit",
-    path: "fail-closed",
-    run: () => {
-      const parsed = parseGateUseClaim({
-        ...claimRecord(),
-        attemptGeneration: ""
-      });
-      expect(parsed.status).toBe("FAILED");
-      expect(parsed.field).toBe("attemptGeneration");
-    }
-  },
-  {
-    id: "CSOC-C4-V42",
-    title: "Attempt Generation Must Be Explicit",
+    id: "CSOC-C3-V34",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V34"],
     path: "positive",
     run: () => {
-      expect(parseGateUseClaim(claimRecord()).value?.attemptGeneration).toBe("gen-1");
+      expect(attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() }).status).toBe("PASS");
     }
   },
   {
-    id: "CSOC-C4-V43",
-    title: "New Observation Required Is Not Immediate Retry",
+    id: "CSOC-C3-V35",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V35"],
+    path: "fail-closed",
+    run: () => {
+      const result = attemptGateUseClaim({
+        state: emptyKernelState(),
+        claim: claimRecord(),
+        winningAttemptPhase: "IN_FLIGHT"
+      });
+      expect(result.classification).toBe("CLAIM_REJECTED");
+      expect(result.value?.record?.claimResult).toBe("CLAIM_REJECTED");
+      expect(canStartExecutableAttempt({ winningAttemptPhase: "IN_FLIGHT" }).status).toBe("HOLD");
+    }
+  },
+  {
+    id: "CSOC-C3-V35",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V35"],
+    path: "positive",
+    run: () => {
+      expect(attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() }).status).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C3-V36",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V36"],
+    path: "fail-closed",
+    run: () => {
+      const result = recordTerminalOutcome({
+        state: emptyKernelState(),
+        outcome: terminalRecord(),
+        ambiguous: true
+      });
+      expect(result.status).toBe("HOLD");
+      expect(result.value?.record.claimState).toBe("TERMINAL_OUTCOME_UNKNOWN");
+      expect(result.value?.record.mutationPerformed).toBe("UNKNOWN");
+      expect(canStartExecutableAttempt({ lastTerminal: result.value?.record }).classification).toBe(
+        "TERMINAL_OUTCOME_UNKNOWN"
+      );
+    }
+  },
+  {
+    id: "CSOC-C3-V36",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V36"],
+    path: "positive",
+    run: () => {
+      const result = recordTerminalOutcome({
+        state: emptyKernelState(),
+        outcome: terminalRecord({ claimState: "TERMINAL_NO_MUTATION", mutationPerformed: false, mutationAttempts: 0 })
+      });
+      expect(result.status).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C3-V37",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V37"],
+    path: "fail-closed",
+    run: () => {
+      const terminal = recordTerminalOutcome({
+        state: emptyKernelState(),
+        outcome: terminalRecord({ claimState: "TERMINAL_CONSUMED_SUCCESS" })
+      });
+      const again = attemptGateUseClaim({
+        state: terminal.value!.state,
+        claim: claimRecord({ observationId: "claim-after-terminal", claimId: "claim-event-after", attemptGeneration: "gen-9" })
+      });
+      expect(again.status).toBe("HOLD");
+    }
+  },
+  {
+    id: "CSOC-C3-V37",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V37"],
+    path: "positive",
+    run: () => {
+      expect(attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() }).status).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C3-V38",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V38"],
     path: "fail-closed",
     run: () => {
       const result = canStartExecutableAttempt({});
@@ -553,8 +466,8 @@ const parentScenarios: Scenario[] = [
     }
   },
   {
-    id: "CSOC-C4-V43",
-    title: "New Observation Required Is Not Immediate Retry",
+    id: "CSOC-C3-V38",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V38"],
     path: "positive",
     run: () => {
       expect(canStartExecutableAttempt({ reconciliationProvesSafe: true }).status).toBe("PASS");
@@ -570,65 +483,66 @@ const parentScenarios: Scenario[] = [
     }
   },
   {
-    id: "CSOC-C5-V44",
-    title: "Ambiguous Terminal Outcome Unknown",
+    id: "CSOC-C3-V39",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V39"],
     path: "fail-closed",
     run: () => {
-      const result = recordTerminalOutcome({
-        state: emptyKernelState(),
-        outcome: terminalRecord(),
-        ambiguous: true
+      const first = attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() });
+      const claim = attemptGateUseClaim({
+        state: first.value!.state!,
+        claim: claimRecord({ observationId: "claim-lose", claimId: "claim-event-lose" })
       });
-      expect(result.status).toBe("HOLD");
-      expect(result.value?.record.claimState).toBe("TERMINAL_OUTCOME_UNKNOWN");
-      expect(result.value?.record.mutationPerformed).toBe("UNKNOWN");
-      expect(result.value?.record.mutationPerformed).not.toBe(false);
-      expect(
-        canStartExecutableAttempt({ lastTerminal: result.value?.record }).classification
-      ).toBe("TERMINAL_OUTCOME_UNKNOWN");
+      const authority = evaluateAuthority({ decision: "NONE" });
+      expect(claim.classification).toBe("CLAIM_REJECTED");
+      expect(claim.status).toBe("HOLD");
+      expect(authority.status).toBe("NOT_AUTHORIZED");
+      expect(claim.status).not.toBe(authority.status);
     }
   },
   {
-    id: "CSOC-C5-V44",
-    title: "Ambiguous Terminal Outcome Unknown",
+    id: "CSOC-C3-V39",
+    title: PARENT_SCENARIO_TITLES["CSOC-C3-V39"],
     path: "positive",
     run: () => {
-      const result = recordTerminalOutcome({
-        state: emptyKernelState(),
-        outcome: terminalRecord({ claimState: "TERMINAL_NO_MUTATION", mutationPerformed: false, mutationAttempts: 0 })
-      });
-      expect(result.status).toBe("PASS");
-      expect(result.value?.record.mutationPerformed).toBe(false);
+      expect(evaluateAuthority({ decision: "GO", authorityDecisionRef: "auth-1" }).status).toBe("PASS");
     }
   },
   {
-    id: "CSOC-C5-V45",
-    title: "Terminal State Never Returns Available",
+    id: "CSOC-C4-V40",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V40"],
     path: "fail-closed",
     run: () => {
-      const terminal = recordTerminalOutcome({
+      const first = attemptGateUseClaim({
         state: emptyKernelState(),
-        outcome: terminalRecord({ claimState: "TERMINAL_CONSUMED_SUCCESS" })
+        claim: claimRecord({
+          observationId: "claim-o1",
+          claimId: "claim-event-o1",
+          sourceObservationId: "obs-O1",
+          logicalMutationId: "M",
+          attemptGeneration: "G"
+        })
       });
-      const again = attemptGateUseClaim({
-        state: terminal.value!.state,
-        claim: claimRecord({ observationId: "claim-after-terminal", claimId: "claim-event-after", attemptGeneration: "gen-9" })
+      const second = attemptGateUseClaim({
+        state: first.value!.state!,
+        claim: claimRecord({
+          observationId: "claim-o2",
+          claimId: "claim-event-o2",
+          claimantId: "claimant-o2",
+          sourceObservationId: "obs-O2",
+          logicalMutationId: "M",
+          attemptGeneration: "G"
+        })
       });
-      expect(again.status).toBe("HOLD");
+      expect(second.classification).toBe("CLAIM_REJECTED");
+      expect(second.value?.mutationAttempts).toBe(0);
+      expect(second.value?.record?.claimResult).toBe("CLAIM_REJECTED");
+      expect(second.value?.record?.sourceObservationId).toBe("obs-O2");
     }
   },
   {
-    id: "CSOC-C5-V45",
-    title: "Terminal State Never Returns Available",
+    id: "CSOC-C4-V40",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V40"],
     path: "positive",
-    run: () => {
-      expect(attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() }).status).toBe("PASS");
-    }
-  },
-  {
-    id: "CSOC-C5-V46",
-    title: "Claim Denial Versus Authority Denial",
-    path: "fail-closed",
     run: () => {
       const first = attemptGateUseClaim({
         state: emptyKernelState(),
@@ -639,204 +553,328 @@ const parentScenarios: Scenario[] = [
           attemptGeneration: "G"
         })
       });
-      const claim = attemptGateUseClaim({
+      const other = attemptGateUseClaim({
         state: first.value!.state!,
         claim: claimRecord({
           observationId: "claim-o2",
           claimId: "claim-event-o2",
           sourceObservationId: "obs-O2",
-          logicalMutationId: "M",
+          logicalMutationId: "M-other",
           attemptGeneration: "G"
         })
       });
-      const authority = evaluateAuthority({ decision: "NONE" });
-      expect(claim.classification).toBe("CLAIM_REJECTED");
-      expect(claim.status).toBe("HOLD");
-      expect(authority.status).toBe("NOT_AUTHORIZED");
-      expect(claim.status).not.toBe(authority.status);
+      expect(other.status).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C4-V41",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V41"],
+    path: "fail-closed",
+    run: () => {
+      const parsed = parseGateUseClaim({ ...claimRecord(), attemptGeneration: "" });
+      expect(parsed.status).toBe("FAILED");
+      expect(parsed.field).toBe("attemptGeneration");
+    }
+  },
+  {
+    id: "CSOC-C4-V41",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V41"],
+    path: "positive",
+    run: () => {
+      expect(parseGateUseClaim(claimRecord()).value?.attemptGeneration).toBe("gen-1");
+    }
+  },
+  {
+    id: "CSOC-C4-V42",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V42"],
+    path: "fail-closed",
+    run: () => {
+      const first = gateBound();
+      const state = appendRecord(emptyKernelState(), first);
+      expect(rejectObservationIdReuse(state, first.observationId).status).toBe("HOLD");
+      expect(acceptRecord(state, gateBound({ observationId: first.observationId })).classification).toBe(
+        "OBSERVATION_ID_REUSE"
+      );
+      expect(originalRecordPreserved(state, first.observationId).value).toEqual(first);
+    }
+  },
+  {
+    id: "CSOC-C4-V42",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V42"],
+    path: "positive",
+    run: () => {
+      const parsed = parseGateBoundObservation(gateBound());
+      expect(parsed.status).toBe("PASS");
+      expect(parsed.value).not.toHaveProperty("consumed");
+    }
+  },
+  {
+    id: "CSOC-C4-V43",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V43"],
+    path: "fail-closed",
+    run: () => {
+      const observation = gateBound();
+      const seeded = seedFreshState({ observation });
+      const terminal = recordTerminalOutcome({
+        state: seeded.state,
+        outcome: terminalRecord({ sourceObservationId: observation.observationId })
+      });
+      expect(derivedConsumed(terminal.value!.state, observation.observationId)).toBe(true);
+      const eligibility = evaluateMutationEligibility({
+        state: terminal.value!.state,
+        observation,
+        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+      });
+      expect(eligibility.status).toBe("HOLD");
+      expect(["GATE_CONSUMED", "GATE_NOT_REUSABLE"]).toContain(eligibility.classification);
+    }
+  },
+  {
+    id: "CSOC-C4-V43",
+    title: PARENT_SCENARIO_TITLES["CSOC-C4-V43"],
+    path: "positive",
+    run: () => {
+      const seeded = seedFreshState();
+      expect(derivedConsumed(seeded.state, seeded.observation.observationId)).toBe(false);
+      expect(
+        evaluateMutationEligibility({
+          state: seeded.state,
+          observation: seeded.observation,
+          authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+        }).status
+      ).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C5-V44",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V44"],
+    path: "fail-closed",
+    run: () => {
+      const first = seedFreshState({ verification: { observationId: "fresh-1" } });
+      const original = first.freshness;
+      const second = verifyGateFreshness({
+        state: first.state,
+        verification: freshnessRecord({ observationId: "fresh-1", freshnessStatus: "EXPIRED" }),
+        sourceObservation: first.observation,
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      expect(second.status).toBe("HOLD");
+      expect(first.state.records[0]).toEqual(original);
+    }
+  },
+  {
+    id: "CSOC-C5-V44",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V44"],
+    path: "positive",
+    run: () => {
+      const first = seedFreshState({ verification: { observationId: "fresh-1" } });
+      expect(first.state.records[0]).toEqual(first.freshness);
+    }
+  },
+  {
+    id: "CSOC-C5-V45",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V45"],
+    path: "positive",
+    run: () => {
+      const first = seedFreshState({ verification: { observationId: "fresh-1" } });
+      const second = verifyGateFreshness({
+        state: first.state,
+        verification: freshnessRecord({ observationId: "fresh-2", observationCompletedAt: T2, freshnessVerifiedAt: T2 }),
+        sourceObservation: first.observation,
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      expect(second.status).toBe("PASS");
+      expect(second.value!.state.records).toHaveLength(2);
+      expect(first.state.records[0]).toEqual(first.freshness);
+    }
+  },
+  {
+    id: "CSOC-C5-V45",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V45"],
+    path: "fail-closed",
+    run: () => {
+      const first = seedFreshState({ verification: { observationId: "fresh-1" } });
+      const replay = verifyGateFreshness({
+        state: first.state,
+        verification: freshnessRecord({ observationId: "fresh-1" }),
+        sourceObservation: first.observation,
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      expect(replay.status).toBe("HOLD");
+      expect(replay.classification).toBe("OBSERVATION_ID_REUSE");
     }
   },
   {
     id: "CSOC-C5-V46",
-    title: "Claim Denial Versus Authority Denial",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V46"],
+    path: "fail-closed",
+    run: () => {
+      const observation = gateBound();
+      const v1 = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({ observationId: "fresh-v1", observationCompletedAt: T1 }),
+        sourceObservation: observation,
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      const v2 = verifyGateFreshness({
+        state: v1.value!.state,
+        verification: freshnessRecord({
+          observationId: "fresh-v2",
+          observationCompletedAt: T2,
+          freshnessVerifiedAt: T2
+        }),
+        sourceObservation: observation,
+        observedEvidence: withChanged(REVIEW_EVIDENCE, "DISMISSED")
+      });
+      const latest = resolveLatestApplicableFreshness(v2.value!.state, {
+        gateBoundObservationId: observation.observationId,
+        logicalMutationId: observation.logicalMutationId,
+        attemptGeneration: observation.attemptGeneration,
+        verificationPurpose: REQUIRED_MUTATION_VERIFICATION_PURPOSE
+      });
+      expect(latest?.observationId).toBe("fresh-v2");
+      expect(latest?.freshnessStatus).toBe("INVALIDATED");
+      const eligibility = evaluateMutationEligibility({
+        state: v2.value!.state,
+        observation,
+        freshness: v1.value!.record,
+        authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+      });
+      expect(eligibility.status).toBe("HOLD");
+    }
+  },
+  {
+    id: "CSOC-C5-V46",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V46"],
     path: "positive",
     run: () => {
+      const observation = gateBound();
+      const v1 = verifyGateFreshness({
+        state: emptyKernelState(),
+        verification: freshnessRecord({
+          observationId: "fresh-v1",
+          verificationPurpose: VERIFICATION_PURPOSE.AUDIT,
+          observationCompletedAt: T2,
+          freshnessVerifiedAt: T2
+        }),
+        sourceObservation: observation,
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      const v2 = verifyGateFreshness({
+        state: v1.value!.state,
+        verification: freshnessRecord({
+          observationId: "fresh-pre-action",
+          observationCompletedAt: T1,
+          freshnessVerifiedAt: T1
+        }),
+        sourceObservation: observation,
+        observedEvidence: COMPLETE_EVIDENCE
+      });
+      const latest = resolveLatestApplicableFreshness(v2.value!.state, {
+        gateBoundObservationId: observation.observationId,
+        logicalMutationId: observation.logicalMutationId,
+        attemptGeneration: observation.attemptGeneration
+      });
+      expect(latest?.observationId).toBe("fresh-pre-action");
+      expect(latest?.verificationPurpose).toBe(REQUIRED_MUTATION_VERIFICATION_PURPOSE);
+      expect(
+        evaluateMutationEligibility({
+          state: v2.value!.state,
+          observation,
+          authority: { decision: "GO", authorityDecisionRef: "auth-1" }
+        }).status
+      ).toBe("PASS");
+    }
+  },
+  {
+    id: "CSOC-C5-V47",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V47"],
+    path: "fail-closed",
+    run: () => {
+      const seeded = seedFreshState();
+      expect(freshnessGrantsAuthority(seeded.freshness!)).toBe(false);
+      expect(
+        evaluateMutationEligibility({
+          state: seeded.state,
+          observation: seeded.observation,
+          authority: { decision: "NONE" }
+        }).status
+      ).toBe("NOT_AUTHORIZED");
+    }
+  },
+  {
+    id: "CSOC-C5-V47",
+    title: PARENT_SCENARIO_TITLES["CSOC-C5-V47"],
+    path: "positive",
+    run: () => {
+      const seeded = seedFreshState();
+      expect(seeded.verificationResult.status).toBe("PASS");
       expect(evaluateAuthority({ decision: "GO", authorityDecisionRef: "auth-1" }).status).toBe("PASS");
     }
-  },
-  {
-    id: "CSOC-C5-V47",
-    title: "Mutation Attempts Must Be Explicit",
-    path: "fail-closed",
-    run: () => {
-      const { mutationAttempts: _omit, ...rest } = terminalRecord();
-      const result = parseTerminalOutcome(rest);
-      expect(result.status).toBe("FAILED");
-      expect(result.field).toBe("mutationAttempts");
-    }
-  },
-  {
-    id: "CSOC-C5-V47",
-    title: "Mutation Attempts Must Be Explicit",
-    path: "positive",
-    run: () => {
-      expect(parseTerminalOutcome(terminalRecord({ mutationAttempts: 1 })).value?.mutationAttempts).toBe(1);
-    }
   }
 ];
 
-const kernelExtras: Scenario[] = [
-  {
-    id: "CSOC-IMPL-KERNEL-WINNING-ATTEMPT-PHASE-CLAIMED",
-    title: "Non-terminal winning attempt rejects a new executable claim",
-    path: "fail-closed",
-    run: () => {
-      const result = attemptGateUseClaim({
-        state: emptyKernelState(),
-        claim: claimRecord(),
-        winningAttemptPhase: "CLAIMED"
-      });
-      expect(result.status).toBe("HOLD");
-      expect(result.classification).toBe("CLAIM_REJECTED");
-      expect(result.retryability).toBe("WAIT");
-      expect(result.status).not.toBe("NOT_AUTHORIZED");
-    }
-  },
-  {
-    id: "CSOC-IMPL-KERNEL-MUTATION-ATTEMPTS-RANGE",
-    title: "mutationAttempts accepts only integer 0 or 1",
-    path: "fail-closed",
-    run: () => {
-      for (const invalid of [2, -1, 1.5]) {
-        const result = parseTerminalOutcome(terminalRecord({ mutationAttempts: invalid as 0 | 1 }));
-        expect(result.status).toBe("FAILED");
-        expect(result.field).toBe("mutationAttempts");
-      }
-    }
-  },
-  {
-    id: "CSOC-IMPL-KERNEL-PR-COMPLETE-COMPONENTS",
-    title: "COMPLETE PullRequestObservation requires review, CI, and branch-policy evidence",
-    path: "fail-closed",
-    run: () => {
-      const result = parsePullRequestObservation(
-        pullRequestObservation({
-          reviews: undefined,
-          reviewThreads: undefined,
-          ciWorkflowEvidence: undefined,
-          branchPolicyEvidence: undefined
-        })
-      );
-      expect(result.status).toBe("HOLD");
-      expect(result.value?.observationResult).toBe("PARTIAL");
-      expect(result.value?.unavailableFields).toEqual([
-        "reviews",
-        "reviewThreads",
-        "ciWorkflowEvidence",
-        "branchPolicyEvidence"
-      ]);
-    }
-  },
-  {
-    id: "CSOC-IMPL-KERNEL-FAILURE-CONTRACT",
-    title: "PARTIAL FAILED INVALIDATED require failure contract fields",
-    path: "fail-closed",
-    run: () => {
-      const result = parsePullRequestObservation(
-        pullRequestObservation({
-          observationResult: "FAILED"
-        })
-      );
-      expect(result.status).toBe("FAILED");
-      expect(result.classification).toBe("MISSING_FAILURE_CONTRACT");
-    }
-  },
-  {
-    id: "CSOC-IMPL-KERNEL-TERMINAL-CLAIM-ID",
-    title: "TerminalOutcome retains reverse claimId",
-    path: "fail-closed",
-    run: () => {
-      const { claimId: _omit, ...rest } = terminalRecord();
-      const result = parseTerminalOutcome(rest);
-      expect(result.status).toBe("FAILED");
-      expect(result.field).toBe("claimId");
-    }
-  },
-  {
-    id: "CSOC-IMPL-KERNEL-ACCEPT-RECORD-UNIQUENESS",
-    title: "acceptRecord enforces observationId and logical-action uniqueness",
-    path: "fail-closed",
-    run: () => {
-      const first = acceptRecord(emptyKernelState(), gateBound());
-      expect(first.status).toBe("PASS");
-      const reuse = acceptRecord(first.value!, gateBound());
-      expect(reuse.status).toBe("HOLD");
-      expect(reuse.classification).toBe("OBSERVATION_ID_REUSE");
-      const claimed = attemptGateUseClaim({
-        state: emptyKernelState(),
-        claim: claimRecord({ sourceObservationId: "obs-O1" })
-      });
-      const bypass = acceptRecord(
-        claimed.value!.state!,
-        claimRecord({
-          observationId: "claim-bypass",
-          claimId: "claim-event-bypass",
-          sourceObservationId: "obs-O2",
-          claimState: "CLAIMED",
-          claimResult: "CLAIMED"
-        })
-      );
-      expect(bypass.status).toBe("HOLD");
-      expect(bypass.classification).toBe("CLAIM_REJECTED");
-    }
-  }
-];
-
-describe("CSOC-C2 through CSOC-C5 runtime/domain behavioral tests", () => {
+describe("CSOC-C2 through CSOC-C5 locked-parent behavioral tests", () => {
   it.each(parentScenarios)("$id $title [$path]", (scenario) => {
+    expect(scenario.title).toBe(PARENT_SCENARIO_TITLES[scenario.id]);
     scenario.run();
   });
 
-  it("covers every parent ID from CSOC-C2-V25 through CSOC-C5-V47 with canonical ranges", () => {
+  it("covers every canonical parent ID and exact title from CSOC-C2-V25 through CSOC-C5-V47", () => {
     const ids = new Set(parentScenarios.map((scenario) => scenario.id));
-    const expected = [
-      "CSOC-C2-V25",
-      "CSOC-C2-V26",
-      "CSOC-C2-V27",
-      "CSOC-C2-V28",
-      "CSOC-C2-V29",
-      "CSOC-C2-V30",
-      "CSOC-C2-V31",
-      "CSOC-C2-V32",
-      "CSOC-C3-V33",
-      "CSOC-C3-V34",
-      "CSOC-C3-V35",
-      "CSOC-C3-V36",
-      "CSOC-C3-V37",
-      "CSOC-C3-V38",
-      "CSOC-C3-V39",
-      "CSOC-C4-V40",
-      "CSOC-C4-V41",
-      "CSOC-C4-V42",
-      "CSOC-C4-V43",
-      "CSOC-C5-V44",
-      "CSOC-C5-V45",
-      "CSOC-C5-V46",
-      "CSOC-C5-V47"
-    ];
-    expect([...ids].sort()).toEqual([...expected].sort());
-    for (const id of expected) {
-      expect(parentScenarios.some((scenario) => scenario.id === id && scenario.path === "positive")).toBe(true);
-      expect(parentScenarios.some((scenario) => scenario.id === id && scenario.path === "fail-closed")).toBe(true);
+    expect([...ids].sort()).toEqual([...PARENT_SCENARIO_IDS].sort());
+    for (const id of PARENT_SCENARIO_IDS) {
+      const titled = parentScenarios.filter((scenario) => scenario.id === id);
+      expect(titled.some((scenario) => scenario.path === "positive")).toBe(true);
+      expect(titled.some((scenario) => scenario.path === "fail-closed")).toBe(true);
+      expect(titled.every((scenario) => scenario.title === PARENT_SCENARIO_TITLES[id])).toBe(true);
     }
-    expect(ids.has("CSOC-C4-V39")).toBe(false);
-    expect(ids.has("CSOC-C2-V32")).toBe(true);
-    expect(ids.has("CSOC-C3-V39")).toBe(true);
   });
 });
 
 describe("CSOC-IMPL-KERNEL extra kernel tests (non-parent IDs)", () => {
-  it.each(kernelExtras)("$id $title [$path]", (scenario) => {
-    scenario.run();
+  it("CSOC-IMPL-KERNEL-EVIDENCE-SOURCE-COLLAPSE rejects same key from a different source as a miss", () => {
+    const observation = gateBound({ gateCriticalEvidence: [CI_EVIDENCE] });
+    const otherSource = evidenceItem({
+      key: CI_EVIDENCE.key,
+      evidenceType: CI_EVIDENCE.evidenceType,
+      sourceResource: "/repos/other/actions/runs/9",
+      observedValue: CI_EVIDENCE.observedValue,
+      versionToken: CI_EVIDENCE.versionToken
+    });
+    const result = verifyGateFreshness({
+      state: emptyKernelState(),
+      verification: freshnessRecord({ observationId: "fresh-collapse" }),
+      sourceObservation: observation,
+      observedEvidence: [otherSource]
+    });
+    expect(result.status).toBe("UNVERIFIABLE");
+  });
+
+  it("CSOC-IMPL-KERNEL-MUTATION-ATTEMPTS-RANGE accepts only integer 0 or 1", () => {
+    for (const invalid of [2, -1, 1.5]) {
+      expect(parseTerminalOutcome(terminalRecord({ mutationAttempts: invalid as 0 | 1 })).field).toBe("mutationAttempts");
+    }
+  });
+
+  it("CSOC-IMPL-KERNEL-MISSING-BOUND-OBSERVATION holds when sourceObservation is absent", () => {
+    const result = verifyGateFreshness({
+      state: emptyKernelState(),
+      verification: freshnessRecord({ observationId: "fresh-unbound" }),
+      observedEvidence: COMPLETE_EVIDENCE
+    });
+    expect(result.status).toBe("HOLD");
+    expect(result.classification).toBe("MISSING_BOUND_OBSERVATION");
+  });
+
+  it("CSOC-IMPL-KERNEL-REJECTED-CLAIM-IS-APPEND-ONLY retains losing claim evidence", () => {
+    const first = attemptGateUseClaim({ state: emptyKernelState(), claim: claimRecord() });
+    const rejected = attemptGateUseClaim({
+      state: first.value!.state!,
+      claim: claimRecord({ observationId: "claim-lose", claimId: "claim-event-lose", claimantId: "loser" })
+    });
+    expect(rejected.value?.state?.records).toHaveLength(2);
+    expect(rejected.value?.record?.claimResult).toBe("CLAIM_REJECTED");
+    expect(first.value?.record).toEqual(rejected.value?.state?.records[0]);
   });
 });

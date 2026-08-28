@@ -1,4 +1,4 @@
-export { CONTRACT, CLAIM_STATES, FRESHNESS_STATUSES, TERMINAL_STATES } from "./types.js";
+export { CONTRACT, CLAIM_STATES, FRESHNESS_STATUSES, TERMINAL_STATES, REQUIRED_MUTATION_VERIFICATION_PURPOSE, VERIFICATION_PURPOSE } from "./types.js";
 export type {
   AuthorityResult,
   BranchRelationObservationV1,
@@ -7,6 +7,7 @@ export type {
   EvidenceComparison,
   FailureEvidence,
   GateBoundObservationV1,
+  GateCriticalEvidenceItem,
   GateFreshnessVerificationV1,
   GateUseClaimV1,
   KernelState,
@@ -37,7 +38,7 @@ export {
   requireExplicitSuccession,
   requireTraceability
 } from "./identity.js";
-export { freshnessGrantsAuthority, ttlAloneIsFresh, verifyGateFreshness } from "./freshness.js";
+export { freshnessGrantsAuthority, ttlAloneIsFresh, verifyGateFreshness, resolveLatestApplicableFreshness } from "./freshness.js";
 export {
   attemptGateUseClaim,
   canStartExecutableAttempt,
@@ -45,4 +46,5 @@ export {
   recordTerminalOutcome
 } from "./claim.js";
 export { evaluateAuthority, evaluateMutationEligibility } from "./eligibility.js";
+export { derivedConsumed, observationHasTerminalState } from "./derived-state.js";
 export { appendRecord, acceptRecord, emptyKernelState, findByObservationId, recordsOfType, VERSIONED_CONTRACTS } from "./state.js";

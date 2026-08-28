@@ -995,13 +995,19 @@ Archive: docs/architecture/reviews/dkc-msr-architecture-definition-start-go.md
 Definition Artifact: docs/architecture/dkc-msr-architecture-design-v1.md
 Definition State: DRAFT / DEFINITION IN PROGRESS
 
+Independent Definition Review-1: CORRECTION REQUIRED (recorded)
+Archive: docs/architecture/reviews/dkc-msr-architecture-independent-definition-review-1.md
+P0 / P1 / P2: 0 / 3 / 2
+Lockable: NO
+
 Next Gate:
   DKC-MSR-ARCHITECTURE-DESIGN-V1
-  Independent Definition Review-1
+  Definition Correction-1
 
 Definition Start GO
   != Definition Lock
-Definition Start GO
+Independent Definition Review CORRECTION REQUIRED
+  != Definition Lock
   != Implementation Start
 
 Human Research Evidence Acceptance GO
@@ -1048,7 +1054,8 @@ PR Ready:                 NOT AUTHORIZED
 Merge:                    NOT AUTHORIZED
 Deploy:                   NOT AUTHORIZED
 Automatic Knowledge Promotion: NOT AUTHORIZED
-Next Gate:                DKC-MSR-ARCHITECTURE-DESIGN-V1 Independent Definition Review-1
+Next Gate:                DKC-MSR-ARCHITECTURE-DESIGN-V1 Definition Correction-1
 Definition Start:         GO
+Independent Definition Review-1: CORRECTION REQUIRED
 Repository Mutation beyond acceptance-status documentation: NOT AUTHORIZED BY THIS REPORT
 ```

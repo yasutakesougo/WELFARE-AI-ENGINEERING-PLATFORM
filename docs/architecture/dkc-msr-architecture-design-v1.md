@@ -17,7 +17,20 @@ Accepted Content Baseline: 0ab993f7fb3775460d5df4801f33175bd4e03059
 Accepted Blob:            b6adb8b9d814d0ae9301c7f54e40af16ed87c83d
 Definition Start Archive: docs/architecture/reviews/dkc-msr-architecture-definition-start-go.md
 Human Research Acceptance: docs/research/reviews/human-research-evidence-acceptance-go.md
-Next Gate:                Independent Definition Review-1
+Artifact Path:            docs/architecture/dkc-msr-architecture-design-v1.md
+Encoding:                 UTF-8
+Content Baseline Commit:  34cc4e0f257c47b0a792415bb91d914b74bf4122
+Content Baseline Blob:    87e3799cce22ff4465105842b45f612dc7f336a0
+Content Baseline Bytes:   21083
+Content Baseline SHA-256: 0f9179b7cc094709a8d5b4f7100345003a94927cf80b8e019f576782a3103e5c
+Identity Note:            Baseline identity binds Definition Start semantic content.
+                          Adding this identity block creates a new tip blob; it must
+                          not be treated as a semantic redefinition of the baseline.
+Independent Definition Review-1: CORRECTION REQUIRED
+Review Archive:           docs/architecture/reviews/dkc-msr-architecture-independent-definition-review-1.md
+P0 / P1 / P2:             0 / 3 / 2
+Lockable:                 NO
+Next Gate:                Definition Correction-1
 ```
 
 ---
@@ -719,7 +732,7 @@ Implementation test execution: NOT AUTHORIZED by this Definition
 
 ## 20. Definition Closure Criteria
 
-This Definition draft is ready for Independent Definition Review-1 when:
+This Definition draft was submitted to Independent Definition Review-1 when:
 
 1. Sections 1–20 are present and internally consistent
 2. Design centerline matches Accepted Research Evidence pipeline
@@ -730,12 +743,37 @@ This Definition draft is ready for Independent Definition Review-1 when:
 7. No span residue / unresolved placeholders remain
 8. Document State remains `DRAFT / DEFINITION IN PROGRESS` until Review outcomes
 
+Independent Definition Review-1 result:
+
+```text
+Verdict: CORRECTION REQUIRED
+P0 / P1 / P2: 0 / 3 / 2
+Lockable: NO
+Archive: docs/architecture/reviews/dkc-msr-architecture-independent-definition-review-1.md
+Next: Definition Correction-1
+```
+
+Open Correction-1 finding IDs:
+
+```text
+P1 DKC-MSR-PARENT-OUTPUT-CONTRACT-001
+P1 DKC-MSR-SNAPSHOT-KEY-001
+P1 DKC-MSR-LINK-CONFIDENCE-MAPPING-001
+P2 DKC-MSR-VERIFICATION-AUTHORITY-REF-001
+P2 DKC-MSR-PARENT-LOCK-BINDING-001
+```
+
 ```text
 Definition draft complete
   != Definition Lock
 Independent Definition Review PASS
   != Definition Lock
   != Implementation Start
+Independent Definition Review CORRECTION REQUIRED
+  != Definition Lock
+  != Implementation Start
+  != Ready
+  != Merge
 ```
 
 ---
@@ -746,6 +784,7 @@ Independent Definition Review PASS
 State:                DRAFT / DEFINITION IN PROGRESS
 Authority:            Definition only
 Definition Start:     GO
+Independent Definition Review-1: CORRECTION REQUIRED
 Definition Lock:      NOT AUTHORIZED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation:   NOT AUTHORIZED
@@ -753,5 +792,5 @@ WAEP Adoption:        NOT AUTHORIZED
 Dependency Addition:  NOT AUTHORIZED
 Knowledge Promotion:  NOT AUTHORIZED
 PR Ready / Merge / Deploy / LIVE WRITE: NOT AUTHORIZED
-Next Gate:            DKC-MSR-ARCHITECTURE-DESIGN-V1 Independent Definition Review-1
+Next Gate:            DKC-MSR-ARCHITECTURE-DESIGN-V1 Definition Correction-1
 ```

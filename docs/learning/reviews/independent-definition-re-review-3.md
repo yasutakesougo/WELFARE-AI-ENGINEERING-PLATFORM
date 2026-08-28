@@ -23,6 +23,10 @@ This file archives the Independent Definition Re-Review-3 result that triggered
 Definition Correction-3. Correction mapping lives in
 `docs/learning/waep-learning-system-v1.md` §26.3.
 
+Independent Definition Final Re-Review-4 closed all Re-Review-3 findings
+(PASS / LOCKABLE). See
+`docs/learning/reviews/independent-definition-final-re-review-4.md`.
+
 ---
 
 ## 1. Review Scope

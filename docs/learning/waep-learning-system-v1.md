@@ -8,19 +8,23 @@ Revision: Definition Correction-3
 Supersedes: Definition Correction-2
 Trigger: Independent Definition Re-Review-3
 Re-Review-3 Result: P0 = 0 / P1 = 2 / P2 = 2
-Architecture Centerline: RETAINED
-Definition Lock: DENIED
+Independent Definition Final Re-Review-4: PASS
+Reviewed Head (Re-Review-4): a92421fe43e2c51b635e35fb1516f437d7e5034b
+Architecture Centerline: PASS / RETAINED
+Definition Lock Eligibility: PASS / LOCKABLE
+Definition Lock: AWAITING HUMAN GO / HOLD
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Runtime Authorization: NO CHANGE
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-Next Gate: Independent Definition Final Re-Review-4
+Next Gate: WAEP-LEARNING-SYSTEM-V1 Definition Lock GO / HOLD
 ```
 
-This document is **definition only**. It does not authorize implementation,
-persistence, Agent Control Plane wiring, runtime distribution, registry
-migration, or production policy mutation.
+This document is **definition only**. Independent Definition Final
+Re-Review-4 PASS / LOCKABLE does **not** itself grant Human Definition Lock
+Authorization, Implementation Start, Runtime Activation, Ready, Merge,
+Deploy, or LIVE WRITE.
 
 Correction-3 does **not** change the Architecture. Correction-2 boundaries
 remain:
@@ -173,6 +177,16 @@ resolutionKey:
 ```
 
 Unnecessary dimensions may be omitted per contract.
+
+Contract-specific Resolution Keys defined later **override** this generic
+template for that Authority Domain. Notably:
+
+```text
+LearningPayloadReleaseDecision@v1
+  → payloadRef + payloadDigest + destinationLearningPlane
+KnowledgeEffectivenessDecision@v1
+  → subjectRef + subjectVersion + runtimeTargetRef + evaluationScopeRef
+```
 
 Decisions in the same Authority Domain must **not** be incorrectly separated
 by divergent keys.
@@ -1473,50 +1487,59 @@ Registry Last Verified projection: §20.3, AC-44.
 
 ---
 
-## 27. Lock Preparation
+## 27. Lock Preparation / Final Re-Review-4
 
 After Correction-3, no further Architecture Correction is added.
 
-Final Re-Review-4 confirms only:
+Independent Definition Final Re-Review-4 on reviewed head
+`a92421fe43e2c51b635e35fb1516f437d7e5034b` confirmed:
 
 ```text
 P0 = 0
 P1 = 0
+P2 = 0
 Canonical Decision keys deterministic
 CURRENT time semantics deterministic
 Authority fields consistent
 All unresolved states fail closed
 Existing Registry remains projection-only
 No new execution authority introduced
+Review Verdict: PASS
+Definition Lockability: PASS / LOCKABLE
 ```
 
-If residual P2 items remain and are limited to Editorial / Documentation issues
-that do not affect Runtime Authority, Sensitive Data Boundary, Knowledge
-Integrity, or Rollback Safety, they may be separated from Definition Lock
-judgment.
+Archive: `docs/learning/reviews/independent-definition-final-re-review-4.md`.
+
+```text
+Independent Review PASS
+  != Human Definition Lock Authorization
+```
 
 ---
 
-## 28. Definition Correction-3 Verdict
+## 28. Definition Correction-3 + Final Re-Review-4 Verdict
 
 ```text
 WAEP-LEARNING-SYSTEM-V1
 Definition Correction-3
-Architecture Centerline: RETAINED
+Independent Definition Final Re-Review-4: PASS
+Reviewed Head: a92421fe43e2c51b635e35fb1516f437d7e5034b
+Architecture Centerline: PASS / RETAINED
 Payload Release Resolution: CANONICALIZED
 CURRENT Time Semantics: CANONICALIZED
 Verification Policy Identity: CANONICALIZED
 Effectiveness Evaluation Scope: CANONICALIZED
 Decision Authority Field: NORMALIZED
-Definition Lock: DENIED
+Definition Lock Eligibility: PASS / LOCKABLE
+Definition Lock: AWAITING HUMAN GO / HOLD
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-Next Gate: Independent Definition Final Re-Review-4
+Next Gate: WAEP-LEARNING-SYSTEM-V1 Definition Lock GO / HOLD
 ```
 
-Until Final Re-Review-4 passes and Definition Lock is granted:
+Until Human Definition Lock GO is granted:
 
 ```text
 Implementation Start     = NOT AUTHORIZED

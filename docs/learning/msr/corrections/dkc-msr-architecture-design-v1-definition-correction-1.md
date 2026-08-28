@@ -14,14 +14,11 @@ Source Review Blob: 5bb7f398bb338ce898ddef76c39124338fc4250a
 Architecture Centerline: RETAINED
 Parent DKC Compatibility: RETAINED / PASS
 Definition State: DRAFT / NOT LOCKED
-Independent Definition Re-Review-1: PASS
-Review-1 Findings Closed: 5 / 5
-P0 / P1 / P2: 0 / 0 / 0
 Implementation Start: NOT AUTHORIZED
 Dependency Addition: NOT AUTHORIZED
 Repository Source Adapter Execution: NOT AUTHORIZED
 Ready / Merge / Deploy / Runtime Activation / LIVE WRITE: NOT AUTHORIZED
-Next Gate: Human Definition Lock GO / HOLD
+Next Gate: Independent Definition Re-Review-1
 ```
 
 This Correction is a normative delta over the exact Definition Start artifact above.
@@ -505,15 +502,17 @@ All other Definition Start Acceptance Criteria and boundaries are unchanged.
 
 ## 10. Review-1 Finding Closure Claim
 
-Independent Re-Review-1 has closed all Review-1 findings:
+Correction author claims the following are addressed, subject to Independent Re-Review-1:
 
-| Finding | Correction | Independent Closure |
+| Finding | Correction | Closure Claim |
 | --- | --- | --- |
-| `MSR-IDENTITY-CANONICAL-KEY-001` | §§2, 7, 8 + Correction-1 Clarification | CLOSED |
-| `MSR-LINK-METHOD-CLASS-MAPPING-001` | §§3, 7, 8 | CLOSED |
-| `MSR-EXTERNAL-VERIFICATION-REF-001` | §§4, 7, 8 | CLOSED |
-| `MSR-SANITIZED-DERIVED-TERM-001` | §§5, 7, 8 | CLOSED |
-| `MSR-CONFIDENCE-CONTRACT-001` | §§6, 7, 8 | CLOSED |
+| `MSR-IDENTITY-CANONICAL-KEY-001` | §§2, 7, 8 | ADDRESSED / PENDING RE-REVIEW |
+| `MSR-LINK-METHOD-CLASS-MAPPING-001` | §§3, 7, 8 | ADDRESSED / PENDING RE-REVIEW |
+| `MSR-EXTERNAL-VERIFICATION-REF-001` | §§4, 7, 8 | ADDRESSED / PENDING RE-REVIEW |
+| `MSR-SANITIZED-DERIVED-TERM-001` | §§5, 7, 8 | ADDRESSED / PENDING RE-REVIEW |
+| `MSR-CONFIDENCE-CONTRACT-001` | §§6, 7, 8 | ADDRESSED / PENDING RE-REVIEW |
+
+Correction author does not mark these findings independently CLOSED.
 
 ---
 
@@ -521,6 +520,7 @@ Independent Re-Review-1 has closed all Review-1 findings:
 
 ```text
 Definition Correction-1
+  != Independent Re-Review PASS
   != Human Definition Lock GO
   != Implementation Start GO
   != Technology Adoption
@@ -542,8 +542,9 @@ This Correction grants no authority to modify the locked Parent DKC artifact.
 
 ```text
 DKC-MSR-ARCHITECTURE-DESIGN-V1
-Independent Definition Re-Review-1: PASS
-Review-1 Findings Closed: 5 / 5
-P0 / P1 / P2: 0 / 0 / 0
-Next Gate: Human Definition Lock GO / HOLD
+Independent Definition Re-Review-1
+
+Review Target:
+  Definition Start blob 86eabbb9b5328177e3197ae3d2168815219f6e0b
+  + Definition Correction-1 exact artifact identity
 ```

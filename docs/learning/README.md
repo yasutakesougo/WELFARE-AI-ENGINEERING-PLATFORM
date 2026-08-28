@@ -55,23 +55,42 @@ Implementation Start: NOT AUTHORIZED
 PR #17 is the active DKC source line. PR #16 is its historical predecessor and
 is not a parallel merge target.
 
+Repository-recorded state:
+
 ```text
 PR #17 head: 332d671eea5d268998fdaef551eac0ed9ca2ace8
 Current-main relation: diverged / ahead 4 / behind 13
 Correction-2: complete on source branch
-Independent Definition Re-Review-2: CORRECTION REQUIRED
-P0 / P1 / P2: 0 / 2 / 1
-Review-1 findings: 9 / 9 CLOSED
-Re-Review-1 findings: 3 / 3 CLOSED
-Next work: current-main reconciliation + Definition Correction-3
+Repository-recorded Next Gate: Independent Definition Re-Review-2 PENDING
 Definition Lock: NOT AUTHORIZED
 Implementation Start: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 ```
 
-The Re-Review-2 result must be published as its own review evidence before it is
-used as a canonical branch-state transition. Current-State documentation records
-the independent assessment without manufacturing closure evidence.
+An external independent assessment in the current review session against that
+exact head concluded:
+
+```text
+Assessment Verdict: CORRECTION REQUIRED
+P0 / P1 / P2: 0 / 2 / 1
+Review-1 findings assessed CLOSED: 9 / 9
+Re-Review-1 findings assessed CLOSED: 3 / 3
+Repository Review Evidence Publication: NOT YET DONE
+```
+
+This external assessment is not repository Authority. It must be published as a
+dedicated Re-Review-2 evidence record before it becomes a canonical gate
+transition.
+
+Recommended sequence after publication:
+
+```text
+current-main reconciliation
+  → Definition Correction-3
+  → Independent Definition Re-Review-3
+  → PASS / LOCKABLE
+  → Human Definition Lock GO / HOLD
+```
 
 ## Governance Dependency
 

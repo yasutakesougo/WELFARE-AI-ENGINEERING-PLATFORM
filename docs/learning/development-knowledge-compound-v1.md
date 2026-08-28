@@ -19,20 +19,30 @@ Automation Enforcement: NOT AUTHORIZED
 Next Gate: Independent Definition Re-Review-2
 ```
 
+Gate chain:
+
+```text
+Independent Definition Re-Review-3  PASS / LOCKABLE
+        ↓
+Human Definition Lock               GO / HOLD
+        ↓
+Definition LOCKED
+        ↓
+Implementation Start              separate GO / HOLD
+```
+
+Review path to lock:
+
+```text
+Review-1 → Correction-1 → Re-Review-1 → Correction-2 → Re-Review-2 → Re-Review-3
+                                                                    ↑
+                                                          PASS / LOCKABLE required
+```
+
 Current position:
 
 ```text
 Correction-2 complete → Re-Review-2 pending
-```
-
-Gate chain:
-
-```text
-Independent Definition Re-Review-2  (PASS / LOCKABLE required)
-        ↓
-Human Definition Lock               (GO / HOLD)
-        ↓
-Implementation Start                (separate gate; not authorized by Definition Lock alone)
 ```
 
 This document is **definition only**. It does not authorize implementation,
@@ -42,10 +52,18 @@ enforcement.
 ```text
 Definition Correction-2
   != Definition Lock GO / HOLD
+  != Definition LOCKED
   != Implementation Start
   != Knowledge Extraction Prototype
   != Automatic Candidate Generation
   != Automatic Knowledge Promotion
+
+Definition Lock GO
+  != Implementation Start
+  != Automatic Knowledge Promotion
+
+Definition LOCKED
+  != Implementation Start (separate GO / HOLD gate)
 ```
 
 Correction-2 does **not** change the Architecture. Correction-1 boundaries
@@ -865,6 +883,8 @@ AC-DKC-17  evidenceRefs structured relation schema is consistent across Candidat
 
 ## 19. Next Gate
 
+### 19.1 Re-Review-2 (current)
+
 Re-Review-2 must independently confirm:
 
 ```text
@@ -875,17 +895,39 @@ Re-Review-2 must independently confirm:
 ```text
 Next: Independent Definition Re-Review-2
 on:   DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 Definition Correction-2
+```
 
-Re-Review-2 verdict must be PASS / LOCKABLE before Definition Lock GO / HOLD.
+### 19.2 Gate chain to Implementation
 
-Until Re-Review-2 passes and Definition Lock is granted:
+```text
+Independent Definition Re-Review-3  PASS / LOCKABLE
+        ↓
+Human Definition Lock               GO / HOLD
+        ↓
+Definition LOCKED
+        ↓
+Implementation Start              separate GO / HOLD
+```
 
+Re-Review-3 verdict must be PASS / LOCKABLE before Human Definition Lock
+GO / HOLD.
+
+Human Definition Lock GO authorizes Definition Lock only. It does not authorize
+Implementation Start, Knowledge Extraction Prototype, Automatic Candidate
+Generation, or Automatic Knowledge Promotion.
+
+Until Human Definition Lock GO is granted and Definition is LOCKED:
+
+```text
   Definition Lock              = NOT AUTHORIZED
+  Definition State             = UNLOCKED
   Implementation Start         = NOT AUTHORIZED
   Knowledge Extraction Prototype = NOT AUTHORIZED
   Automatic Candidate Generation = NOT AUTHORIZED
   Automatic Knowledge Promotion  = PROHIBITED
   Automation Enforcement       = NOT AUTHORIZED
+```
 
-Implementation Start remains a separate gate after Definition Lock GO / HOLD.
+Implementation Start requires a separate GO / HOLD gate after Definition LOCKED.
+Automatic Knowledge Promotion remains PROHIBITED regardless of Definition Lock.
 ```

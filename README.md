@@ -24,8 +24,18 @@ PR #17: OPEN / DRAFT / NOT MERGED
 ```
 
 Current position: Correction-2 complete → Re-Review-2 pending.
-Re-Review-2 must confirm Re-Review-1 closure and absence of new P0/P1/P2 before
-Definition Lock GO / HOLD. Implementation Start is a separate gate thereafter.
+
+Gate chain:
+
+```text
+Independent Definition Re-Review-3  PASS / LOCKABLE
+        ↓
+Human Definition Lock               GO / HOLD
+        ↓
+Definition LOCKED
+        ↓
+Implementation Start              separate GO / HOLD
+```
 
 ### WAEP-LEARNING-SYSTEM-V1
 

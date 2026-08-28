@@ -42,4 +42,16 @@ Next Gate: Independent Definition Re-Review-2
 PR #17: OPEN / DRAFT / NOT MERGED
 ```
 
-Gate chain: Re-Review-2 (PASS / LOCKABLE) → Definition Lock GO / HOLD → Implementation Start (separate gate).
+Gate chain:
+
+```text
+Independent Definition Re-Review-3  PASS / LOCKABLE
+        ↓
+Human Definition Lock               GO / HOLD
+        ↓
+Definition LOCKED
+        ↓
+Implementation Start              separate GO / HOLD
+```
+
+Current position: Correction-2 complete → Re-Review-2 pending.

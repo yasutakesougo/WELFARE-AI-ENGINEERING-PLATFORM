@@ -1,7 +1,7 @@
 import type { AuthorityResult, SearchBounds, ShadowRequest, ShadowResult } from './contracts';
 import { isDefinitionCapability } from './definitionRegistry';
 import {
-  evaluateDataAccessDecisions,
+  evaluateDataAccessDecisionRefs,
   evaluateDependencyEntries,
   evaluateTrustedContainmentRef,
   evaluateTrustedDecisionRef,
@@ -21,21 +21,28 @@ const MUTATION_CAPABILITIES = new Set([
   'desktop.control',
 ]);
 
+export const SLICE_A_SEARCH_POLICY_CEILING: Readonly<SearchBounds> = Object.freeze({
+  maxFiles: 1000,
+  maxBytes: 10_000_000,
+  maxFileSize: 1_000_000,
+  maxDepth: 32,
+  maxResults: 1000,
+  timeoutMs: 30_000,
+  maxOutputBytes: 1_000_000,
+});
+
 function isPositiveFiniteInteger(value: number): boolean {
   return Number.isFinite(value) && Number.isInteger(value) && value > 0;
 }
 
 export function validateSearchBounds(bounds: SearchBounds | undefined): AuthorityResult {
   if (!bounds) return 'DENY';
-  return [
-    bounds.maxFiles,
-    bounds.maxBytes,
-    bounds.maxFileSize,
-    bounds.maxDepth,
-    bounds.maxResults,
-    bounds.timeoutMs,
-    bounds.maxOutputBytes,
-  ].every(isPositiveFiniteInteger)
+  const keys = Object.keys(SLICE_A_SEARCH_POLICY_CEILING) as (keyof SearchBounds)[];
+  return keys.every((key) => {
+    const requested = bounds[key];
+    const ceiling = SLICE_A_SEARCH_POLICY_CEILING[key];
+    return isPositiveFiniteInteger(requested) && requested <= ceiling;
+  })
     ? 'ALLOW'
     : 'DENY';
 }
@@ -68,7 +75,7 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
     else if (request.preAccessEligibility === 'UNKNOWN' || request.preAccessEligibility === undefined) {
       dataAccessResult = 'HOLD';
     } else {
-      dataAccessResult = evaluateDataAccessDecisions(request.dataZoneDecisions, {
+      dataAccessResult = evaluateDataAccessDecisionRefs(request.dataZoneDecisionRefs, {
         targetIdentity: request.targetIdentity,
         repositoryIdentity: request.repositoryIdentity,
         approvedRootIdentity: request.approvedRootIdentity,
@@ -143,6 +150,7 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
       `capability:${request.capability}`,
       `scope-ref:${request.scopeDecisionRef}`,
       `authority-ref:${request.authorityDecisionRef}`,
+      `data-zone-refs:${request.dataZoneDecisionRefs?.join(',') ?? 'none'}`,
       `dependency:${dependencyResult}`,
       `runtime:${request.runtimeState}`,
       `effective:${effectiveResult}`,

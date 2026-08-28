@@ -1,10 +1,10 @@
 import type { AuthorityResult, SearchBounds, ShadowRequest, ShadowResult } from './contracts';
 import { isDefinitionCapability } from './definitionRegistry';
 import {
-  evaluateContainmentEvidence,
   evaluateDataAccessDecisions,
   evaluateDependencyEntries,
-  evaluateVerifiedDecision,
+  evaluateTrustedContainmentRef,
+  evaluateTrustedDecisionRef,
 } from './policy';
 
 const MUTATION_CAPABILITIES = new Set([
@@ -55,8 +55,8 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
   const definitionCapabilityResult: AuthorityResult = capabilityDefined ? 'ALLOW' : 'DENY';
   const mutationDenied = MUTATION_CAPABILITIES.has(request.capability);
 
-  const scopeResult = evaluateVerifiedDecision(request.scopeDecision, request.targetIdentity);
-  const authorityResult = evaluateVerifiedDecision(request.authorityDecision, request.targetIdentity);
+  const scopeResult = evaluateTrustedDecisionRef('SCOPE', request.scopeDecisionRef, request.targetIdentity);
+  const authorityResult = evaluateTrustedDecisionRef('AUTHORITY', request.authorityDecisionRef, request.targetIdentity);
   const dependencyResult = evaluateDependencyEntries(request.dependencyEntries);
 
   const runtimeStateResult: AuthorityResult =
@@ -78,7 +78,7 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
 
   let containmentResult: AuthorityResult = 'ALLOW';
   if (request.capability.startsWith('filesystem.')) {
-    containmentResult = evaluateContainmentEvidence(request.containmentEvidence, request.targetIdentity);
+    containmentResult = evaluateTrustedContainmentRef(request.containmentEvidenceRef, request.targetIdentity);
   }
 
   let boundsResult: AuthorityResult = 'ALLOW';
@@ -105,13 +105,13 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
         : definitionCapabilityResult === 'DENY'
           ? 'CAPABILITY_NOT_DEFINED'
           : scopeResult !== 'ALLOW'
-            ? 'SCOPE_DECISION_NOT_VERIFIED_ALLOW'
+            ? 'SCOPE_DECISION_NOT_TRUSTED_ALLOW'
             : authorityResult !== 'ALLOW'
-              ? 'AUTHORITY_DECISION_NOT_VERIFIED_ALLOW'
+              ? 'AUTHORITY_DECISION_NOT_TRUSTED_ALLOW'
               : dependencyResult !== 'ALLOW'
                 ? 'DEPENDENCY_NOT_VERIFIED_ALLOW'
                 : containmentResult === 'DENY'
-                  ? 'CONTAINMENT_NOT_PROVEN'
+                  ? 'CONTAINMENT_NOT_TRUSTED_PASS'
                   : boundsResult === 'DENY'
                     ? 'INVALID_SEARCH_BOUNDS'
                     : dataAccessResult === 'DENY'
@@ -141,8 +141,8 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
     blockReason,
     evidence: [
       `capability:${request.capability}`,
-      `scope:${scopeResult}`,
-      `authority:${authorityResult}`,
+      `scope-ref:${request.scopeDecisionRef}`,
+      `authority-ref:${request.authorityDecisionRef}`,
       `dependency:${dependencyResult}`,
       `runtime:${request.runtimeState}`,
       `effective:${effectiveResult}`,

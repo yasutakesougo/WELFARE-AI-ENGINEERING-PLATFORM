@@ -4,10 +4,12 @@
 
 ```text
 Definition: DEVELOPMENT-KNOWLEDGE-COMPOUND-V1
-Revision: Definition Correction-1
-Supersedes: Definition Start (pre-repo draft reviewed as Independent Definition Review-1)
-Independent Definition Review-1: CORRECTION REQUIRED → addressed herein
-Independent Definition Re-Review-1: REQUIRED
+Revision: Definition Correction-2
+Supersedes: Definition Correction-1
+Trigger: Independent Definition Re-Review-1
+Re-Review-1 Result: P0 = 0 / P1 = 2 / P2 = 1
+Review-1 Findings: 9 / 9 CLOSED
+Independent Definition Re-Review-2: REQUIRED
 Definition Lock: NOT AUTHORIZED
 Implementation Start: NOT AUTHORIZED
 Knowledge Extraction Prototype: NOT AUTHORIZED
@@ -21,12 +23,22 @@ persistence, automatic candidate generation, knowledge promotion, or automation
 enforcement.
 
 ```text
-Definition Correction-1
+Definition Correction-2
   != Definition Lock
   != Implementation Start
   != Knowledge Extraction Prototype
   != Automatic Candidate Generation
   != Automatic Knowledge Promotion
+```
+
+Correction-2 does **not** change the Architecture. Correction-1 boundaries
+remain:
+
+```text
+DKC = knowledge creation entry
+Knowledge Assetization = knowledge formal asset authority
+Candidate existence ≠ Knowledge existence
+Automatic Knowledge Promotion = PROHIBITED
 ```
 
 ---
@@ -101,6 +113,35 @@ Knowledge count based personal evaluation
 Rework count based personal evaluation
 Productivity ranking from work time alone
 ```
+
+### 2.1 Correction-1 (retained)
+
+Correction-1 addressed Independent Definition Review-1 findings:
+
+| Priority | ID | Topic |
+| --- | --- | --- |
+| P1-1 | DKC-AUTH-CANDIDATE-001 | Candidate generation authority and creation provenance |
+| P1-2 | DKC-AUTH-VERIFY-001 | Verification vs Authority Decision boundary |
+| P1-3 | DKC-BOUNDARY-KA-001 | Knowledge Assetization responsibility separation |
+| P1-4 | DKC-CROSSREPO-001 | Cross-Repository Promotion authority |
+| P2-1 | DKC-GENERALIZATION-001 | Observed / Proposed / Validated scope separation |
+| P2-2 | DKC-EVIDENCE-NEGATIVE-001 | Contradicting evidence retention |
+| P2-3 | DKC-REUSE-001 | Reuse event stage separation |
+| P2-4 | DKC-METRIC-TIME-001 | Work time measurement source |
+| P2-5 | DKC-METRIC-GOVERNANCE-001 | Personal metric use prohibition |
+
+### 2.2 Correction-2 Scope
+
+Correction-2 addresses **only** Independent Definition Re-Review-1 residuals:
+
+| Priority | ID | Topic |
+| --- | --- | --- |
+| P1-1 | DKC-AUTH-SELF-APPROVAL-001 | Self-Approval Eligibility Matrix |
+| P1-2 | DKC-RESOLUTION-001 | Candidate / Submission Resolution Identity |
+| P2-1 | DKC-SCHEMA-CONSISTENCY-001 | evidenceRefs structured relation consistency |
+
+Correction-2 does **not** add Lifecycle, Promotion, or Runtime Authority inside
+DKC.
 
 ---
 
@@ -228,6 +269,31 @@ classification: ""
 Duplicate / replay handling follows idempotent ingestion semantics. Re-ingest
 of the same identity must not artificially increase evidence strength.
 
+### 5.3 Candidate extraction resolution (Correction-2)
+
+Candidate extraction from a Development Event must compute a canonical resolution
+identity:
+
+```yaml
+resolutionKey:
+  contractType: KnowledgeCandidate@v1
+  sourceRepository: ""
+  sourceEventId: ""
+  contentDigest: ""
+```
+
+Rules:
+
+```text
+Candidate identity     = stable over sourceRepository + sourceEventId + contentDigest
+Duplicate extraction   = required detection at candidate creation
+Replay handling        = idempotent; does not create a new independent candidate
+Re-extraction          = returns existing candidateRef unless contentDigest changes
+```
+
+A changed `contentDigest` creates a new candidate version; it does not mutate
+prior candidate content in place.
+
 ---
 
 ## 6. Knowledge Candidate Generation
@@ -249,7 +315,9 @@ problem: ""
 suspectedRootCause: ""
 proposedRule: ""
 sourceRefs: []
-evidenceRefs: []
+evidenceRefs:
+  - evidenceRef: ""
+    relation: SUPPORTING|CONTRADICTING|INCONCLUSIVE
 scope:
   observedIn: []
   proposedAppliesTo: []
@@ -314,6 +382,20 @@ Supersession State
 Non-authoritative draft annotations are permitted only when explicitly labeled
 `nonAuthoritative: true` and ignored by all downstream gates.
 
+### 6.5 evidenceRefs schema consistency (Correction-2)
+
+The structured `evidenceRefs` shape in §6.1 is mandatory everywhere Candidate
+content appears, including:
+
+```text
+Candidate draft records
+KnowledgeCandidateSubmission@v1 payloads
+Cross-Repository Promotion request attachments
+```
+
+Bare string arrays for `evidenceRefs` are **not** permitted. Every evidence
+reference must declare `relation`.
+
 ---
 
 ## 7. Candidate Generation Authority (P1-1)
@@ -375,16 +457,79 @@ Verification Actor
 Authority Decision Actor
 ```
 
+### 8.1 Self-Approval Eligibility Matrix (Correction-2)
+
+Self-approval by the same principal is **not** uniformly permitted. DKC must
+classify each submission into exactly one eligibility class:
+
+| Class | Meaning |
+| --- | --- |
+| `PROHIBITED` | Same principal must not perform Verification and Authority Decision |
+| `CONDITIONAL` | Same principal may proceed only when external contract conditions are met |
+| `INDEPENDENT_VERIFICATION_REQUIRED` | Different Verification Actor is mandatory before Authority Decision |
+
+Default classification by impact:
+
+```text
+Production Runtime impact          → INDEPENDENT_VERIFICATION_REQUIRED
+Safety-impacting Knowledge         → INDEPENDENT_VERIFICATION_REQUIRED
+Cross-Repository Promotion         → INDEPENDENT_VERIFICATION_REQUIRED
+creationMode = AUTOMATED           → PROHIBITED for Verification / Authority Decision
+                                      by the same actorId
+Local / non-production draft       → CONDITIONAL
+```
+
 Rules:
 
 1. Full three-actor separation is **not** always required.
-2. Self-approval by the same principal is permitted only under explicitly
-   defined conditions in the external Verification / Promotion contracts.
-3. For Production Runtime or safety-impacting Knowledge, **Independent
-   Verification is mandatory** before Authority Decision.
-4. One principal or one Agent must not be assumed safe to perform Candidate
-   generation, Verification completion, and Approval without an explicit
-   allowed-self-approval rule.
+2. `CONDITIONAL` self-approval still requires external Verification and
+   Promotion Decision records; DKC must not infer approval from eligibility
+   class alone.
+3. `PROHIBITED` and `INDEPENDENT_VERIFICATION_REQUIRED` submissions must carry
+   a different `verificationActor.actorId` from `createdBy.actorId` before
+   Knowledge Assetization accepts downstream Authority Decisions.
+4. Candidates and submissions **must not** self-declare
+   `selfApprovalEligible`, `verified`, or equivalent authority fields.
+
+### 8.2 Circular self-reinforcement boundary
+
+At the DKC submission boundary, bind to `WAEP-LEARNING-SYSTEM-V1`
+`INV-LRN-016`:
+
+```text
+Knowledge-derived output cannot be the sole independent evidence
+supporting that same Knowledge.
+```
+
+DKC submissions must preserve evidence lineage sufficient for downstream
+Validation Authority to detect circular support:
+
+```yaml
+evidenceRefs:
+  - evidenceRef: ""
+    relation: SUPPORTING|CONTRADICTING|INCONCLUSIVE
+    lineage:
+      derivedFromKnowledgeRefs: []
+      derivedFromDecisionRefs: []
+```
+
+DKC must not treat prior Candidate or Authoritative Knowledge output as
+independent evidence when it is the sole support for the same candidate chain.
+
+### 8.3 Submission actor separation
+
+`createdBy` records Candidate authorship. `submittedBy` records submission
+action. They may differ (for example, human author with automation-assisted
+submission).
+
+Rules:
+
+```text
+submittedBy.actorId = createdBy.actorId
+  → permitted, but subject to Self-Approval Eligibility Matrix
+submittedBy.actorType = AUTOMATION with creationMode = HUMAN
+  → requires explicit human author in createdBy
+```
 
 DKC may submit Candidates and capture verification requests. DKC must not
 record verification or approval outcomes as authoritative state.
@@ -428,6 +573,30 @@ External contract definitions live under `docs/learning/contracts/` in
 DKC submits Candidates to Knowledge Assetization through
 `KnowledgeCandidateSubmission@v1` (see
 `docs/learning/contracts/knowledge-candidate-submission-v1.md`).
+
+### 9.4 Submission resolution identity (Correction-2)
+
+Each submission must compute a canonical resolution identity:
+
+```yaml
+resolutionKey:
+  contractType: KnowledgeCandidateSubmission@v1
+  candidateId: ""
+  candidateVersion: ""
+  contentDigest: ""
+```
+
+Rules:
+
+```text
+Submission identity      = stable over candidateId + candidateVersion + contentDigest
+Duplicate submission     = required detection at handoff
+Replay handling          = idempotent; does not create new candidate visibility
+Re-submission            = new submissionId only when contentDigest or candidateVersion changes
+```
+
+Duplicate submissions must not increase perceived candidate count, evidence
+strength, or promotion pressure.
 
 DKC outputs Candidate proposals only. Knowledge Assetization outputs
 Authoritative Knowledge state.
@@ -606,6 +775,10 @@ INV-DKC-012  Agent direct Authoritative Knowledge activation is PROHIBITED
 INV-DKC-013  Production Runtime / safety-impacting Knowledge requires Independent
              Verification before Authority Decision
 INV-DKC-014  Derived retrieval state is not Canonical Authority
+INV-DKC-015  Self-Approval Eligibility Matrix class is mandatory on submission
+INV-DKC-016  Candidate and Submission resolutionKey identities are mandatory
+             and duplicate / replay handling is idempotent
+INV-DKC-017  evidenceRefs must use structured relation form everywhere
 ```
 
 ---
@@ -637,6 +810,12 @@ AC-DKC-12  GitHub Canonical / Derived separation is retained.
 AC-DKC-13  Automatic Knowledge Promotion remains PROHIBITED.
 AC-DKC-14  KnowledgeCandidateSubmission@v1 contract defines the DKC output
            boundary to Knowledge Assetization.
+AC-DKC-15  Self-Approval Eligibility Matrix defines PROHIBITED / CONDITIONAL /
+           INDEPENDENT_VERIFICATION_REQUIRED classes.
+AC-DKC-16  Candidate extraction and Submission resolutionKey identities are
+           defined with idempotent duplicate / replay handling.
+AC-DKC-17  evidenceRefs structured relation schema is consistent across Candidate
+           and Submission surfaces.
 ```
 
 ---
@@ -657,13 +836,23 @@ AC-DKC-14  KnowledgeCandidateSubmission@v1 contract defines the DKC output
 
 ---
 
-## 18. Next Gate
+## 18. Correction Mapping (Re-Review-1)
+
+| Finding | ID | Correction location |
+| --- | --- | --- |
+| P1-1 Self-Approval Eligibility Matrix undefined | DKC-AUTH-SELF-APPROVAL-001 | §8.1–§8.3, INV-DKC-015, AC-DKC-15 |
+| P1-2 Candidate / Submission Resolution Identity undefined | DKC-RESOLUTION-001 | §5.3, §9.4, contract, INV-DKC-016, AC-DKC-16 |
+| P2-1 evidenceRefs schema inconsistency | DKC-SCHEMA-CONSISTENCY-001 | §6.1, §6.5, contract, INV-DKC-017, AC-DKC-17 |
+
+---
+
+## 19. Next Gate
 
 ```text
-Next: Independent Definition Re-Review-1
-on:   DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 Definition Correction-1
+Next: Independent Definition Re-Review-2
+on:   DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 Definition Correction-2
 
-Until Re-Review-1 passes and Definition Lock is granted:
+Until Re-Review-2 passes and Definition Lock is granted:
 
   Definition Lock              = NOT AUTHORIZED
   Implementation Start         = NOT AUTHORIZED

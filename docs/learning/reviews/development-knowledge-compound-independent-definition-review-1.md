@@ -103,5 +103,6 @@ Automatic Knowledge Promotion: PROHIBITED
 Next: DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 Definition Correction-1
 ```
 
-Correction-1 addresses all nine Review-1 findings. Independent Re-Review-1 is
-required before Definition Lock consideration.
+Correction-1 addresses all nine Review-1 findings. Independent Re-Review-1
+closed all Review-1 findings (9 / 9) and triggered Definition Correction-2.
+See `docs/learning/reviews/development-knowledge-compound-independent-definition-re-review-1.md`.

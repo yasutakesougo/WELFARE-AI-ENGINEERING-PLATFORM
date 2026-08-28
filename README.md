@@ -9,7 +9,7 @@ Learning and development-knowledge definitions live under
 | Definition | Revision | State |
 | --- | --- | --- |
 | `WAEP-LEARNING-SYSTEM-V1` | Definition Correction-3 | LOCKED |
-| `DEVELOPMENT-KNOWLEDGE-COMPOUND-V1` | Definition Correction-1 | Re-Review-1 pending |
+| `DEVELOPMENT-KNOWLEDGE-COMPOUND-V1` | Definition Correction-2 | Re-Review-2 pending |
 
 ```text
 Revision: Definition Correction-3

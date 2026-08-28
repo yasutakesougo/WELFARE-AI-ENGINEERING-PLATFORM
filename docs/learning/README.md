@@ -15,7 +15,7 @@ PR #13: OPEN / DRAFT / NOT MERGED
 | Path | Role |
 | --- | --- |
 | `waep-learning-system-v1.md` | Definition Correction-3 (LOCKED) |
-| `development-knowledge-compound-v1.md` | Definition Correction-1 (Re-Review-1 pending) |
+| `development-knowledge-compound-v1.md` | Definition Correction-2 (Re-Review-2 pending) |
 | `contracts/` | External Decision Contracts |
 | `reviews/independent-definition-review-1.md` | Review-1 archive |
 | `reviews/independent-definition-re-review-2.md` | Re-Review-2 archive |
@@ -23,6 +23,7 @@ PR #13: OPEN / DRAFT / NOT MERGED
 | `reviews/independent-definition-final-re-review-4.md` | Final Re-Review-4 PASS archive |
 | `reviews/definition-lock-go.md` | Human Definition Lock GO archive |
 | `reviews/development-knowledge-compound-independent-definition-review-1.md` | DKC Review-1 archive |
+| `reviews/development-knowledge-compound-independent-definition-re-review-1.md` | DKC Re-Review-1 archive |
 | `projections/registry-projection-v1.md` | Derived Registry Projection compatibility |
 
 Next gate: PR #13 READY GO / HOLD → main正本化 → Implementation Definition.

@@ -4,7 +4,7 @@
 
 ```text
 Definition: WAEP-CURRENT-STATE-OBSERVATION-IMPLEMENTATION-DEFINITION-V1
-Revision: Implementation Scope Correction-2
+Revision: Implementation Scope Correction-3
 Parent Definition: WAEP-CURRENT-STATE-OBSERVATION-CONTRACT-V1
 Parent Revision: Definition Correction-6
 Parent Source Baseline Commit: 5c55d9383a34915c45619429d7e24488ade75337
@@ -21,7 +21,7 @@ Repository Migration: NOT AUTHORIZED
 Ready / Merge / Deploy: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 External Mutation: NOT AUTHORIZED
-Next Gate: CSOC-IMPL-SLICE-A Independent Scope Re-Review-2
+Next Gate: CSOC-IMPL-SLICE-A Independent Scope Re-Review-3
 ```
 
 This document defines a candidate implementation slice against the locked
@@ -40,7 +40,7 @@ Historical Lock Transition SHA
 
 Current Authoritative Parent Artifact
   = LOCKED + Human Definition Lock GO + Implementation Start GO
-  = current parent authority for this Correction-2
+  = current parent authority for this Correction-3
 ```
 
 ```text
@@ -59,17 +59,26 @@ Source and correction lineage:
 ```text
 Source Revision: Implementation Scope Draft-1
 Source SHA-256: 2f11ce5e76d17736d957ef8b998f8c5413b45d2fa3e02dea07da6ece2dd75a68
-Prior Revision: Implementation Scope Correction-1
-Prior SHA-256: f44c8f9ede0ac5493f69b48572373a2521caf161508f5dcab97c008fb0c38991
-Apply: Implementation Scope Correction-2
+Prior Revision: Implementation Scope Correction-2
+Prior SHA-256: b125d8988c30a6fdc746b24725c5b6a21cebaaaf77b431d5c4fb2e53df1f544d
+Prior Git blob: 6e612affc28c0cf5714e5980e8124b319c67b2db
+Apply: Implementation Scope Correction-3
 ```
 
-Correction-2 preserves the Re-Review-1 closures for claim/retry and
-governance-test boundary. It restores Draft-1 mandatory kernel requirements
-that Correction-1 unintentionally removed or weakened. It does not reopen
-those closed findings and does not authorize implementation code.
+Correction-3 is a classification-only fix. It does not reopen closed
+findings and does not change the Draft-1 kernel requirements restored by
+Correction-2. It does not authorize implementation code.
 
-Finding:
+Correction-3 unique change:
+
+```text
+CLAIM_REJECTED → WAIT / HOLD
+NOT_AUTHORIZED = separately evaluated authority failure only
+CLAIM_REJECTED != NOT_AUTHORIZED
+Claim denial != Authority denial
+```
+
+Finding retained from Re-Review-2:
 
 ```text
 Finding:
@@ -77,6 +86,19 @@ CSOC-IMPL-SCOPE-PRESERVATION-001
 
 Severity:
 P1
+
+Closure Status:
+CLOSED / RETAINED
+```
+
+Finding:
+
+```text
+Finding:
+CSOC-IMPL-CLAIM-RESULT-CLASSIFICATION-001
+
+Severity:
+P2
 
 Closure Status:
 CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
@@ -388,6 +410,7 @@ CLAIM_REJECTED
   != mutationPerformed
   != retry authorized
   != new attemptGeneration already consumed
+  != NOT_AUTHORIZED
 
 NEW_OBSERVATION_REQUIRED
   != immediate retry authorized
@@ -395,11 +418,33 @@ NEW_OBSERVATION_REQUIRED
 
 terminal state
   != AVAILABLE
+
+Claim denial
+  != Authority denial
 ```
 
-The kernel MAY record `CLAIM_REJECTED` and MUST return `HOLD` or
-`NOT_AUTHORIZED`. It MUST NOT start, schedule, or imply a follow-on
+Finding:
+
+```text
+Finding:
+CSOC-IMPL-CLAIM-RESULT-CLASSIFICATION-001
+
+Severity:
+P2
+
+Closure Status:
+CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
+```
+
+The kernel MUST record `CLAIM_REJECTED` and MUST return `WAIT / HOLD` for
+claim rejection. It MUST NOT start, schedule, or imply a follow-on
 executable attempt.
+
+```text
+NOT_AUTHORIZED:
+reserved for a separately evaluated authority failure,
+not for the competing-claim rejection itself.
+```
 
 `logicalMutationId` plus `attemptGeneration` uniqueness is a kernel
 invariant. A later distributed coordination adapter may enforce it across
@@ -644,9 +689,9 @@ C6-V48: governance traceability only
 
 The current repository is documentation-only and does not expose an existing
 package manifest or test runner. That fact remains a scope-decision input.
-This Correction-2 names the authorized new substrate above. It MUST NOT be
+This Correction-3 names the authorized new substrate above. It MUST NOT be
 read as permission to create that substrate before Independent Scope
-Re-Review-2 returns `GO`.
+Re-Review-3 returns `GO`.
 
 ```text
 Named package/runtime substrate
@@ -664,7 +709,7 @@ The next gate must record a decision against this exact revision:
 Decision: GO | HOLD
 Decision Target: CSOC-IMPL-SLICE-A
 Decision Definition: WAEP-CURRENT-STATE-OBSERVATION-IMPLEMENTATION-DEFINITION-V1
-Decision Revision: Implementation Scope Correction-2
+Decision Revision: Implementation Scope Correction-3
 Parent Semantic Baseline: 29ad48d7fc3080d16c966dc9a13cd3213584d7bd4f73e2964961d1e1c9cae7fb
 Current Authoritative Parent Artifact SHA-256: ebeebd54422c8402812478fcb2b011cbe1f8f2d19a69b3be3b2a63135f81f3be
 Historical Lock Transition SHA: 26147297b3382181bc7acc69b81427a984c3aaf8fe0aaae8da8f82f375f9345b
@@ -680,20 +725,22 @@ Repository / SharePoint / M365 Mutation: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 P1 CSOC-IMPL-CLAIM-RETRY-SEMANTICS-001: CLOSED / RETAINED
 P2 CSOC-IMPL-GOVERNANCE-TEST-BOUNDARY-001: CLOSED / RETAINED
-P1 CSOC-IMPL-SCOPE-PRESERVATION-001: <CLOSED | OPEN | HOLD>
+P1 CSOC-IMPL-SCOPE-PRESERVATION-001: CLOSED / RETAINED
+P2 CSOC-IMPL-CLAIM-RESULT-CLASSIFICATION-001: <CLOSED | OPEN | HOLD>
 Reason: <evidence-backed decision>
 ```
 
 `GO` authorizes only the included scope after all required preconditions are
-recorded and Independent Scope Re-Review-2 closes
-`CSOC-IMPL-SCOPE-PRESERVATION-001`. `HOLD` is required if the restored
-Draft-1 kernel requirements, toolchain, paths, test boundary, claim/retry
-semantics, governance-test boundary, or any required evidence remains
-unknown, contradictory, unavailable, or weakened.
+recorded and Independent Scope Re-Review-3 closes
+`CSOC-IMPL-CLAIM-RESULT-CLASSIFICATION-001`. `HOLD` is required if claim
+rejection is classified as `NOT_AUTHORIZED`, or if restored Draft-1 kernel
+requirements, toolchain, paths, test boundary, claim/retry semantics,
+governance-test boundary, or any required evidence remains unknown,
+contradictory, unavailable, or weakened.
 
-The author of this Correction-2 MUST NOT promote
-`CSOC-IMPL-SCOPE-PRESERVATION-001` to `CLOSED` and MUST NOT promote the
-slice to `Scope GO`.
+The author of this Correction-3 MUST NOT promote
+`CSOC-IMPL-CLAIM-RESULT-CLASSIFICATION-001` to `CLOSED` and MUST NOT
+promote the slice to `Scope GO`.
 
 ## 8. Current decision state
 
@@ -701,7 +748,7 @@ slice to `Scope GO`.
 CSOC-IMPL-SLICE-A:
 CORRECTED / AWAITING INDEPENDENT SCOPE RE-REVIEW
 
-Implementation Scope Correction-2:
+Implementation Scope Correction-3:
 COMPLETE WHEN APPLIED
 
 P1 CSOC-IMPL-CLAIM-RETRY-SEMANTICS-001:
@@ -711,6 +758,9 @@ P2 CSOC-IMPL-GOVERNANCE-TEST-BOUNDARY-001:
 CLOSED / RETAINED
 
 P1 CSOC-IMPL-SCOPE-PRESERVATION-001:
+CLOSED / RETAINED
+
+P2 CSOC-IMPL-CLAIM-RESULT-CLASSIFICATION-001:
 CORRECTED / PENDING INDEPENDENT SCOPE RE-REVIEW
 
 Implementation Code:
@@ -729,5 +779,5 @@ External Mutation:
 NOT AUTHORIZED
 
 Next Gate:
-CSOC-IMPL-SLICE-A Independent Scope Re-Review-2
+CSOC-IMPL-SLICE-A Independent Scope Re-Review-3
 ```

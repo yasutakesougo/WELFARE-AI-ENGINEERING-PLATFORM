@@ -10,6 +10,7 @@ Source Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Source Main Event: PR #22 Merge Commit
 Source Reconciliation: WAEP-CURRENT-REPOSITORY-RECONCILIATION-V3 / READ ONLY
 Correction Authority: Human GO
+Correction State: COMPLETE ON FEATURE BRANCH
 Branch: docs/waep-current-state-correction-v3
 Repository Mutation Scope: CURRENT-STATE DOCUMENTS ONLY
 Ready: NOT AUTHORIZED
@@ -93,33 +94,36 @@ Implementation Reliance: HOLD
 Runtime Enforcement: NOT AUTHORIZED
 ```
 
-### C3-4 — DKC Current Gate changed by independent assessment
+### C3-4 — DKC repository state and external assessment differ
 
-PR #17 still records `Re-Review-2 pending`, but the independent Re-Review-2
-performed against exact head `332d671eea5d268998fdaef551eac0ed9ca2ace8`
-found:
+PR #17 still records `Independent Definition Re-Review-2 pending`.
+
+Separately, an external independent assessment in the current review session was
+performed against exact head
+`332d671eea5d268998fdaef551eac0ed9ca2ace8` and concluded:
 
 ```text
-Verdict: CORRECTION REQUIRED
+Assessment Verdict: CORRECTION REQUIRED
 P0 / P1 / P2: 0 / 2 / 1
-Review-1 findings: 9 / 9 CLOSED
-Re-Review-1 findings: 3 / 3 CLOSED
+Review-1 findings assessed CLOSED: 9 / 9
+Re-Review-1 findings assessed CLOSED: 3 / 3
 ```
 
-Because the PR body has not yet been updated and the branch is 13 commits behind
-current main, the Current-State interpretation is:
+That assessment has not yet been published as repository review evidence and is
+not treated as repository Authority by this correction.
 
 ```text
-DKC Correction-2: historical active source on PR #17
-Next work: current-main reconciliation + Definition Correction-3
+Repository-recorded DKC Next Gate: Independent Definition Re-Review-2 PENDING
+External Assessment: CORRECTION REQUIRED
+Repository Review Evidence Publication: NOT YET DONE
 Definition Lock: NOT AUTHORIZED
 Implementation Start: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 ```
 
-The independent review result should be published as review evidence in its own
-subsequent write step; this Current-State correction does not manufacture or
-close that evidence record.
+If the external assessment is adopted through the repository review path, the
+expected next work is current-main reconciliation followed by Definition
+Correction-3.
 
 ---
 
@@ -130,7 +134,7 @@ PR #9  = HISTORICAL PORTFOLIO SOURCE / DIRECT MERGE HOLD
 PR #14 = SUPERSEDED POST-MERGE CANDIDATE
 PR #15 = ACTIVE SLICE A CANDIDATE
 PR #16 = HISTORICAL DKC PREDECESSOR
-PR #17 = ACTIVE DKC SOURCE LINE / CORRECTION-3 REQUIRED
+PR #17 = ACTIVE DKC SOURCE LINE / REPOSITORY RE-REVIEW-2 PENDING
 PR #21 = ACTIVE CSOC IMPLEMENTATION LINE
 PR #22 = MERGED AUTHORITY-CONTRACT MILESTONE / POST-LOCK TRIAGE REQUIRED
 ```
@@ -147,12 +151,13 @@ classification.
 2. Authority Claim Resolution Post-Lock Independent Review
 3. If required: Authority Claim Resolution Definition Correction-4
 4. Independent Re-Review + Human Definition Lock GO / HOLD
-5. DKC current-main reconciliation + Definition Correction-3
-6. DKC Independent Definition Re-Review-3 + Human Lock GO / HOLD
-7. Slice A Learning Event baseline reconciliation + Correction-1
-8. CSOC PR #21 governance reconciliation + Independent Implementation Re-Review-2
-9. Superseded PR cleanup after evidence preservation verification
-10. Ready / Merge / Deploy remain separate workstream-specific gates
+5. Publish/resolve DKC Re-Review-2 evidence
+6. DKC current-main reconciliation + Definition Correction-3 if required
+7. DKC Independent Definition Re-Review-3 + Human Lock GO / HOLD
+8. Slice A Learning Event baseline reconciliation + Correction-1
+9. CSOC PR #21 governance reconciliation + Independent Implementation Re-Review-2
+10. Superseded PR cleanup after evidence preservation verification
+11. Ready / Merge / Deploy remain separate workstream-specific gates
 ```
 
 This order minimizes repeated review caused by changing Authority governance
@@ -192,8 +197,7 @@ docs/audit/waep-current-state-correction-v3.md
 ```
 
 `docs/audit/waep-current-state-index-v2.md` remains untouched as historical
-snapshot evidence. Current-facing documents must point to V3 after this
-correction.
+snapshot evidence. Current-facing documents point to V3 after this correction.
 
 ---
 
@@ -201,7 +205,7 @@ correction.
 
 ```text
 Current-State Correction V3:
-CORRECTION ARTIFACTS PREPARED ON FEATURE BRANCH
+COMPLETE ON FEATURE BRANCH
 
 PR Publication:
 NOT AUTHORIZED BY THIS GO

@@ -8,34 +8,23 @@ Revision: Definition Correction-2
 Supersedes: Definition Correction-1
 Review-1 Findings: 9 / 9 CLOSED
 Independent Definition Re-Review-1: CORRECTION REQUIRED → addressed in Correction-2
-Re-Review-1 Findings: 3 / 3 CLOSED by Independent Definition Re-Review-2
-Independent Definition Re-Review-2: PASS
-Independent Definition Re-Review-3: PASS / LOCKABLE
-Human Definition Lock: GO
-Definition State: LOCKED
-Locked Definition Blob: a17ede815d9c9f3efc4292e9db8d24edca19b9d3
-Locked Submission Contract Blob: 26c9764abf41106b9faba5bd5f5bb25323961b7f
-Lock Decision Record: docs/learning/reviews/development-knowledge-compound-definition-lock-go.md
+Re-Review-1 Findings: 3 / 3 addressed in Correction-2 (closure pending Re-Review-2)
+Independent Definition Re-Review-2: REQUIRED
+Definition Lock: NOT AUTHORIZED
 Implementation Start: NOT AUTHORIZED
 Knowledge Extraction Prototype: NOT AUTHORIZED
 Automatic Candidate Generation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 Automation Enforcement: NOT AUTHORIZED
-Next Gate: Implementation Start GO / HOLD
+Next Gate: Independent Definition Re-Review-2
 ```
-
-> NOTE: The locked Definition identity is the pre-lock content blob
-> `a17ede815d9c9f3efc4292e9db8d24edca19b9d3`. This file header synchronization
-> records the lock state only; it does not redefine or replace that locked
-> semantic artifact. Any semantic change below this notice requires a new
-> Definition review / lock chain.
 
 Gate chain:
 
 ```text
 Independent Definition Re-Review-3  PASS / LOCKABLE
         ↓
-Human Definition Lock               GO
+Human Definition Lock               GO / HOLD
         ↓
 Definition LOCKED
         ↓
@@ -46,16 +35,14 @@ Review path to lock:
 
 ```text
 Review-1 → Correction-1 → Re-Review-1 → Correction-2 → Re-Review-2 → Re-Review-3
-                                                                    ↓
-                                                          PASS / LOCKABLE
-                                                                    ↓
-                                                          Human Lock GO
+                                                                    ↑
+                                                          PASS / LOCKABLE required
 ```
 
 Current position:
 
 ```text
-Definition LOCKED → Implementation Start GO / HOLD pending
+Correction-2 complete → Re-Review-2 pending
 ```
 
 This document is **definition only**. It does not authorize implementation,
@@ -63,6 +50,14 @@ persistence, automatic candidate generation, knowledge promotion, or automation
 enforcement.
 
 ```text
+Definition Correction-2
+  != Definition Lock GO / HOLD
+  != Definition LOCKED
+  != Implementation Start
+  != Knowledge Extraction Prototype
+  != Automatic Candidate Generation
+  != Automatic Knowledge Promotion
+
 Definition Lock GO
   != Implementation Start
   != Automatic Knowledge Promotion
@@ -610,67 +605,9 @@ External contract definitions live under `docs/learning/contracts/` in
 
 ### 9.3 Submission contract
 
-DKC submits Candidates to Knowledge Assetization through the versioned contract:
-
-```text
-KnowledgeCandidateSubmission@v1
-```
-
-Mandatory submission fields:
-
-```yaml
-submissionId: ""
-contractVersion: KnowledgeCandidateSubmission@v1
-submissionVersion: "1"
-resolutionKey:
-  contractType: KnowledgeCandidateSubmission@v1
-  candidateId: ""
-  candidateVersion: ""
-  contentDigest: ""
-selfApprovalEligibility: PROHIBITED|CONDITIONAL|INDEPENDENT_VERIFICATION_REQUIRED
-candidate:
-  candidateId: ""
-  candidateVersion: ""
-  observation: ""
-  problem: ""
-  suspectedRootCause: ""
-  proposedRule: ""
-  sourceRefs: []
-  scope:
-    observedIn: []
-    proposedAppliesTo: []
-    explicitlyNotValidatedFor: []
-  evidenceRefs:
-    - evidenceRef: ""
-      relation: SUPPORTING|CONTRADICTING|INCONCLUSIVE
-      lineage:
-        derivedFromKnowledgeRefs: []
-        derivedFromDecisionRefs: []
-  createdBy:
-    actorType: HUMAN|AGENT|SERVICE|AUTOMATION
-    actorId: ""
-  creationMode: HUMAN|AGENT_ASSISTED|AUTOMATED
-  contentDigest: ""
-submittedAt: ""
-submittedBy:
-  actorType: HUMAN|AGENT|SERVICE|AUTOMATION
-  actorId: ""
-sourceRepository: ""
-crossRepositoryPromotionRequest: null
-contentDigest: ""
-```
-
-Rules:
-
-```text
-DKC Candidate submission
-  != Verification Decision
-  != Promotion Decision
-  != Lifecycle Decision
-```
-
-Submission may reference external Verification or Promotion decision identifiers,
-but must not encode their outcome as DKC authority state.
+DKC submits Candidates to Knowledge Assetization through
+`KnowledgeCandidateSubmission@v1` (see
+`docs/learning/contracts/knowledge-candidate-submission-v1.md`).
 
 ### 9.4 Submission resolution identity (Correction-2)
 
@@ -687,32 +624,36 @@ resolutionKey:
 Rules:
 
 ```text
-Duplicate submission → detected before Knowledge Assetization intake
-Same resolutionKey   → idempotent; does not create new candidate visibility
-Resubmission          → new submission identity only when candidateVersion or
-                        contentDigest changes
+Submission identity      = stable over candidateId + candidateVersion + contentDigest
+Duplicate submission     = required detection at handoff
+Replay handling          = idempotent; does not create new candidate visibility
+Re-submission            = new submissionId only when contentDigest or candidateVersion changes
 ```
+
+Duplicate submissions must not increase perceived candidate count, evidence
+strength, or promotion pressure.
+
+DKC outputs Candidate proposals only. Knowledge Assetization outputs
+Authoritative Knowledge state.
 
 ---
 
-## 10. Cross-Repository Promotion Boundary (P1-4)
+## 10. Cross-Repository Promotion (P1-4)
 
-DKC may create a **promotion request** for cross-repository reuse, but must not
-self-promote local knowledge into Platform Knowledge.
+Local Knowledge Candidates are repository-scoped by default.
 
-Required stages:
+Cross-repository elevation follows a separate action:
 
 ```text
-Local Candidate
-       ↓
-Verification
-       ↓
-Cross-Repository Promotion Decision
-       ↓
-Platform Candidate
-       ↓
-Knowledge Assetization
+Local Knowledge Candidate
+  ↓
+Cross-Repository Applicability Review
+  ↓
+Platform Knowledge Candidate
 ```
+
+Platform Knowledge Candidate creation is a **separate action** from Local
+Candidate generation.
 
 Minimum required evidence for Cross-Repository Promotion Decision:
 
@@ -726,47 +667,48 @@ crossRepositoryPromotionRequest:
   promotionDecisionRef: ""          # external authority only
 ```
 
-A single repository observation is insufficient for automatic platform-level
-promotion.
+Rules:
+
+```text
+Repository-specific incidents must not silently generalize to platform rules.
+SharePoint-specific failure must not become all-web-application rule without
+  independent Promotion Decision and counterexample assessment.
+Platform Candidate creation requires independent Promotion Decision authority.
+```
+
+DKC may package a Cross-Repository Promotion **request**. DKC must not create
+Platform Knowledge Candidates as authoritative outputs without an external
+Promotion Decision reference.
 
 ---
 
-## 11. Development Knowledge Retrieval
+## 11. Reuse Event Capture (P2-3)
 
-DKC can request retrieval of Authoritative Knowledge after Knowledge Assetization.
+Reuse events measure development-side engagement with knowledge artifacts.
+Simple reference is not successful reuse.
 
-Retrieval inputs:
+Required reuse stages:
 
-```text
-Task
-Repository Role
-Language
-Framework
-Error
-Historical Context
+```yaml
+reuseStage:
+  - DISCOVERED
+  - CONSIDERED
+  - APPLIED
+  - VERIFIED_EFFECTIVE
+  - REJECTED_NOT_APPLICABLE
 ```
 
-Retrieval outputs must distinguish:
+Rules:
 
 ```text
-Candidate results
-Authoritative Knowledge results
+Reference alone            != successful reuse
+DISCOVERED / CONSIDERED    != VERIFIED_EFFECTIVE
+VERIFIED_EFFECTIVE         requires explicit confirmation event
+REJECTED_NOT_APPLICABLE    is a valid reuse outcome and must be retained
 ```
 
-A Candidate must not be presented as if it were `CURRENT` Authoritative Knowledge.
-
-Derived retrieval systems remain rebuildable:
-
-```text
-GitHub Canonical
-     │
-     ├─ Vector DB
-     ├─ Search Index
-     ├─ Knowledge Graph
-     └─ Agent Memory
-```
-
-Loss of a derived store does not modify Canonical Knowledge state.
+Reuse metrics for Knowledge Reuse Assessment must use stage-aware aggregation.
+Do not count DISCOVERED or CONSIDERED as successful reuse.
 
 ---
 
@@ -783,34 +725,23 @@ Avoided Work estimate
 Estimated reduction must not be treated as measured outcome.
 ```
 
-### 12.2 Work time measurement (P2-4)
+### 12.2 Work time source (P2-4)
 
-Raw `WorkTime` is not a single-source metric.
-
-Possible sources include:
-
-```text
-Human start / stop records
-Agent task start / completion timestamps
-Git commit intervals
-PR activity intervals
-CI duration
-Issue state intervals
-```
-
-Metric records must declare source and measurement type:
+Work time values must retain measurement source:
 
 ```yaml
-metric:
-  name: ""
-  measurementType: MEASURED|ESTIMATED|DERIVED
-  source: ""
-  observedAt: ""
-  value: 0
-  unit: ""
+duration:
+  minutes: 0
+  source: MANUAL|TIMER|SYSTEM_EVENT|ESTIMATED
 ```
 
+Rules:
+
+```text
+Estimated duration must not be aggregated as measured duration.
+Analysis surfaces must preserve source separation.
 Mixed-source rollups must label ESTIMATED separately from measured sources.
+```
 
 ### 12.3 Metric governance (P2-5)
 
@@ -830,83 +761,50 @@ explicit governance definition authorizes otherwise.
 
 ---
 
-## 13. Reuse Event Capture (P2-3)
+## 13. Knowledge Retrieval Request
 
-A reuse event is recorded in stages:
+DKC may emit retrieval requests against Derived retrieval planes and Canonical
+GitHub artifacts.
+
+Retrieval results must preserve authority labeling:
 
 ```text
-Retrieved
-Suggested
-Accepted
-Applied
-Outcome Observed
+Candidate result            ≠ Authoritative Knowledge result
+Derived index result        ≠ Canonical state
+Knowledge Available         ≠ Execution Authority
 ```
 
-These stages must not be collapsed into one boolean `reused=true`.
-
-Minimum record:
-
-```yaml
-reuseEventId: ""
-knowledgeRef: ""
-repository: ""
-stage: RETRIEVED|SUGGESTED|ACCEPTED|APPLIED|OUTCOME_OBSERVED
-actorType: HUMAN|AGENT|SERVICE|AUTOMATION
-observedAt: ""
-evidenceRefs: []
-```
-
-`APPLIED` does not imply successful outcome.
-
-`OUTCOME_OBSERVED` must reference result evidence.
+Retrieval does not grant runtime execution authority.
 
 ---
 
-## 14. Data Flow
+## 14. Retained Positive Findings
+
+The following Definition Start decisions remain unchanged:
 
 ```text
-Repository / Issue / PR / CI / Incident
-              │
-              ▼
-       Development Event
-              │
-              ▼
-DEVELOPMENT-KNOWLEDGE-COMPOUND
-              │
-              ├─ Candidate Generation
-              │       │
-              │       ▼
-              │  KnowledgeCandidateSubmission@v1
-              │       │
-              │       ▼
-              │  Knowledge Assetization
-              │       │
-              │       ├─ Verification
-              │       ├─ Validation
-              │       ├─ Promotion
-              │       ├─ Lifecycle
-              │       └─ Runtime Eligibility
-              │
-              ├─ Reuse Event Capture
-              │
-              └─ Engineering Metrics
+GitHub Canonical / Derived rebuild model
+Automatic Knowledge Promotion prohibition
+Observation vs Generalized Rule separation
+Known Failure Rework as process metric
+Avoided Work estimate vs actual separation
 ```
 
 ---
 
-## 15. Invariants
+## 15. Safety Invariants
 
 ```text
-INV-DKC-001  Candidate existence != Knowledge existence
-INV-DKC-002  DKC does not own Authoritative Knowledge lifecycle
-INV-DKC-003  DKC does not own Runtime Binding / Eligibility
-INV-DKC-004  Candidate Generation Authority != Promotion Authority
-INV-DKC-005  Automated Candidate requires createdBy + creationMode provenance
-INV-DKC-006  Verification and Authority Decision are external contracts
-INV-DKC-007  Contradicting evidence must be preserved
-INV-DKC-008  Candidate scope must not declare validatedScope
-INV-DKC-009  Cross-Repository Promotion requires external Promotion Decision
-INV-DKC-010  Reuse event stages must not collapse into one boolean
+INV-DKC-001  Development Event ≠ Knowledge Candidate ≠ Authoritative Knowledge
+INV-DKC-002  Candidate existence ≠ Knowledge existence
+INV-DKC-003  Candidate Generation Authority ≠ Promotion Authority
+INV-DKC-004  Candidate must record createdBy and creationMode
+INV-DKC-005  DKC must not emit ACTIVE / CURRENT / Validated / Runtime Eligible
+INV-DKC-006  Contradicting evidence must not be deleted to strengthen a Candidate
+INV-DKC-007  Validated Scope is decided only in Knowledge Assetization authority
+INV-DKC-008  Cross-Repository Promotion requires independent Promotion Decision
+INV-DKC-009  Reference alone is not successful reuse
+INV-DKC-010  Estimated work time must not be aggregated as measured work time
 INV-DKC-011  Engineering Metrics must not be used for personal productivity ranking
 INV-DKC-012  Agent direct Authoritative Knowledge activation is PROHIBITED
 INV-DKC-013  Production Runtime / safety-impacting Knowledge requires Independent
@@ -920,51 +818,28 @@ INV-DKC-017  evidenceRefs must use structured relation form everywhere
 
 ---
 
-## 16. Validation Scenarios
+## 16. Acceptance Criteria
 
 ```text
-DKC-V01  Development Event without Candidate → permitted
-DKC-V02  Candidate without promotion → Candidate only
-DKC-V03  Automated Candidate with missing createdBy → reject / HOLD
-DKC-V04  Candidate self-declares ACTIVE → reject
-DKC-V05  Contradicting evidence removed before promotion → reject / HOLD
-DKC-V06  Local Candidate promoted cross-repo without Promotion Decision → reject
-DKC-V07  Candidate claims validatedScope → reject
-DKC-V08  Reuse APPLIED without outcome evidence → do not mark outcome success
-DKC-V09  Avoided work estimate displayed as measured actual → reject
-DKC-V10  Derived index lost → rebuild from GitHub Canonical without changing
-         Knowledge lifecycle state
-DKC-V11  Agent direct Authoritative Knowledge activation → prohibited
-DKC-V12  Production runtime knowledge uses same Candidate Author, Verification Actor,
-         and Authority Decision Actor without independent verification → reject / HOLD
-DKC-V13  Knowledge-derived output is the sole independent evidence for the same
-         candidate chain → reject / HOLD under INV-LRN-016
-DKC-V14  Candidate submitted using KnowledgeCandidateSubmission@v1 with full
-         provenance and external Decision ownership → accept for downstream review only
-DKC-V15  AUTOMATED candidate submitted with same actor attempting Verification /
-         Authority Decision → classify PROHIBITED; do not promote
-DKC-V16  Same Development Event + same contentDigest is re-extracted → resolve to
-         existing candidate identity; no evidence-strength increase
-DKC-V17  Submission uses bare string evidenceRefs → reject; structured relation is
-         mandatory
-```
-
----
-
-## 17. Acceptance Criteria
-
-```text
-AC-DKC-01  DKC responsibility excludes Authoritative Lifecycle and Runtime Binding.
-AC-DKC-02  Candidate Generation records actor and creationMode.
-AC-DKC-03  Verification / Authority Decision are represented as external contracts.
-AC-DKC-04  Observation / Problem / Root Cause / Generalized Rule remain distinct.
-AC-DKC-05  Observed / Proposed / Validated scope are distinct.
-AC-DKC-06  Contradicting evidence is retained.
-AC-DKC-07  Cross-Repository Promotion requires independent evidence and Decision.
-AC-DKC-08  Reuse stages are distinguishable.
-AC-DKC-09  Work time metric sources and measurementType are declared.
-AC-DKC-10  Personal productivity ranking from DKC metrics is prohibited.
-AC-DKC-11  Engineering Metrics remain process-improvement inputs only at Definition
+AC-DKC-01  DKC scope is limited to event capture, candidate extraction,
+           traceability, reuse, metrics, and retrieval request.
+AC-DKC-02  Candidate records createdBy.actorType, createdBy.actorId, and
+           creationMode.
+AC-DKC-03  Candidate Generation Authority is separated from Promotion Authority.
+AC-DKC-04  Verification Actor and Authority Decision Actor separation rules
+           are defined with Independent Verification required for production /
+           safety-impacting Knowledge.
+AC-DKC-05  DKC does not own Authoritative Lifecycle, Maturity, Confidence,
+           Validation Result, Runtime Binding, or Canonical Supersession.
+AC-DKC-06  Cross-Repository Promotion requires separate action and external
+           Promotion Decision evidence.
+AC-DKC-07  Candidate scope distinguishes observedIn, proposedAppliesTo, and
+           explicitlyNotValidatedFor.
+AC-DKC-08  Evidence refs support SUPPORTING / CONTRADICTING / INCONCLUSIVE.
+AC-DKC-09  Reuse events distinguish DISCOVERED, CONSIDERED, APPLIED,
+           VERIFIED_EFFECTIVE, REJECTED_NOT_APPLICABLE.
+AC-DKC-10  Work time preserves MANUAL / TIMER / SYSTEM_EVENT / ESTIMATED source.
+AC-DKC-11  Personal evaluation uses from metrics are prohibited at Definition
            level.
 AC-DKC-12  GitHub Canonical / Derived separation is retained.
 AC-DKC-13  Automatic Knowledge Promotion remains PROHIBITED.
@@ -980,6 +855,22 @@ AC-DKC-17  evidenceRefs structured relation schema is consistent across Candidat
 
 ---
 
+## 17. Correction Mapping (Review-1)
+
+| Finding | ID | Correction location |
+| --- | --- | --- |
+| P1-1 Candidate generation authority undefined | DKC-AUTH-CANDIDATE-001 | §6.1, §7, INV-DKC-003/004, AC-DKC-02/03 |
+| P1-2 Verification vs Authority Decision boundary | DKC-AUTH-VERIFY-001 | §8, INV-DKC-013, AC-DKC-04 |
+| P1-3 Knowledge Assetization authority overlap | DKC-BOUNDARY-KA-001 | §3, §9, INV-DKC-005/007, AC-DKC-01/05/14 |
+| P1-4 Cross-Repository Promotion authority | DKC-CROSSREPO-001 | §10, INV-DKC-008, AC-DKC-06 |
+| P2-1 Over-generalization detection weak | DKC-GENERALIZATION-001 | §6.2, INV-DKC-007, AC-DKC-07 |
+| P2-2 Negative evidence handling missing | DKC-EVIDENCE-NEGATIVE-001 | §6.3, INV-DKC-006, AC-DKC-08 |
+| P2-3 Reuse success definition missing | DKC-REUSE-001 | §11, INV-DKC-009, AC-DKC-09 |
+| P2-4 Work time input reliability | DKC-METRIC-TIME-001 | §12.2, INV-DKC-010, AC-DKC-10 |
+| P2-5 Personal metric use boundary | DKC-METRIC-GOVERNANCE-001 | §2, §12.3, INV-DKC-011, AC-DKC-11 |
+
+---
+
 ## 18. Correction Mapping (Re-Review-1)
 
 | Finding | ID | Correction location |
@@ -990,14 +881,53 @@ AC-DKC-17  evidenceRefs structured relation schema is consistent across Candidat
 
 ---
 
-## 19. Exit Gate
+## 19. Next Gate
+
+### 19.1 Re-Review-2 (current)
+
+Re-Review-2 must independently confirm:
 
 ```text
-Human Definition Lock: GO
-Definition State: LOCKED
-Lock Decision Record: docs/learning/reviews/development-knowledge-compound-definition-lock-go.md
-Implementation Start: separate GO / HOLD
-Automatic Knowledge Promotion: PROHIBITED
+1. Re-Review-1 findings (3 / 3) are fully closed in Correction-2
+2. No new P0 / P1 / P2 findings are introduced
 ```
 
-No Implementation Start is implied by Definition Lock.
+```text
+Next: Independent Definition Re-Review-2
+on:   DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 Definition Correction-2
+```
+
+### 19.2 Gate chain to Implementation
+
+```text
+Independent Definition Re-Review-3  PASS / LOCKABLE
+        ↓
+Human Definition Lock               GO / HOLD
+        ↓
+Definition LOCKED
+        ↓
+Implementation Start              separate GO / HOLD
+```
+
+Re-Review-3 verdict must be PASS / LOCKABLE before Human Definition Lock
+GO / HOLD.
+
+Human Definition Lock GO authorizes Definition Lock only. It does not authorize
+Implementation Start, Knowledge Extraction Prototype, Automatic Candidate
+Generation, or Automatic Knowledge Promotion.
+
+Until Human Definition Lock GO is granted and Definition is LOCKED:
+
+```text
+  Definition Lock              = NOT AUTHORIZED
+  Definition State             = UNLOCKED
+  Implementation Start         = NOT AUTHORIZED
+  Knowledge Extraction Prototype = NOT AUTHORIZED
+  Automatic Candidate Generation = NOT AUTHORIZED
+  Automatic Knowledge Promotion  = PROHIBITED
+  Automation Enforcement       = NOT AUTHORIZED
+```
+
+Implementation Start requires a separate GO / HOLD gate after Definition LOCKED.
+Automatic Knowledge Promotion remains PROHIBITED regardless of Definition Lock.
+```

@@ -18,34 +18,44 @@ Ready / Merge / Deploy: NOT AUTHORIZED
 
 ## Correction Mapping
 
-- `CSOC-IMPL-ACTOR-AUTHORITY-DEFAULT-ALLOW-001`: actor authority is positive-only; `actorAuthorized === true`, actor identity, structured authority basis, exact Policy revision binding, and evidence are required. Missing/unknown authority fails closed.
-- `CSOC-IMPL-REVOCATION-APPLICABILITY-001`: supersession/revocation suppression is derived only from lifecycle edges that are current-context applicable, resolution-time effective, policy-resolvable, and backed by explicit lifecycle authority evidence. Invalid lifecycle graph edges fail closed.
-- `CSOC-IMPL-CLAIM-EVENT-BINDING-001`: every Claim event validates `claimEventId`, exact `claimId`, exact `gateObservationId`, `occurredAt`, actor identity, evidence references, uniqueness, and event ordering. Mixed histories are INVALID.
+- `CSOC-IMPL-ACTOR-AUTHORITY-DEFAULT-ALLOW-001`: actor authority is positive-only. `actorAuthorized === true`, actor identity, structured authority basis, exact Policy revision binding, and evidence are required. Missing or unknown authority fails closed.
+- `CSOC-IMPL-REVOCATION-APPLICABILITY-001`: supersession/revocation is derived only from lifecycle edges that are current-context applicable, resolution-time effective, policy-resolvable, domain/scope compatible, and backed by explicit lifecycle authority evidence.
+- `CSOC-IMPL-CLAIM-EVENT-BINDING-001`: every Claim event validates exact `claimId` / `gateObservationId`, event identity, timestamp, actor identity, evidence references, uniqueness, and ordering. Mixed histories are INVALID.
 - `CSOC-IMPL-MATERIAL-PRESENT-SOURCE-001`: `PRESENT` and `AUTHORITATIVELY_ABSENT` require `REMOTE_AUTHORITATIVE` provenance plus source system/resource/retrieval time/evidence reference. Local or missing provenance becomes PARTIAL / HOLD.
-- `CSOC-IMPL-AUTHORITY-EVIDENCE-CONTRACT-001`: exact `AuthorityPolicyRevisionIdentity` validation, immutable `AuthorityResolutionEvidence@v1`-shape output, and `PreActionAuthorityValidation@v1`-shape output are implemented. Gate/Claim bind to verified initial `authorityResolutionId`; initial and pre-action resolution IDs are retained separately. Claim acquisition must precede pre-action validation, and Authority resolution timestamps are checked against the action timeline.
-- `CSOC-IMPL-IDENTITY-CANONICALIZATION-001`: identity comparison uses deterministic recursive object-key ordering, locale-independent lexical comparison, and Unicode NFC normalization instead of raw insertion-order `JSON.stringify`. Unsupported identity values fail comparison closed.
+- `CSOC-IMPL-AUTHORITY-EVIDENCE-CONTRACT-001`: exact `AuthorityPolicyRevisionIdentity` validation, immutable Authority Resolution evidence, and Pre-Action Authority Validation evidence are implemented. Gate/Claim bind to verified initial `authorityResolutionId`; initial and pre-action resolution IDs remain separate. Policy execution rules are bound to the exact Policy revision identity and evidence. Authority evidence records evaluated, applicable, excluded, and lifecycle-suppressed Decisions with reasons.
+- `CSOC-IMPL-IDENTITY-CANONICALIZATION-001`: identity comparison uses deterministic recursive key ordering, locale-independent lexical ordering, and Unicode NFC normalization. Unsupported values fail comparison closed.
 - `CSOC-IMPL-DECISION-ID-UNIQUENESS-001`: duplicate `decisionId` is INVALID.
 
-Additional hardening: a terminal Claim history (`CONSUMED / ABORTED / RELEASED`) is valid historical evidence but is never an ACTIVE exclusive claim for a new action attempt.
+Additional hardening:
+
+```text
+terminal Claim history cannot become an ACTIVE execution claim
+initial Authority resolution must not occur after Claim
+pre-action Authority resolution must occur after Claim
+pre-action Authority validation must occur after the pre-action resolution
+Authority domain / scope must match the currently applicable Policy context
+unbound Policy precedence / revision-independent rules fail closed
+```
 
 ## Validation
 
-Exact corrected source is intended for dependency-free Node 22 validation:
+Exact corrected source/test blobs were validated under Node 22:
 
 ```text
 node --test test/*.test.js
-25 / 25 PASS
+29 / 29 PASS
 
 node bin/shadow-evaluate.mjs
 mode = SHADOW_READ_ONLY
 mutationAttempted = false
+recommendation = ELIGIBLE
 initialAuthorityResolutionId = AR-initial-1
 preActionAuthorityResolutionId = AR-preaction-1
 preActionAuthorityValidation = GO
 mutationAuthorizedByThisResolver = false
 ```
 
-Regression coverage includes all eight Review-1 requested gaps, terminal-claim non-reuse, current-policy compatibility fail-closed behavior, pre-action temporal ordering, and NFC-equivalent identity comparison.
+`ELIGIBLE` remains a resolver recommendation only. No mutation adapter is implemented by Slice A.
 
 ## Authority Boundary
 

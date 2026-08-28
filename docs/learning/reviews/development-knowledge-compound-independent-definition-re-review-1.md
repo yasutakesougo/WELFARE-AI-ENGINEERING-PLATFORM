@@ -22,7 +22,10 @@ Next: DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 Definition Correction-2
 
 This file archives the Independent Definition Re-Review-1 result that triggered
 Definition Correction-2. Correction mapping lives in
-`docs/learning/development-knowledge-compound-v1.md` §19.2.
+`docs/learning/development-knowledge-compound-v1.md` §18.
+
+Definition Correction-2 addresses all three Re-Review-1 findings. Finding
+closure is pending Independent Definition Re-Review-2 verification.
 
 ---
 
@@ -102,6 +105,13 @@ No new Lifecycle / Promotion / Runtime Authority inside DKC.
 
 Architecture Centerline は RETAINED。
 
-Definition Lock は、Self-Approval Matrix・Resolution Identity・Schema Consistency
-が Definition Contract まで確定し、Independent Definition Re-Review-2 が通過するまで
-NOT AUTHORIZED。
+Definition Correction-2 addresses all three Re-Review-1 findings. Closure
+requires Independent Definition Re-Review-2 to confirm:
+
+```text
+1. Re-Review-1 findings (3 / 3) are fully closed
+2. No new P0 / P1 / P2 findings are introduced
+```
+
+Definition Lock GO / HOLD is judged only after Re-Review-2 PASS / LOCKABLE.
+Implementation Start remains a separate gate thereafter.

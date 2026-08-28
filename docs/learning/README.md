@@ -27,3 +27,19 @@ PR #13: OPEN / DRAFT / NOT MERGED
 | `projections/registry-projection-v1.md` | Derived Registry Projection compatibility |
 
 Next gate: PR #13 READY GO / HOLD → main正本化 → Implementation Definition.
+
+### DEVELOPMENT-KNOWLEDGE-COMPOUND-V1
+
+```text
+Revision: Definition Correction-2
+Review-1: 9 / 9 CLOSED
+Re-Review-1: CORRECTION REQUIRED → addressed in Correction-2
+Re-Review-1 Findings: 3 / 3 addressed (closure pending Re-Review-2)
+Definition Lock: NOT AUTHORIZED
+Implementation Start: NOT AUTHORIZED
+Automatic Knowledge Promotion: PROHIBITED
+Next Gate: Independent Definition Re-Review-2
+PR #17: OPEN / DRAFT / NOT MERGED
+```
+
+Gate chain: Re-Review-2 (PASS / LOCKABLE) → Definition Lock GO / HOLD → Implementation Start (separate gate).

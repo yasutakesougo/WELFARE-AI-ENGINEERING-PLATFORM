@@ -6,9 +6,9 @@
 Definition: DEVELOPMENT-KNOWLEDGE-COMPOUND-V1
 Revision: Definition Correction-2
 Supersedes: Definition Correction-1
-Trigger: Independent Definition Re-Review-1
-Re-Review-1 Result: P0 = 0 / P1 = 2 / P2 = 1
 Review-1 Findings: 9 / 9 CLOSED
+Independent Definition Re-Review-1: CORRECTION REQUIRED → addressed in Correction-2
+Re-Review-1 Findings: 3 / 3 addressed in Correction-2 (closure pending Re-Review-2)
 Independent Definition Re-Review-2: REQUIRED
 Definition Lock: NOT AUTHORIZED
 Implementation Start: NOT AUTHORIZED
@@ -16,6 +16,23 @@ Knowledge Extraction Prototype: NOT AUTHORIZED
 Automatic Candidate Generation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 Automation Enforcement: NOT AUTHORIZED
+Next Gate: Independent Definition Re-Review-2
+```
+
+Current position:
+
+```text
+Correction-2 complete → Re-Review-2 pending
+```
+
+Gate chain:
+
+```text
+Independent Definition Re-Review-2  (PASS / LOCKABLE required)
+        ↓
+Human Definition Lock               (GO / HOLD)
+        ↓
+Implementation Start                (separate gate; not authorized by Definition Lock alone)
 ```
 
 This document is **definition only**. It does not authorize implementation,
@@ -24,7 +41,7 @@ enforcement.
 
 ```text
 Definition Correction-2
-  != Definition Lock
+  != Definition Lock GO / HOLD
   != Implementation Start
   != Knowledge Extraction Prototype
   != Automatic Candidate Generation
@@ -848,9 +865,18 @@ AC-DKC-17  evidenceRefs structured relation schema is consistent across Candidat
 
 ## 19. Next Gate
 
+Re-Review-2 must independently confirm:
+
+```text
+1. Re-Review-1 findings (3 / 3) are fully closed in Correction-2
+2. No new P0 / P1 / P2 findings are introduced
+```
+
 ```text
 Next: Independent Definition Re-Review-2
 on:   DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 Definition Correction-2
+
+Re-Review-2 verdict must be PASS / LOCKABLE before Definition Lock GO / HOLD.
 
 Until Re-Review-2 passes and Definition Lock is granted:
 
@@ -860,4 +886,6 @@ Until Re-Review-2 passes and Definition Lock is granted:
   Automatic Candidate Generation = NOT AUTHORIZED
   Automatic Knowledge Promotion  = PROHIBITED
   Automation Enforcement       = NOT AUTHORIZED
+
+Implementation Start remains a separate gate after Definition Lock GO / HOLD.
 ```

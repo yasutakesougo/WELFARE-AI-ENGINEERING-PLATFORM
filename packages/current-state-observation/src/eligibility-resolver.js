@@ -25,6 +25,7 @@ export function buildPreActionAuthorityValidation({
   if (!acquired || Number.isNaN(acquiredAt)) findings.push('PREACTION_CLAIM_ACQUISITION_UNRESOLVED');
   else if (!Number.isNaN(validationTime) && acquiredAt > validationTime) findings.push('PREACTION_VALIDATION_BEFORE_CLAIM');
   if (!Number.isNaN(initialResolutionTime) && !Number.isNaN(acquiredAt) && initialResolutionTime > acquiredAt) findings.push('INITIAL_AUTHORITY_AFTER_CLAIM');
+  if (!Number.isNaN(preActionResolutionTime) && !Number.isNaN(acquiredAt) && preActionResolutionTime < acquiredAt) findings.push('PREACTION_RESOLUTION_BEFORE_CLAIM');
   if (!Number.isNaN(preActionResolutionTime) && !Number.isNaN(validationTime) && preActionResolutionTime > validationTime) findings.push('PREACTION_RESOLUTION_AFTER_VALIDATION');
   if (binding.result !== 'PASS') findings.push('CLAIM_BINDING_NOT_PASS');
   if (initialAuthorityResolution?.authorityResolutionId !== observation?.authorityResolutionId

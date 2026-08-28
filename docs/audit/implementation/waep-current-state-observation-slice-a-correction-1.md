@@ -19,22 +19,22 @@ Ready / Merge / Deploy: NOT AUTHORIZED
 ## Correction Mapping
 
 - `CSOC-IMPL-ACTOR-AUTHORITY-DEFAULT-ALLOW-001`: actor authority is positive-only; `actorAuthorized === true`, actor identity, structured authority basis, exact Policy revision binding, and evidence are required. Missing/unknown authority fails closed.
-- `CSOC-IMPL-REVOCATION-APPLICABILITY-001`: supersession/revocation suppression is derived only from lifecycle edges that are current-context applicable, time-effective, policy-resolvable, and backed by explicit lifecycle authority evidence. Invalid lifecycle graph edges fail closed.
+- `CSOC-IMPL-REVOCATION-APPLICABILITY-001`: supersession/revocation suppression is derived only from lifecycle edges that are current-context applicable, resolution-time effective, policy-resolvable, and backed by explicit lifecycle authority evidence. Invalid lifecycle graph edges fail closed.
 - `CSOC-IMPL-CLAIM-EVENT-BINDING-001`: every Claim event validates `claimEventId`, exact `claimId`, exact `gateObservationId`, `occurredAt`, actor identity, evidence references, uniqueness, and event ordering. Mixed histories are INVALID.
 - `CSOC-IMPL-MATERIAL-PRESENT-SOURCE-001`: `PRESENT` and `AUTHORITATIVELY_ABSENT` require `REMOTE_AUTHORITATIVE` provenance plus source system/resource/retrieval time/evidence reference. Local or missing provenance becomes PARTIAL / HOLD.
-- `CSOC-IMPL-AUTHORITY-EVIDENCE-CONTRACT-001`: exact `AuthorityPolicyRevisionIdentity` validation, immutable `AuthorityResolutionEvidence@v1`-shape output, and `PreActionAuthorityValidation@v1`-shape output are implemented. Gate/Claim bind to verified initial `authorityResolutionId`; initial and pre-action resolution IDs are retained separately.
-- `CSOC-IMPL-IDENTITY-CANONICALIZATION-001`: identity comparison uses deterministic recursive object-key ordering and Unicode NFC normalization instead of raw insertion-order `JSON.stringify`. Unsupported identity values fail comparison closed.
+- `CSOC-IMPL-AUTHORITY-EVIDENCE-CONTRACT-001`: exact `AuthorityPolicyRevisionIdentity` validation, immutable `AuthorityResolutionEvidence@v1`-shape output, and `PreActionAuthorityValidation@v1`-shape output are implemented. Gate/Claim bind to verified initial `authorityResolutionId`; initial and pre-action resolution IDs are retained separately. Claim acquisition must precede pre-action validation, and Authority resolution timestamps are checked against the action timeline.
+- `CSOC-IMPL-IDENTITY-CANONICALIZATION-001`: identity comparison uses deterministic recursive object-key ordering, locale-independent lexical comparison, and Unicode NFC normalization instead of raw insertion-order `JSON.stringify`. Unsupported identity values fail comparison closed.
 - `CSOC-IMPL-DECISION-ID-UNIQUENESS-001`: duplicate `decisionId` is INVALID.
 
 Additional hardening: a terminal Claim history (`CONSUMED / ABORTED / RELEASED`) is valid historical evidence but is never an ACTIVE exclusive claim for a new action attempt.
 
 ## Validation
 
-Local Node 22 validation before publication:
+Exact corrected source is intended for dependency-free Node 22 validation:
 
 ```text
 node --test test/*.test.js
-23 / 23 PASS
+25 / 25 PASS
 
 node bin/shadow-evaluate.mjs
 mode = SHADOW_READ_ONLY
@@ -45,7 +45,7 @@ preActionAuthorityValidation = GO
 mutationAuthorizedByThisResolver = false
 ```
 
-Regression coverage includes all eight Review-1 requested gaps plus terminal-claim non-reuse and current-policy compatibility fail-closed behavior.
+Regression coverage includes all eight Review-1 requested gaps, terminal-claim non-reuse, current-policy compatibility fail-closed behavior, pre-action temporal ordering, and NFC-equivalent identity comparison.
 
 ## Authority Boundary
 

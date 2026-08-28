@@ -137,7 +137,7 @@ test('Gate authorityResolutionId not backed by evaluated evidence fails pre-acti
   const pre = resolveAuthority(scenario.preActionAuthorityContext);
   const validation = buildPreActionAuthorityValidation({
     validationId: 'PAV-X', validatedAt: scenario.preActionAuthorityValidatedAt,
-    observation: scenario.observation, claim: scenario.claim,
+    observation: scenario.observation, claim: scenario.claim, claimEvents: scenario.claimEvents,
     initialAuthorityResolution: initial, preActionAuthorityResolution: pre,
   });
   assert.equal(validation.result, 'UNRESOLVED');
@@ -152,6 +152,19 @@ test('pre-action Authority change prevents eligibility', () => {
 test('same revision identity with reordered object keys compares as same', () => {
   const scenario = makeHappyScenario();
   scenario.claim = { ...scenario.claim, targetRevisionIdentity: { baseSha: 'base-a', headSha: 'head-a' } };
+  assert.equal(validateClaimBinding(scenario.observation, scenario.claim).result, 'PASS');
+});
+
+test('pre-action validation before Claim acquisition fails closed', () => {
+  const scenario = makeHappyScenario();
+  scenario.preActionAuthorityValidatedAt = '2026-08-28T20:30:02+09:00';
+  assert.equal(shadowEvaluate(scenario).recommendation, 'NO_MUTATION');
+});
+
+test('canonical identity treats NFC-equivalent strings as equal', () => {
+  const scenario = makeHappyScenario();
+  scenario.observation.targetRevisionIdentity = { headSha: 'he\u0301ad-a', baseSha: 'base-a' };
+  scenario.claim.targetRevisionIdentity = { baseSha: 'base-a', headSha: 'héad-a' };
   assert.equal(validateClaimBinding(scenario.observation, scenario.claim).result, 'PASS');
 });
 

@@ -1,5 +1,4 @@
 import type {
-  DataZoneDecision,
   DependencyEntry,
   EvidenceEmit,
   ProcessObservationLimited,
@@ -13,8 +12,6 @@ const now = '2026-08-28T00:00:00+09:00';
 const repositoryIdentity = 'fixture:repo:normal';
 const targetIdentity = 'fixture:file:readme';
 const rootIdentity = 'root:A';
-const validConfigDigestA = `sha256:${'a'.repeat(64)}`;
-const validConfigDigestB = `sha256:${'b'.repeat(64)}`;
 
 export const currentStateDependency: DependencyEntry = {
   dependencyId: 'WAEP-CURRENT-STATE-OBSERVATION-CONTRACT-V1',
@@ -25,121 +22,6 @@ export const currentStateDependency: DependencyEntry = {
   authorityRole: 'CONSTRAINT_ONLY',
   verifiedAt: now,
   verificationEvidence: 'fixture:immutable-commit:5c55d9383a34915c45619429d7e24488ade75337',
-};
-
-export const syntheticDevelopmentZone: DataZoneDecision = {
-  dataZone: 'DEVELOPMENT',
-  dataZoneSource: 'EXPLICIT_AUTHORITY_DECISION',
-  dataZoneAuthority: 'AUTHORITATIVE',
-  dataZoneDecisionRef: 'synthetic:authority:development',
-  classifiedAt: now,
-  targetScope: 'APPROVED_ROOT',
-  scopeIdentity: rootIdentity,
-  targetIdentity: rootIdentity,
-  decisionEvidence: ['synthetic-only'],
-  observationAccessClass: 'ALLOW_OBSERVE',
-  accessPolicyRef: 'synthetic:policy:observe-v1',
-};
-
-export const syntheticProductionZone: DataZoneDecision = {
-  ...syntheticDevelopmentZone,
-  dataZone: 'PRODUCTION',
-  observationAccessClass: 'DENY_OBSERVE',
-  dataZoneDecisionRef: 'synthetic:authority:production',
-};
-
-export const maliciousProductionAllowClaim: DataZoneDecision = {
-  ...syntheticProductionZone,
-  observationAccessClass: 'ALLOW_OBSERVE',
-};
-
-export const untrustedDevelopmentClaim: DataZoneDecision = {
-  ...syntheticDevelopmentZone,
-  dataZoneSource: 'UNTRUSTED_METADATA',
-  dataZoneAuthority: 'CONSTRAINT_ONLY',
-  dataZoneDecisionRef: null,
-};
-
-export const untrustedProductionConstraint: DataZoneDecision = {
-  ...syntheticProductionZone,
-  dataZoneSource: 'UNTRUSTED_METADATA',
-  dataZoneAuthority: 'CONSTRAINT_ONLY',
-  dataZoneDecisionRef: null,
-};
-
-export const selfAuthorizingTrustedConfig: DataZoneDecision = {
-  ...syntheticDevelopmentZone,
-  dataZoneSource: 'TRUSTED_CONFIGURATION',
-  trustedConfigurationValidation: {
-    configurationIdentity: 'config:A',
-    configurationExactRef: validConfigDigestA,
-    integrityResult: 'PASS',
-    configurationAuthorityRef: 'config:A',
-    configurationAuthorityState: 'VALID',
-    targetScopeMatch: true,
-    authorityCycleDetected: true,
-    validatedAt: now,
-  },
-};
-
-export const validTrustedConfigDevelopment: DataZoneDecision = {
-  ...syntheticDevelopmentZone,
-  dataZoneSource: 'TRUSTED_CONFIGURATION',
-  trustedConfigurationValidation: {
-    configurationIdentity: 'config:B',
-    configurationExactRef: validConfigDigestB,
-    integrityResult: 'PASS',
-    configurationAuthorityRef: 'authority:external:B',
-    configurationAuthorityState: 'VALID',
-    targetScopeMatch: true,
-    authorityCycleDetected: false,
-    validatedAt: now,
-  },
-};
-
-export const trustedConfigIntegrityFailure: DataZoneDecision = {
-  ...validTrustedConfigDevelopment,
-  trustedConfigurationValidation: {
-    ...validTrustedConfigDevelopment.trustedConfigurationValidation!,
-    integrityResult: 'FAIL',
-  },
-};
-
-export const trustedConfigExpired: DataZoneDecision = {
-  ...validTrustedConfigDevelopment,
-  trustedConfigurationValidation: {
-    ...validTrustedConfigDevelopment.trustedConfigurationValidation!,
-    configurationAuthorityState: 'EXPIRED',
-  },
-};
-
-export const trustedConfigMutableRef: DataZoneDecision = {
-  ...validTrustedConfigDevelopment,
-  trustedConfigurationValidation: {
-    ...validTrustedConfigDevelopment.trustedConfigurationValidation!,
-    configurationExactRef: 'main',
-  },
-};
-
-export const trustedConfigUnknownAuthorityRoot: DataZoneDecision = {
-  ...validTrustedConfigDevelopment,
-  trustedConfigurationValidation: {
-    ...validTrustedConfigDevelopment.trustedConfigurationValidation!,
-    configurationAuthorityRef: 'authority:external:UNREGISTERED',
-  },
-};
-
-export const targetMismatchDevelopmentZone: DataZoneDecision = {
-  ...syntheticDevelopmentZone,
-  scopeIdentity: 'root:OTHER',
-  targetIdentity: 'root:OTHER',
-};
-
-export const restrictedSyntheticMarker: DataZoneDecision = {
-  ...syntheticDevelopmentZone,
-  dataZone: 'RESTRICTED',
-  observationAccessClass: 'DENY_OBSERVE',
-  dataZoneDecisionRef: 'synthetic:authority:restricted',
 };
 
 export const baseFilesystemReadRequest: ShadowRequest = {
@@ -154,18 +36,18 @@ export const baseFilesystemReadRequest: ShadowRequest = {
   authorityDecisionRef: 'synthetic:authority:read',
   dependencyEntries: [currentStateDependency],
   preAccessEligibility: 'ELIGIBLE',
-  dataZoneDecisions: [syntheticDevelopmentZone],
+  dataZoneDecisionRefs: ['synthetic:zone:development'],
   containmentEvidenceRef: 'synthetic:containment:pass',
 };
 
-const validSearchBounds = {
+export const validSearchBounds = {
   maxFiles: 10,
-  maxBytes: 10000,
-  maxFileSize: 1000,
+  maxBytes: 10_000,
+  maxFileSize: 1_000,
   maxDepth: 3,
   maxResults: 10,
-  timeoutMs: 1000,
-  maxOutputBytes: 2000,
+  timeoutMs: 1_000,
+  maxOutputBytes: 2_000,
 } as const;
 
 export const sliceAFixtures: readonly { name: string; request: ShadowRequest; expected: 'ALLOW' | 'DENY' | 'HOLD' }[] = [
@@ -177,167 +59,186 @@ export const sliceAFixtures: readonly { name: string; request: ShadowRequest; ex
   },
   {
     name: 'production zone read',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-003', dataZoneDecisions: [syntheticProductionZone] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-003', dataZoneDecisionRefs: ['synthetic:zone:production'] },
     expected: 'DENY',
   },
   {
     name: 'production cannot self-declare allow',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-004', dataZoneDecisions: [maliciousProductionAllowClaim] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-004', dataZoneDecisionRefs: ['synthetic:zone:malicious-production-allow'] },
     expected: 'DENY',
   },
   {
     name: 'untrusted development claim cannot authorize read',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-005', dataZoneDecisions: [untrustedDevelopmentClaim] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-005', dataZoneDecisionRefs: ['synthetic:zone:untrusted-development'] },
     expected: 'HOLD',
   },
   {
     name: 'untrusted metadata may only tighten access',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-006', dataZoneDecisions: [syntheticDevelopmentZone, untrustedProductionConstraint] },
+    request: {
+      ...baseFilesystemReadRequest,
+      requestId: 'fixture-request-006',
+      dataZoneDecisionRefs: ['synthetic:zone:development', 'synthetic:zone:untrusted-production'],
+    },
     expected: 'DENY',
   },
   {
     name: 'trusted config cannot self-authorize',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-007', dataZoneDecisions: [selfAuthorizingTrustedConfig] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-007', dataZoneDecisionRefs: ['synthetic:zone:trusted-self-authorize'] },
     expected: 'HOLD',
   },
   {
     name: 'externally authorized trusted config can allow development read',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-008', dataZoneDecisions: [validTrustedConfigDevelopment] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-008', dataZoneDecisionRefs: ['synthetic:zone:trusted-valid'] },
     expected: 'ALLOW',
   },
   {
     name: 'trusted config integrity failure',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-009', dataZoneDecisions: [trustedConfigIntegrityFailure] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-009', dataZoneDecisionRefs: ['synthetic:zone:trusted-integrity-fail'] },
     expected: 'HOLD',
   },
   {
     name: 'trusted config expiry',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-010', dataZoneDecisions: [trustedConfigExpired] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-010', dataZoneDecisionRefs: ['synthetic:zone:trusted-expired'] },
     expected: 'HOLD',
   },
   {
     name: 'trusted config mutable exact ref rejected',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-011', dataZoneDecisions: [trustedConfigMutableRef] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-011', dataZoneDecisionRefs: ['synthetic:zone:trusted-mutable-ref'] },
     expected: 'HOLD',
   },
   {
     name: 'trusted config unknown authority root rejected',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-012', dataZoneDecisions: [trustedConfigUnknownAuthorityRoot] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-012', dataZoneDecisionRefs: ['synthetic:zone:trusted-unknown-authority'] },
+    expected: 'HOLD',
+  },
+  {
+    name: 'data-zone authority semantic mismatch rejected',
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-013', dataZoneDecisionRefs: ['synthetic:zone:authority-semantic-mismatch'] },
+    expected: 'HOLD',
+  },
+  {
+    name: 'unregistered data-zone decision ref rejected',
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-014', dataZoneDecisionRefs: ['forged:zone:development'] },
     expected: 'HOLD',
   },
   {
     name: 'unknown pre-access classification',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-013', preAccessEligibility: 'UNKNOWN' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-015', preAccessEligibility: 'UNKNOWN' },
     expected: 'HOLD',
   },
   {
     name: 'ineligible pre-access classification',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-014', preAccessEligibility: 'INELIGIBLE' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-016', preAccessEligibility: 'INELIGIBLE' },
     expected: 'DENY',
   },
   {
     name: 'unknown capability',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-015', capability: 'filesystem.magic' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-017', capability: 'filesystem.magic' },
     expected: 'DENY',
   },
   {
     name: 'evidence persistence request',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-016', capability: 'evidence.persist' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-018', capability: 'evidence.persist' },
     expected: 'DENY',
   },
   {
     name: 'internal subprocess request',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-017', capability: 'process.spawn' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-019', capability: 'process.spawn' },
     expected: 'DENY',
   },
   {
     name: 'invalid zero search bound',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-018', capability: 'filesystem.search', searchBounds: { ...validSearchBounds, maxFiles: 0 } },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-020', capability: 'filesystem.search', searchBounds: { ...validSearchBounds, maxFiles: 0 } },
     expected: 'DENY',
   },
   {
     name: 'invalid fractional search bound',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-019', capability: 'filesystem.search', searchBounds: { ...validSearchBounds, maxFiles: 1.5 } },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-021', capability: 'filesystem.search', searchBounds: { ...validSearchBounds, maxFiles: 1.5 } },
     expected: 'DENY',
   },
   {
     name: 'missing search bounds',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-020', capability: 'filesystem.search', searchBounds: undefined },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-022', capability: 'filesystem.search', searchBounds: undefined },
+    expected: 'DENY',
+  },
+  {
+    name: 'search bound exceeds policy ceiling',
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-023', capability: 'filesystem.search', searchBounds: { ...validSearchBounds, maxFiles: 1001 } },
     expected: 'DENY',
   },
   {
     name: 'valid bounded search candidate',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-021', capability: 'filesystem.search', searchBounds: validSearchBounds },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-024', capability: 'filesystem.search', searchBounds: validSearchBounds },
     expected: 'ALLOW',
   },
   {
     name: 'scope decision target mismatch',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-022', scopeDecisionRef: 'synthetic:scope:other-target' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-025', scopeDecisionRef: 'synthetic:scope:other-target' },
     expected: 'HOLD',
   },
   {
     name: 'forged verified authority ref rejected',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-023', authorityDecisionRef: 'forged:authority:read' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-026', authorityDecisionRef: 'forged:authority:read' },
     expected: 'HOLD',
   },
   {
     name: 'dependency exact-ref mismatch',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-024', dependencyEntries: [{ ...currentStateDependency, exactRef: 'deadbeef' }] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-027', dependencyEntries: [{ ...currentStateDependency, exactRef: 'deadbeef' }] },
     expected: 'HOLD',
   },
   {
     name: 'required dependency missing',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-025', dependencyEntries: [] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-028', dependencyEntries: [] },
     expected: 'HOLD',
   },
   {
     name: 'data-zone target scope mismatch',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-026', dataZoneDecisions: [targetMismatchDevelopmentZone] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-029', dataZoneDecisionRefs: ['synthetic:zone:target-mismatch'] },
     expected: 'HOLD',
   },
   {
     name: 'symlink escape containment fail',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-027', containmentEvidenceRef: 'synthetic:containment:symlink-escape' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-030', containmentEvidenceRef: 'synthetic:containment:symlink-escape' },
     expected: 'DENY',
   },
   {
     name: 'junction containment unverifiable',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-028', containmentEvidenceRef: 'synthetic:containment:junction-unverifiable' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-031', containmentEvidenceRef: 'synthetic:containment:junction-unverifiable' },
     expected: 'DENY',
   },
   {
     name: 'path traversal containment fail',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-029', targetPath: '/fixture/repo/../outside/secret.txt', containmentEvidenceRef: 'synthetic:containment:path-traversal' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-032', targetPath: '/fixture/repo/../outside/secret.txt', containmentEvidenceRef: 'synthetic:containment:path-traversal' },
     expected: 'DENY',
   },
   {
     name: 'unregistered containment pass rejected',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-030', containmentEvidenceRef: 'forged:containment:pass' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-033', containmentEvidenceRef: 'forged:containment:pass' },
     expected: 'DENY',
   },
   {
     name: 'secret-like filename preclassified restricted',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-031', targetPath: '/fixture/repo/.env', dataZoneDecisions: [restrictedSyntheticMarker] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-034', targetPath: '/fixture/repo/.env', dataZoneDecisionRefs: ['synthetic:zone:restricted'] },
     expected: 'DENY',
   },
   {
     name: 'secret-like content marker preclassified restricted',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-032', dataZoneDecisions: [restrictedSyntheticMarker] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-035', dataZoneDecisionRefs: ['synthetic:zone:restricted'] },
     expected: 'DENY',
   },
   {
     name: 'personal-data-like marker preclassified restricted',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-033', dataZoneDecisions: [restrictedSyntheticMarker] },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-036', dataZoneDecisionRefs: ['synthetic:zone:restricted'] },
     expected: 'DENY',
   },
   {
     name: 'runtime disabled',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-034', runtimeState: 'DISABLED' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-037', runtimeState: 'DISABLED' },
     expected: 'DENY',
   },
   {
     name: 'execution-capable runtime unreachable in slice A',
-    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-035', runtimeState: 'EXECUTION_CAPABLE' },
+    request: { ...baseFilesystemReadRequest, requestId: 'fixture-request-038', runtimeState: 'EXECUTION_CAPABLE' },
     expected: 'DENY',
   },
 ];

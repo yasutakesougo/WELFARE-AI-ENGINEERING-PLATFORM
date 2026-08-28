@@ -1,10 +1,12 @@
 import type {
   AuthorityResult,
+  ContainmentEvidence,
   DataZone,
   DataZoneDecision,
   DependencyEntry,
   ObservationAccessClass,
   TrustedConfigurationValidationRecord,
+  VerifiedDecision,
 } from './contracts';
 
 const accessRank: Record<ObservationAccessClass, number> = {
@@ -12,6 +14,21 @@ const accessRank: Record<ObservationAccessClass, number> = {
   HOLD_OBSERVE: 1,
   DENY_OBSERVE: 2,
 };
+
+const CURRENT_STATE_DEPENDENCY = {
+  dependencyId: 'WAEP-CURRENT-STATE-OBSERVATION-CONTRACT-V1',
+  revision: 'Definition Correction-1',
+  exactRef: '5c55d9383a34915c45619429d7e24488ade75337',
+  definitionState: 'CORRECTED / NOT LOCKED',
+  relationship: 'COMPATIBILITY_REQUIRED',
+  authorityRole: 'CONSTRAINT_ONLY',
+} as const;
+
+export interface DataAccessContext {
+  targetIdentity: string;
+  repositoryIdentity: string;
+  approvedRootIdentity?: string;
+}
 
 export function deriveZoneAccessClass(zone: DataZone): ObservationAccessClass {
   switch (zone) {
@@ -31,18 +48,25 @@ function stricterAccessClass(a: ObservationAccessClass, b: ObservationAccessClas
   return accessRank[a] >= accessRank[b] ? a : b;
 }
 
+function looksImmutableExactRef(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  return !['latest', 'main', 'current', 'head'].includes(normalized);
+}
+
 export function validateTrustedConfiguration(
   validation: TrustedConfigurationValidationRecord | undefined,
 ): boolean {
   if (!validation) return false;
   if (!validation.configurationIdentity.trim()) return false;
-  if (!validation.configurationExactRef.trim()) return false;
+  if (!looksImmutableExactRef(validation.configurationExactRef)) return false;
   if (validation.integrityResult !== 'PASS') return false;
   if (validation.configurationAuthorityState !== 'VALID') return false;
   if (!validation.configurationAuthorityRef?.trim()) return false;
   if (validation.configurationAuthorityRef === validation.configurationIdentity) return false;
   if (!validation.targetScopeMatch) return false;
   if (validation.authorityCycleDetected) return false;
+  if (!validation.validatedAt.trim()) return false;
   return true;
 }
 
@@ -50,12 +74,12 @@ function validateDecisionAuthority(decision: DataZoneDecision): 'AUTHORITATIVE' 
   switch (decision.dataZoneSource) {
     case 'LOCKED_POLICY':
     case 'EXPLICIT_AUTHORITY_DECISION':
-      return decision.dataZoneAuthority === 'AUTHORITATIVE' && !!decision.dataZoneDecisionRef
+      return decision.dataZoneAuthority === 'AUTHORITATIVE' && !!decision.dataZoneDecisionRef?.trim()
         ? 'AUTHORITATIVE'
         : 'INVALID';
     case 'TRUSTED_CONFIGURATION':
       return decision.dataZoneAuthority === 'AUTHORITATIVE' &&
-        !!decision.dataZoneDecisionRef &&
+        !!decision.dataZoneDecisionRef?.trim() &&
         validateTrustedConfiguration(decision.trustedConfigurationValidation)
         ? 'AUTHORITATIVE'
         : 'INVALID';
@@ -66,13 +90,31 @@ function validateDecisionAuthority(decision: DataZoneDecision): 'AUTHORITATIVE' 
   }
 }
 
-export function evaluateDataAccessDecisions(decisions: readonly DataZoneDecision[] | undefined): AuthorityResult {
+function decisionTargetsRequest(decision: DataZoneDecision, context: DataAccessContext): boolean {
+  switch (decision.targetScope) {
+    case 'EXACT_TARGET':
+      return decision.targetIdentity === context.targetIdentity && decision.scopeIdentity === context.targetIdentity;
+    case 'APPROVED_ROOT':
+      return !!context.approvedRootIdentity && decision.scopeIdentity === context.approvedRootIdentity;
+    case 'REPOSITORY':
+      return decision.scopeIdentity === context.repositoryIdentity;
+  }
+}
+
+export function evaluateDataAccessDecisions(
+  decisions: readonly DataZoneDecision[] | undefined,
+  context: DataAccessContext,
+): AuthorityResult {
   if (!decisions?.length) return 'HOLD';
 
   let authoritativeCount = 0;
   let effectiveClass: ObservationAccessClass = 'ALLOW_OBSERVE';
 
   for (const decision of decisions) {
+    if (!decisionTargetsRequest(decision, context)) return 'HOLD';
+    if (!decision.classifiedAt.trim()) return 'HOLD';
+    if (!decision.decisionEvidence.length) return 'HOLD';
+
     const authorityClass = validateDecisionAuthority(decision);
     if (authorityClass === 'INVALID') return 'HOLD';
 
@@ -89,6 +131,20 @@ export function evaluateDataAccessDecisions(decisions: readonly DataZoneDecision
   return 'ALLOW';
 }
 
+export function evaluateVerifiedDecision(
+  decision: VerifiedDecision | undefined,
+  targetIdentity: string,
+): AuthorityResult {
+  if (!decision) return 'HOLD';
+  if (decision.verificationState !== 'VERIFIED') return 'HOLD';
+  if (decision.targetIdentity !== targetIdentity) return 'HOLD';
+  if (!decision.producerIdentity.trim()) return 'HOLD';
+  if (!decision.decisionRef.trim()) return 'HOLD';
+  if (!decision.evaluatedAt.trim()) return 'HOLD';
+  if (!decision.evidenceRef.trim()) return 'HOLD';
+  return decision.result;
+}
+
 export function validateDependencyEntry(entry: DependencyEntry): AuthorityResult {
   if (!entry.dependencyId.trim()) return 'HOLD';
   if (!entry.revision.trim()) return 'HOLD';
@@ -101,5 +157,45 @@ export function validateDependencyEntry(entry: DependencyEntry): AuthorityResult
     return 'DENY';
   }
 
+  if (entry.dependencyId === CURRENT_STATE_DEPENDENCY.dependencyId) {
+    if (
+      entry.revision !== CURRENT_STATE_DEPENDENCY.revision ||
+      entry.exactRef !== CURRENT_STATE_DEPENDENCY.exactRef ||
+      entry.definitionState !== CURRENT_STATE_DEPENDENCY.definitionState ||
+      entry.relationship !== CURRENT_STATE_DEPENDENCY.relationship ||
+      entry.authorityRole !== CURRENT_STATE_DEPENDENCY.authorityRole
+    ) {
+      return 'HOLD';
+    }
+  }
+
+  return 'ALLOW';
+}
+
+export function evaluateDependencyEntries(entries: readonly DependencyEntry[] | undefined): AuthorityResult {
+  if (!entries?.length) return 'HOLD';
+  const required = entries.find((entry) => entry.dependencyId === CURRENT_STATE_DEPENDENCY.dependencyId);
+  if (!required) return 'HOLD';
+
+  let sawHold = false;
+  for (const entry of entries) {
+    const result = validateDependencyEntry(entry);
+    if (result === 'DENY') return 'DENY';
+    if (result === 'HOLD') sawHold = true;
+  }
+  return sawHold ? 'HOLD' : 'ALLOW';
+}
+
+export function evaluateContainmentEvidence(
+  evidence: ContainmentEvidence | undefined,
+  targetIdentity: string,
+): AuthorityResult {
+  if (!evidence) return 'DENY';
+  if (evidence.verificationState !== 'VERIFIED') return 'DENY';
+  if (evidence.targetIdentity !== targetIdentity) return 'DENY';
+  if (!evidence.verifiedAt.trim() || !evidence.evidenceRef.trim()) return 'DENY';
+  if (!evidence.rootBinding.resolvedIdentity.trim()) return 'DENY';
+  if (evidence.rootBinding.resolvedIdentity !== evidence.observedRootIdentity) return 'DENY';
+  if (evidence.containmentResult !== 'PASS') return 'DENY';
   return 'ALLOW';
 }

@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": ".slice-a-verify"
+  },
+  "include": ["src/**/*.ts", "verify.ts"]
+}

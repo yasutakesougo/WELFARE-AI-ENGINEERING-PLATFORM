@@ -6,14 +6,11 @@
 Definition: WAEP-LEARNING-SYSTEM-V1
 Revision: Definition Correction-3
 Supersedes: Definition Correction-2
-Trigger: Independent Definition Re-Review-3
-Re-Review-3 Result: P0 = 0 / P1 = 2 / P2 = 2
 Independent Definition Final Re-Review-4: PASS
-Reviewed Head (Re-Review-4): a92421fe43e2c51b635e35fb1516f437d7e5034b
 P0 / P1 / P2: 0 / 0 / 0
 Human Definition Lock: GO
 Definition Lock Authority: AUTHORIZED
-Definition State: LOCKED
+Definition State: LOCKED / CANONICAL ON MAIN
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Architecture Centerline: LOCKED
 Implementation Start: NOT AUTHORIZED
@@ -21,24 +18,24 @@ Runtime Activation: NOT AUTHORIZED
 Runtime Authorization: NO CHANGE
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-PR #13: OPEN / DRAFT / NOT MERGED
-Next Gate: PR #13 READY GO / HOLD
+PR #13: MERGED
+Merged Head: 9ce07872528c93dfd5309107a592c1af3db989c2
+Main (canonical): bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
+Next Gate: Implementation Definition / Slice A — Learning Event Contract
 ```
 
-This document is the **LOCKED** Definition Correction-3. Human Definition
-Lock GO authorizes Definition Lock only.
+This document is the **LOCKED** Definition Correction-3, **canonical on
+`main`** via PR #13 merge. Human Definition Lock GO authorizes Definition Lock
+only; Merge to main正本化 does not authorize Implementation Start.
 
 ```text
-Definition Lock GO
-  != PR READY
-  != Merge
+Definition LOCKED / CANONICAL ON MAIN
   != Implementation Start
   != Runtime Activation
   != Automatic Knowledge Promotion / Runtime Distribution
 ```
 
-Repository WRITE for lock-status synchronization is not implied as a general
-write grant by Definition Lock GO (WAEP 01-CURRENT-AUTHORITY boundary).
+Post-Merge Reconciliation: `docs/learning/reviews/post-merge-reconciliation.md`.
 
 Correction-3 does **not** change the Architecture. Correction-2 boundaries
 remain:
@@ -1537,46 +1534,45 @@ Human Definition Lock GO != Implementation Start / Ready / Merge
 
 ---
 
-## 28. Definition Lock Verdict
+## 28. Definition Lock + Canonical Main Verdict
 
 ```text
 WAEP-LEARNING-SYSTEM-V1
 Definition Correction-3
 Independent Definition Final Re-Review-4: PASS
-Reviewed Head: a92421fe43e2c51b635e35fb1516f437d7e5034b
 Human Definition Lock: GO
 Definition Lock Authority: AUTHORIZED
-Definition State: LOCKED
+Definition State: LOCKED / CANONICAL ON MAIN
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Architecture Centerline: LOCKED
-Payload Release Resolution: LOCKED
-CURRENT Time Semantics: LOCKED
-Verification Policy Identity: LOCKED
-Effectiveness Evaluation Scope: LOCKED
-Decision Authority Field: LOCKED
+PR #13: MERGED
+Merged Head: 9ce07872528c93dfd5309107a592c1af3db989c2
+Main (canonical): bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
+Post-Merge Reconciliation: PASS
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-PR #13: OPEN / DRAFT / NOT MERGED
-Next Gate: PR #13 READY GO / HOLD
+Next Gate: Implementation Definition / Slice A — Learning Event Contract
 ```
 
-Until PR #13 READY GO and subsequent Merge / Implementation gates are
-separately authorized:
+Merge to main正本化 is complete. Implementation Definition is the next gate and
+requires separate authorization:
 
 ```text
-PR Ready                  = AWAITING READY GO / HOLD
-Merge to main             = NOT AUTHORIZED by Definition Lock GO
 Implementation Start      = NOT AUTHORIZED
 Runtime Activation        = NOT AUTHORIZED
 Automatic Promotion       = PROHIBITED
 Automatic Distribution    = NOT AUTHORIZED
 ```
 
-Intended sequence after READY GO:
+Intended sequence:
 
 ```text
-PR #13 Ready → Merge Definition to main (正本化)
-  → Implementation Definition (separate gate)
+Post-Merge Reconciliation (complete)
+  → Implementation Definition
+  → Slice A — Learning Event Contract
 ```
+
+Implementation Definition must not alter LOCKED Architecture Centerline or
+Decision Contract semantics without a new Definition Correction cycle.

@@ -1,0 +1,9 @@
+{
+  "name": "@waep/local-mcp-bridge-slice-a",
+  "private": true,
+  "version": "0.0.0-slice-a",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "verify": "tsc -p tsconfig.verify.json && node .slice-a-verify/verify.js"
+  }
+}

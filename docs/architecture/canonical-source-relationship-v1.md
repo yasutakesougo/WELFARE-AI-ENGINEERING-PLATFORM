@@ -20,18 +20,15 @@ Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
 
 ## Portfolio Foundation
 
-PR #9由来のPortfolio Foundation資産は、次を定義するCandidateである。
+PR #9由来のPortfolio FoundationはDefinition Candidateである。
 
-- Portfolio Architecture
-- Repository Role Registry
-- Knowledge Classification
-- Knowledge Promotion Gate
-- WAEP Roadmap
-- Knowledge Registry entry surface
+Current Reconciliationでは、Current Main基準へCandidate資産を再配置する。
 
-Current Reconciliationでは、PR #9のREADME以外のCandidate blobをCurrent Main基準へ移植する。
+LOCKED Learning Systemと衝突しない資産はsource blobを保持する。
 
-内容の再解釈やDefinition Lockは行わない。
+LOCKED Learning Systemと衝突または曖昧性がある資産はCompatibility Correctionを行う。
+
+Historical PR #9 contentはPR #9 branchにEvidenceとして残す。
 
 ```text
 State: DEFINITION CANDIDATE
@@ -51,32 +48,42 @@ Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 ```
 
-Learning SystemのLOCKED semanticsは、Learning scopeにおけるCanonical Definitionである。
+Learning SystemのLOCKED semanticsはLearning scopeにおけるCanonical Definitionである。
 
-## Relationship Rule
+## Compatibility Rule
 
-Portfolio Foundation Candidateは、LOCKED Learning Systemを上書きしない。
+Portfolio Foundation CandidateはLOCKED Learning Systemを上書きしない。
 
-LOCKED Learning Systemは、Portfolio Foundation Candidateを自動的にLOCKしない。
+LOCKED Learning SystemはPortfolio Foundation Candidateを自動的にLOCKしない。
+
+Portfolio Candidateの旧schemaがLOCKED Learning semanticsと衝突する場合は、旧Candidateを優先しない。
+
+```text
+LOCKED Canonical Definition
+  > incompatible Definition Candidate
+```
+
+具体的には、Immutable Knowledge Record自身に`maturity`、`ACTIVE`、`CURRENT`、Lifecycle authorityを保存しない。
+
+Portfolio-level L0-L5 maturityはDerived Projectionとして扱う。
+
+Authoritative Promotionは`KnowledgePromotionDecision@v1`とCanonical Decision Resolverに従う。
 
 ```text
 Portfolio Definition State
   != Learning Definition State
 
-Portfolio Knowledge Governance
-  != Learning Runtime Authority
+Portfolio Maturity Projection
+  != Knowledge Record Authority
 
-Repository Membership
-  != Cross-Repository Mutation Authority
+Knowledge Promotion Candidate
+  != Runtime Binding
+  != Execution Authority
 ```
-
-Portfolio Foundationを将来LOCKする際にLearning SystemのLOCKED semanticsと不一致が生じる場合は、推論で整合させない。
-
-不一致はHOLDとし、対象DefinitionのCorrection cycleへ戻す。
 
 ## Precedence
 
-WAEP内で状態が競合する場合は、次の順序を使用する。
+WAEP内で状態が競合する場合は次の順序を使用する。
 
 1. Current Authority / Current Decision
 2. LOCKED Canonical Definition
@@ -87,9 +94,19 @@ WAEP内で状態が競合する場合は、次の順序を使用する。
 
 候補文書や旧PR bodyは、LOCKED Definitionまたは現在のGitHub metadataを上書きしない。
 
+## Conflict Handling
+
+CandidateとLOCKED Definitionの不一致を推論で解消しない。
+
+不一致を検出した場合はHOLDまたはCompatibility Correctionとする。
+
+Compatibility CorrectionはCandidateのLockを意味しない。
+
+LOCKED Definition semanticsを変更する必要がある場合は、新しいDefinition Correction cycleへ戻す。
+
 ## Execution Boundary
 
-このRelationship定義は、次を認可しない。
+このRelationship定義は次を認可しない。
 
 ```text
 Implementation Start

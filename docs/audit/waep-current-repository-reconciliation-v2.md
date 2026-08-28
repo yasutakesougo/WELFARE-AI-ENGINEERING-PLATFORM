@@ -7,6 +7,7 @@ Reconciliation: WAEP-CURRENT-REPOSITORY-RECONCILIATION-V2
 Date: 2026-08-28 JST
 Source Main Exact Baseline: 820104bf5fc520561a70e11467f9043b958dc247
 Mode: DOCS / GOVERNANCE RECONCILIATION
+Correction: COMPATIBILITY CORRECTION-1 APPLIED
 Runtime Mutation: NOT AUTHORIZED
 Ready: NOT AUTHORIZED
 Merge: NOT AUTHORIZED
@@ -17,7 +18,7 @@ Deploy: NOT AUTHORIZED
 
 GitHubのCurrent Repository State、LOCKED Learning Definition、Portfolio Foundation Candidate、進行中PRの依存関係を同一基準で再整合する。
 
-旧Snapshotや旧PR bodyの状態表記を、Current metadataより優先しない。
+旧Snapshotや旧PR bodyの状態表記をCurrent metadataより優先しない。
 
 ## Scope
 
@@ -43,7 +44,7 @@ Latest Included Merge: PR #18
 
 このSHAは本Reconciliationの入力Snapshotである。
 
-Reconciliation branchはこのSHAから直接作成する。
+Reconciliation branchはこのSHAから直接作成した。
 
 ## 2. PR #13 Status Synchronization
 
@@ -108,23 +109,48 @@ Merge Base: 4d46d93a43835f5d5e718a7ab952586e68a4601e
 
 旧PR #9を直接Merge targetとして扱わない。
 
-README以外の7 Candidate blobは、内容を変更せずCurrent Main基準へ移植する。
+PR #9のCandidate資産は、LOCKED Learning Systemとの互換性確認を行ってCurrent Mainへ再配置する。
 
-対象は次である。
+### 4.1 Source Blob Preserved
+
+次の5資産はsource blob identityを保持する。
 
 ```text
 docs/architecture/portfolio-architecture-v1.md
 docs/governance/repository-role-registry-v1.md
 docs/governance/knowledge-classification-v1.md
-docs/governance/knowledge-promotion-gate-v1.md
 docs/roadmap/waep-roadmap-v1.md
 knowledge/registry/README.md
+```
+
+### 4.2 Compatibility Corrected
+
+次の2資産はLOCKED Learning Systemとの整合性確保のためCompatibility Correctionを行う。
+
+```text
+docs/governance/knowledge-promotion-gate-v1.md
 templates/knowledge-record-v1.md
 ```
 
-これらは移植後もDefinition Candidateである。
+旧`templates/knowledge-record-v1.md`はKnowledge Record自身に`maturity.level`と`status: ACTIVE`等を保存する構造を含んでいた。
 
-移植はIndependent Portfolio ReviewやDefinition Lockを代替しない。
+これはLOCKED Learning SystemのImmutable Knowledge Content boundaryと衝突する。
+
+Current Reconciliationでは同PathをCompatibility Noticeに変更する。
+
+Canonical templateは次とする。
+
+```text
+templates/knowledge-record-content-v1.md
+```
+
+旧Promotion GateのL0-L5は、Knowledge Record stored authorityではなくDerived Portfolio Maturityとして明示する。
+
+Authoritative Promotionは`KnowledgePromotionDecision@v1`とCanonical Decision Resolverに従う。
+
+Historical PR #9の原文はPR #9 branchにEvidenceとして保持する。
+
+Compatibility CorrectionはPortfolio Definition Lockを意味しない。
 
 ## 5. PR #15 / #16 / #17 Dependency Recalculation
 
@@ -190,7 +216,9 @@ Portfolio CandidateはLOCKED Learning semanticsを上書きしない。
 
 Learning Definition LockはPortfolio Foundationを自動LOCKしない。
 
-詳細は `docs/architecture/canonical-source-relationship-v1.md` に分離する。
+CandidateとLOCKED Definitionが衝突する場合はLOCKED Definitionを優先し、Candidate側をHOLDまたはCompatibility Correctionする。
+
+詳細は`docs/architecture/canonical-source-relationship-v1.md`に分離する。
 
 ## 7. Current-State Index
 
@@ -200,13 +228,13 @@ Current-State Index V2を生成する。
 docs/audit/waep-current-state-index-v2.md
 ```
 
-旧 `waep-current-state-reconciliation-v1.md` はHistorical Snapshotとして保持する。
+旧`waep-current-state-reconciliation-v1.md`はHistorical Snapshotとして保持する。
 
 旧Snapshotを削除または書き換えない。
 
 ## 8. Independent Reconciliation Review
 
-本Reconciliation commit作成後、exact branch headを対象に独立再確認する。
+Compatibility Correction後のexact branch headを対象に独立再確認する。
 
 Reviewは別commitで記録する。
 

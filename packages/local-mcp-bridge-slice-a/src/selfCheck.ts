@@ -1,4 +1,5 @@
 import { acceptanceCoverage } from './acceptanceCoverage';
+import { evidenceIdExists } from './evidenceCatalog';
 import {
   boundedSearchExhaustionFixture,
   evidenceEmitFixture,
@@ -8,6 +9,7 @@ import {
   sliceAFixtures,
 } from './fixtures';
 import { evaluateShadow } from './shadowEvaluator';
+import { trustAnchorHealth } from './trustRegistry';
 
 export interface SelfCheckFailure {
   name: string;
@@ -38,6 +40,18 @@ export function runSliceASelfCheck(): readonly SelfCheckFailure[] {
     }
   }
 
+  const requiredTrustFixtures = [
+    'forged verified authority ref rejected',
+    'unregistered containment pass rejected',
+    'trusted config mutable exact ref rejected',
+    'trusted config unknown authority root rejected',
+  ];
+  const shadowFixtureNames = new Set(sliceAFixtures.map((fixture) => fixture.name));
+  for (const name of requiredTrustFixtures) {
+    if (!shadowFixtureNames.has(name)) failures.push(failure(`trust fixture ${name}`, 'present', 'missing'));
+  }
+  if (trustAnchorHealth() !== 'ALLOW') failures.push(failure('synthetic trust registry health', 'ALLOW', trustAnchorHealth()));
+
   const expectedRepositoryFixtureIds = [
     'repo-observation-dirty',
     'repo-observation-detached',
@@ -60,10 +74,30 @@ export function runSliceASelfCheck(): readonly SelfCheckFailure[] {
     failures.push(failure('local observation remote-current-state boundary', 'false', 'true'));
   }
 
+  const allowedProcessResourceFields = new Set([
+    'cpuPercent',
+    'residentMemoryBytes',
+    'threadCount',
+    'handleCount',
+  ]);
+  const resourceFields = Object.keys(limitedProcessFixture.resourceSummary);
+  for (const field of resourceFields) {
+    if (!allowedProcessResourceFields.has(field)) {
+      failures.push(failure(`process resource allowlist ${field}`, 'allowed fixed field', 'unexpected field'));
+    }
+  }
+  for (const value of Object.values(limitedProcessFixture.resourceSummary)) {
+    if (value !== undefined && typeof value !== 'number') {
+      failures.push(failure('process resource value type', 'number only', typeof value));
+    }
+  }
   const forbiddenProcessFields = ['commandLine', 'environment', 'env', 'stdin', 'memory'];
   for (const field of forbiddenProcessFields) {
     if (Object.prototype.hasOwnProperty.call(limitedProcessFixture, field)) {
       failures.push(failure(`process output forbidden field ${field}`, 'absent', 'present'));
+    }
+    if (Object.prototype.hasOwnProperty.call(limitedProcessFixture.resourceSummary, field)) {
+      failures.push(failure(`process resource forbidden field ${field}`, 'absent', 'present'));
     }
   }
 
@@ -93,6 +127,23 @@ export function runSliceASelfCheck(): readonly SelfCheckFailure[] {
   for (let number = 1; number <= 55; number += 1) {
     const acId = `AC-${String(number).padStart(2, '0')}`;
     if (!uniqueAcIds.has(acId as `AC-${string}`)) failures.push(failure(`acceptance ${acId}`, 'mapped', 'missing'));
+  }
+
+  for (const entry of acceptanceCoverage) {
+    if (!entry.rationale.trim()) failures.push(failure(`${entry.acId} rationale`, 'non-empty', 'empty'));
+
+    if (entry.status === 'IMPLEMENTED') {
+      if (!entry.evidenceIds.length) failures.push(failure(`${entry.acId} evidence`, 'one or more ids', 'empty'));
+      for (const evidenceId of entry.evidenceIds) {
+        if (!evidenceIdExists(evidenceId)) {
+          failures.push(failure(`${entry.acId} evidence ${evidenceId}`, 'registered concrete evidence', 'unresolved'));
+        }
+      }
+    }
+
+    if (entry.status === 'DEFERRED_BY_DEFINITION' && entry.evidenceIds.length !== 0) {
+      failures.push(failure(`${entry.acId} deferred evidence`, 'no false implementation evidence', String(entry.evidenceIds.length)));
+    }
   }
 
   return failures;

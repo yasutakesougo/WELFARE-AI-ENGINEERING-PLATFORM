@@ -4,30 +4,44 @@
 Document ID:        MSR-RESEARCH-REPORT-V1
 Revision:           Research Report Correction-2
 Research Target:    DEVELOPMENT-KNOWLEDGE-COMPOUND-V1
-State:              INDEPENDENT RE-REVIEW-2 PASS / AWAITING HUMAN ACCEPTANCE
+State:              RESEARCH EVIDENCE ACCEPTED
 Content Baseline Commit: 0ab993f7fb3775460d5df4801f33175bd4e03059
 Content Baseline Blob:   b6adb8b9d814d0ae9301c7f54e40af16ed87c83d
 Independent Re-Review-2: PASS / RESEARCH EVIDENCE ACCEPTABLE
 Independent Validation:  21 / 21 PASS
+Human Research Evidence Acceptance: GO
+Research Evidence:       ACCEPTED
+Design Input Eligibility: AUTHORIZED
+Research Evidence Re-Review: CLOSED
+Acceptance Archive:      docs/research/reviews/human-research-evidence-acceptance-go.md
 Source Review Archive:   docs/research/reviews/independent-research-evidence-re-review-2.md
 Prior Artifact:     Research Report Correction-1
 Prior Commit:       83417f0803744bc90f435be4fe2db7f167090ab5
 Artifact Path:      docs/research/msr-research-report-v1.md
 Encoding:           UTF-8
-Authority:          Research Evidence only
-Human Acceptance:   NOT YET DECIDED (GO / HOLD)
+Authority:          Accepted Research Evidence / Design Input only
 WAEP Adoption:      NOT AUTHORIZED BY THIS ARTIFACT
 DKC Definition Lock: NOT AUTHORIZED BY THIS ARTIFACT
 Implementation Start: NOT AUTHORIZED BY THIS ARTIFACT
+Runtime Activation: NOT AUTHORIZED BY THIS ARTIFACT
+Dependency Addition: NOT AUTHORIZED BY THIS ARTIFACT
 PR Ready:           NOT AUTHORIZED BY THIS ARTIFACT
 Merge:              NOT AUTHORIZED BY THIS ARTIFACT
+Deploy:             NOT AUTHORIZED BY THIS ARTIFACT
+Automatic Knowledge Promotion: NOT AUTHORIZED BY THIS ARTIFACT
 ```
 
 ## 0. Authority Boundary
 
 ```text
-Independent Research Evidence PASS
-  != Human Research Evidence Acceptance
+Research Evidence Accepted
+  != Technology Adopted
+ADOPTION_CANDIDATE
+  != ADOPTED
+Research Evidence Accepted
+  != Implementation Authority
+Research Evidence Accepted
+  != Execution Authority
 Human Research Evidence Acceptance GO
   != WAEP Adoption
 Human Research Evidence Acceptance GO
@@ -35,16 +49,20 @@ Human Research Evidence Acceptance GO
 Human Research Evidence Acceptance GO
   != Implementation Start
 Human Research Evidence Acceptance GO
+  != Runtime Activation
+Human Research Evidence Acceptance GO
+  != Dependency Addition
+Human Research Evidence Acceptance GO
   != PR Ready
 Human Research Evidence Acceptance GO
   != Merge
+Human Research Evidence Acceptance GO
+  != Deploy
+Human Research Evidence Acceptance GO
+  != Automatic Knowledge Promotion
 Research Evidence PASS
   != Repository Mutation Authority
-Research Evidence PASS
-  != Execution Authority
 
-ADOPTION_CANDIDATE
-  != ADOPTED
 Knowledge Registry
   != Execution Authority
 ```
@@ -80,8 +98,10 @@ Independent Research Evidence Re-Review-2 reviewed Correction-2 content
 identity `0ab993f7fb3775460d5df4801f33175bd4e03059` /
 blob `b6adb8b9d814d0ae9301c7f54e40af16ed87c83d` and returned
 PASS / RESEARCH EVIDENCE ACCEPTABLE (Independent Validation 21 / 21).
-Status / Next Gate synchronization after that review does not reopen or
-alter Correction-2 Research Classification, Claim statements, or Architecture.
+
+Human Research Evidence Acceptance is GO. Status / Next Gate synchronization
+for Acceptance does not reopen or alter Correction-2 Research Classification,
+Claim statements, Architecture, or Candidate classifications.
 
 DKC Definition Correction documents are not used as substitutes for this report.
 
@@ -936,7 +956,9 @@ Archive: `docs/research/reviews/independent-research-evidence-re-review-2.md`
 
 ```text
 Independent Validation (Re-Review-2): 21 / 21 PASS
-Research Evidence: ACCEPTABLE FOR HUMAN ACCEPTANCE GATE
+Research Evidence: ACCEPTED
+Design Input Eligibility: AUTHORIZED
+Human Research Evidence Acceptance: GO
 ```
 
 ---
@@ -953,7 +975,10 @@ Re-Review-1 New P2 (MSR-RR1-NP2-001):     1 / 1 CLOSED
 Self-Validation scenarios:                21 / 21 PASS
 Independent Validation (Re-Review-2):     21 / 21 PASS
 New P0 / P1 / P2 in Re-Review-2:          0 / 0 / 0
-Research Evidence:                        ACCEPTABLE FOR HUMAN ACCEPTANCE GATE
+Human Research Evidence Acceptance:       GO
+Research Evidence:                        ACCEPTED
+Design Input Eligibility:                 AUTHORIZED
+Research Evidence Re-Review:              CLOSED
 ```
 
 ---
@@ -961,17 +986,16 @@ Research Evidence:                        ACCEPTABLE FOR HUMAN ACCEPTANCE GATE
 ## 15. Next Gate
 
 ```text
+Human Research Evidence Acceptance: GO (recorded)
+Archive: docs/research/reviews/human-research-evidence-acceptance-go.md
+
 Next Gate:
-  MSR-RESEARCH-EVIDENCE-V1
-  Human Research Evidence Acceptance
+  DKC-MSR-ARCHITECTURE-DESIGN-V1
+  Definition Start
   Decision: GO / HOLD
 
-Independent Re-Review-2 precondition: SATISFIED
-  Verdict PASS / RESEARCH EVIDENCE ACCEPTABLE
-  P0 / P1 / P2: 0 / 0 / 0
-  Independent Validation: 21 / 21 PASS
-
-If Human Acceptance is GO, only Research Evidence Acceptance is authorized.
+Definition Start GO
+  != Implementation Start
 
 Human Research Evidence Acceptance GO
   != WAEP Adoption
@@ -980,13 +1004,17 @@ Human Research Evidence Acceptance GO
 Human Research Evidence Acceptance GO
   != Implementation Start
 Human Research Evidence Acceptance GO
+  != Runtime Activation
+Human Research Evidence Acceptance GO
+  != Dependency Addition
+Human Research Evidence Acceptance GO
   != PR Ready
 Human Research Evidence Acceptance GO
   != Merge
-
-Only after Human Acceptance may humans separately decide whether to start:
-  DKC-MSR-ARCHITECTURE-DESIGN-V1
-  Definition Start
+Human Research Evidence Acceptance GO
+  != Deploy
+Human Research Evidence Acceptance GO
+  != Automatic Knowledge Promotion
 ```
 
 ---
@@ -994,17 +1022,25 @@ Only after Human Acceptance may humans separately decide whether to start:
 ## 16. Document End State
 
 ```text
-Research State:           INDEPENDENT RE-REVIEW-2 PASS / AWAITING HUMAN ACCEPTANCE
+Research State:           RESEARCH EVIDENCE ACCEPTED
 Revision:                 Research Report Correction-2
 Content Baseline Commit:  0ab993f7fb3775460d5df4801f33175bd4e03059
 Content Baseline Blob:    b6adb8b9d814d0ae9301c7f54e40af16ed87c83d
 Independent Re-Review-2:  PASS / RESEARCH EVIDENCE ACCEPTABLE
 Independent Validation:   21 / 21 PASS
-Human Acceptance:         NOT YET DECIDED (GO / HOLD)
+Human Research Evidence Acceptance: GO
+Research Evidence:        ACCEPTED
+Design Input Eligibility: AUTHORIZED
+Research Evidence Re-Review: CLOSED
 WAEP Adoption:            NOT AUTHORIZED
 DKC Definition Lock:      NOT AUTHORIZED
 Implementation Start:     NOT AUTHORIZED
+Runtime Activation:       NOT AUTHORIZED
+Dependency Addition:      NOT AUTHORIZED
 PR Ready:                 NOT AUTHORIZED
 Merge:                    NOT AUTHORIZED
-Repository Mutation beyond review-status documentation: NOT AUTHORIZED BY THIS REPORT
+Deploy:                   NOT AUTHORIZED
+Automatic Knowledge Promotion: NOT AUTHORIZED
+Next Gate:                DKC-MSR-ARCHITECTURE-DESIGN-V1 Definition Start GO / HOLD
+Repository Mutation beyond acceptance-status documentation: NOT AUTHORIZED BY THIS REPORT
 ```

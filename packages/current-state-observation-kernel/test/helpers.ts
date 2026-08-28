@@ -73,6 +73,10 @@ export function pullRequestObservation(
     observedBaseSha: "base-a",
     observedHeadSha: "head-a",
     mergeable: true,
+    reviews: [],
+    reviewThreads: [],
+    ciWorkflowEvidence: [],
+    branchPolicyEvidence: [],
     ...overrides
   };
 }
@@ -100,7 +104,9 @@ export function gateBound(
     observedHeadSha: "head-a",
     authorityDecisionRef: "auth-1",
     validForAction: true,
+    consumed: false,
     logicalMutationId: "mut-1",
+    attemptGeneration: "gen-1",
     gateCriticalEvidence: [
       { key: "headSha", value: "head-a", versionToken: "v1" },
       { key: "baseSha", value: "base-a", versionToken: "v1" }
@@ -118,11 +124,29 @@ export function freshnessRecord(
     observationStartedAt: T0,
     observationCompletedAt: T1,
     sourceObservationId: "obs-gate-1",
+    logicalMutationId: "mut-1",
+    attemptGeneration: "gen-1",
+    verificationPurpose: "MUTATION_ELIGIBILITY",
     freshnessStatus: "FRESH",
     gateCriticalEvidence: [
       { key: "headSha", value: "head-a", versionToken: "v1" },
       { key: "baseSha", value: "base-a", versionToken: "v1" }
     ],
+    sourceNativeBindings: [
+      { key: "headSha", value: "head-a", versionToken: "v1" },
+      { key: "baseSha", value: "base-a", versionToken: "v1" }
+    ],
+    evidenceComparison: {
+      requiredEvidence: [
+        { key: "headSha", value: "head-a", versionToken: "v1" },
+        { key: "baseSha", value: "base-a", versionToken: "v1" }
+      ],
+      observedEvidence: [
+        { key: "headSha", value: "head-a", versionToken: "v1" },
+        { key: "baseSha", value: "base-a", versionToken: "v1" }
+      ],
+      missingRequiredMembers: []
+    },
     evidenceReferences: ["ev-fresh"],
     retrievalProvenance: PROVENANCE,
     ...overrides
@@ -133,6 +157,10 @@ export function claimRecord(overrides: Partial<GateUseClaimV1> = {}): GateUseCla
   return {
     contractType: CONTRACT.GateUseClaim,
     observationId: "claim-1",
+    claimId: "claim-event-1",
+    claimantId: "kernel-claimant",
+    claimedAt: T1,
+    claimResult: "CLAIMED",
     sourceObservationId: "obs-gate-1",
     logicalMutationId: "mut-1",
     attemptGeneration: "gen-1",
@@ -145,6 +173,7 @@ export function terminalRecord(overrides: Partial<TerminalOutcomeV1> = {}): Term
   return {
     contractType: CONTRACT.TerminalOutcome,
     observationId: "term-1",
+    claimId: "claim-event-1",
     sourceObservationId: "obs-gate-1",
     logicalMutationId: "mut-1",
     attemptGeneration: "gen-1",

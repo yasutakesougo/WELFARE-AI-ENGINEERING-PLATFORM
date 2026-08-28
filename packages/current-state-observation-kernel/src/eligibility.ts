@@ -29,6 +29,32 @@ export function evaluateMutationEligibility(input: {
   freshness?: GateFreshnessVerificationV1;
   authority: AuthorityResult;
 }): StructuredResult<MutationEligibility> {
+  if (input.freshness === undefined) {
+    return fail("HOLD", {
+      classification: "MISSING_APPLICABLE_FRESHNESS",
+      message: "evaluateMutationEligibility without applicable freshness → HOLD",
+      value: { eligible: false, reason: "HOLD" }
+    });
+  }
+  if (input.freshness.freshnessStatus !== "FRESH") {
+    return fail("HOLD", {
+      classification: "NOT_FRESH",
+      message: "only applicable FRESH verification may proceed to remaining eligibility checks",
+      value: { eligible: false, reason: "HOLD" }
+    });
+  }
+  if (
+    input.freshness.sourceObservationId !== input.observation.observationId ||
+    input.freshness.logicalMutationId !== input.observation.logicalMutationId ||
+    input.freshness.attemptGeneration !== input.observation.attemptGeneration
+  ) {
+    return fail("HOLD", {
+      classification: "FRESHNESS_NOT_APPLICABLE",
+      message: "freshness verification MUST bind to the same observation, logicalMutationId, and attemptGeneration",
+      value: { eligible: false, reason: "HOLD" }
+    });
+  }
+
   const authority = evaluateAuthority(input.authority);
   if (authority.status !== "PASS") {
     return fail("NOT_AUTHORIZED", {
@@ -43,16 +69,9 @@ export function evaluateMutationEligibility(input: {
       value: { eligible: false, reason: "HOLD" }
     });
   }
-  if (!input.observation.validForAction) {
+  if (!input.observation.validForAction || input.observation.consumed) {
     return fail("HOLD", {
       classification: "GATE_NOT_VALID_FOR_ACTION",
-      value: { eligible: false, reason: "HOLD" }
-    });
-  }
-  if (input.freshness !== undefined && input.freshness.freshnessStatus !== "FRESH") {
-    return fail("HOLD", {
-      classification: "NOT_FRESH",
-      message: "technical freshness != authority",
       value: { eligible: false, reason: "HOLD" }
     });
   }

@@ -11,7 +11,7 @@ import {
   preferStableRepositoryIdentity,
   rejectObservationIdReuse
 } from "../src/index.js";
-import { claimRecord, gateBound, pullRequestObservation, repositoryObservation, REPO } from "./helpers.js";
+import { claimRecord, freshnessRecord, gateBound, pullRequestObservation, repositoryObservation, REPO } from "./helpers.js";
 
 interface Scenario {
   id: string;
@@ -57,8 +57,13 @@ const scenarios: Scenario[] = [
         observation: gateBound({
           observationResult: "INVALIDATED",
           consistencyResult: "INVALIDATED",
-          validForAction: false
+          validForAction: false,
+          failureClass: "IDENTITY_MOVED",
+          unavailableFields: ["headSha"],
+          errorEvidenceReferences: ["ev-gate"],
+          retryability: "NEW_OBSERVATION_REQUIRED"
         }),
+        freshness: freshnessRecord(),
         authority: { decision: "GO", authorityDecisionRef: "auth-1" }
       });
       expect(result.status).toBe("HOLD");
@@ -72,6 +77,7 @@ const scenarios: Scenario[] = [
     run: () => {
       const result = evaluateMutationEligibility({
         observation: gateBound(),
+        freshness: freshnessRecord(),
         authority: { decision: "GO", authorityDecisionRef: "auth-1" }
       });
       expect(result.status).toBe("PASS");
@@ -137,11 +143,14 @@ const scenarios: Scenario[] = [
     run: () => {
       const result = parsePullRequestObservation(
         pullRequestObservation({
-          observationResult: "PARTIAL"
+          ciWorkflowEvidence: [{ conclusion: "SUCCESS" }],
+          reviewThreads: undefined
         })
       );
       expect(result.status).toBe("HOLD");
       expect(result.value?.observationResult).toBe("PARTIAL");
+      expect(result.value?.unavailableFields).toContain("reviewThreads");
+      expect(result.value?.failureClass).toBe("UNAVAILABLE_FIELD");
     }
   },
   {

@@ -178,6 +178,113 @@ function readIdentityBoundary(value: unknown, field: string): StructuredResult<O
   return ok(boundary);
 }
 
+const FAILURE_RESULTS: readonly ObservationResult[] = ["PARTIAL", "FAILED", "INVALIDATED"];
+
+function readUnknownArray(input: Record<string, unknown>, field: string): StructuredResult<unknown[]> {
+  const value = input[field];
+  if (value === undefined) {
+    return fail("FAILED", { field, classification: "MISSING_FIELD", message: `${field} is required` });
+  }
+  if (!Array.isArray(value)) {
+    return fail("FAILED", { field, classification: "INVALID_FIELD", message: `${field} must be an array` });
+  }
+  return ok(value);
+}
+
+function readMutationAttempts(input: Record<string, unknown>): StructuredResult<0 | 1> {
+  const value = input.mutationAttempts;
+  if (value === undefined) {
+    return fail("FAILED", {
+      field: "mutationAttempts",
+      classification: "MISSING_FIELD",
+      message: "mutationAttempts is required and MUST NOT be inferred as 0"
+    });
+  }
+  if (typeof value !== "number" || !Number.isInteger(value) || (value !== 0 && value !== 1)) {
+    return fail("FAILED", {
+      field: "mutationAttempts",
+      classification: "INVALID_FIELD",
+      message: "mutation attempts per observation <= 1; only integer 0 or 1 is permitted"
+    });
+  }
+  return ok(value);
+}
+
+function readMutationPerformed(input: Record<string, unknown>): StructuredResult<boolean | "UNKNOWN"> {
+  const value = input.mutationPerformed;
+  if (value === undefined) {
+    return fail("FAILED", { field: "mutationPerformed", classification: "MISSING_FIELD" });
+  }
+  if (value === true || value === false || value === "UNKNOWN") {
+    return ok(value);
+  }
+  return fail("FAILED", {
+    field: "mutationPerformed",
+    classification: "INVALID_FIELD",
+    message: "mutationPerformed MUST be true, false, or UNKNOWN"
+  });
+}
+
+function readEvidenceComparison(value: unknown): StructuredResult<{
+  requiredEvidence: GateCriticalEvidenceItem[];
+  observedEvidence: GateCriticalEvidenceItem[];
+  missingRequiredMembers: string[];
+}> {
+  if (!isRecord(value)) {
+    return fail("FAILED", { field: "evidenceComparison", classification: "MISSING_FIELD" });
+  }
+  const requiredEvidence = readEvidenceItems(value.requiredEvidence, "evidenceComparison.requiredEvidence");
+  const observedEvidence = readEvidenceItems(value.observedEvidence, "evidenceComparison.observedEvidence");
+  const missingRequiredMembers = readStringArray(
+    value as Record<string, unknown>,
+    "missingRequiredMembers"
+  );
+  for (const part of [requiredEvidence, observedEvidence, missingRequiredMembers]) {
+    if (part.status !== "PASS") {
+      return mapFail(part);
+    }
+  }
+  return ok({
+    requiredEvidence: requiredEvidence.value as GateCriticalEvidenceItem[],
+    observedEvidence: observedEvidence.value as GateCriticalEvidenceItem[],
+    missingRequiredMembers: missingRequiredMembers.value as string[]
+  });
+}
+
+function attachFailureFields<T extends BaseObservationFields>(
+  record: T,
+  input: Record<string, unknown>
+): StructuredResult<T> {
+  if (!FAILURE_RESULTS.includes(record.observationResult)) {
+    return ok(record);
+  }
+  const failureClass = requiredString(input, "failureClass");
+  const unavailableFields = readStringArray(input, "unavailableFields");
+  const errorEvidenceReferences = readStringArray(input, "errorEvidenceReferences");
+  const retryability = readEnum(input, "retryability", [
+    "NONE",
+    "WAIT",
+    "NEW_OBSERVATION_REQUIRED",
+    "NOT_RETRYABLE"
+  ] as const);
+  for (const part of [failureClass, unavailableFields, errorEvidenceReferences, retryability]) {
+    if (part.status !== "PASS") {
+      return fail("FAILED", {
+        classification: "MISSING_FAILURE_CONTRACT",
+        field: part.field,
+        message: "PARTIAL, FAILED, and INVALIDATED observations MUST carry failureClass, unavailableFields, errorEvidenceReferences, and retryability"
+      });
+    }
+  }
+  return ok({
+    ...record,
+    failureClass: failureClass.value as string,
+    unavailableFields: unavailableFields.value as string[],
+    errorEvidenceReferences: errorEvidenceReferences.value as string[],
+    retryability: retryability.value as BaseObservationFields["retryability"]
+  });
+}
+
 function readEvidenceItems(value: unknown, field: string): StructuredResult<GateCriticalEvidenceItem[]> {
   if (!Array.isArray(value)) {
     return fail("FAILED", { field, classification: "MISSING_FIELD", message: `${field} is required` });
@@ -270,7 +377,7 @@ function parseBaseObservation(
   if (correctsObservationId.value !== undefined) {
     base.correctsObservationId = correctsObservationId.value;
   }
-  return ok(base);
+  return attachFailureFields(base, input);
 }
 
 function asInput(value: unknown): StructuredResult<Record<string, unknown>> {
@@ -323,6 +430,10 @@ export function parsePullRequestObservation(input: unknown): StructuredResult<Pu
   const observedBaseSha = optionalString(object.value, "observedBaseSha");
   const observedHeadSha = optionalString(object.value, "observedHeadSha");
   const mergeableRaw = object.value.mergeable;
+  const reviews = object.value.reviews;
+  const reviewThreads = object.value.reviewThreads;
+  const ciWorkflowEvidence = object.value.ciWorkflowEvidence;
+  const branchPolicyEvidence = object.value.branchPolicyEvidence;
   for (const part of [pullRequestId, state, draft, merged, observedBaseSha, observedHeadSha]) {
     if (part.status !== "PASS") {
       return fail("FAILED", { field: part.field, classification: part.classification, message: part.message });
@@ -331,17 +442,46 @@ export function parsePullRequestObservation(input: unknown): StructuredResult<Pu
   if (mergeableRaw !== undefined && typeof mergeableRaw !== "boolean") {
     return fail("FAILED", { field: "mergeable", classification: "INVALID_FIELD" });
   }
+
+  const missingComponents: string[] = [];
+  if (!Array.isArray(reviews)) missingComponents.push("reviews");
+  if (!Array.isArray(reviewThreads)) missingComponents.push("reviewThreads");
+  if (!Array.isArray(ciWorkflowEvidence)) missingComponents.push("ciWorkflowEvidence");
+  if (!Array.isArray(branchPolicyEvidence)) missingComponents.push("branchPolicyEvidence");
+
   const record: PullRequestObservationV1 = {
     ...base.value,
     contractType: CONTRACT.PullRequestObservation,
     pullRequestId: pullRequestId.value as string,
     state: state.value as string,
     draft: draft.value as boolean,
-    merged: merged.value as boolean
+    merged: merged.value as boolean,
+    reviews: Array.isArray(reviews) ? reviews : [],
+    reviewThreads: Array.isArray(reviewThreads) ? reviewThreads : [],
+    ciWorkflowEvidence: Array.isArray(ciWorkflowEvidence) ? ciWorkflowEvidence : [],
+    branchPolicyEvidence: Array.isArray(branchPolicyEvidence) ? branchPolicyEvidence : []
   };
   if (observedBaseSha.value !== undefined) record.observedBaseSha = observedBaseSha.value;
   if (observedHeadSha.value !== undefined) record.observedHeadSha = observedHeadSha.value;
   if (typeof mergeableRaw === "boolean") record.mergeable = mergeableRaw;
+
+  if (base.value.observationResult === "COMPLETE" && missingComponents.length > 0) {
+    const partial: PullRequestObservationV1 = {
+      ...record,
+      observationResult: "PARTIAL",
+      failureClass: "UNAVAILABLE_FIELD",
+      unavailableFields: missingComponents,
+      errorEvidenceReferences: record.evidenceReferences,
+      retryability: "WAIT"
+    };
+    return fail("HOLD", {
+      classification: "PARTIAL_OBSERVATION",
+      field: missingComponents[0],
+      message: "COMPLETE PullRequestObservation@v1 MUST NOT infer missing review, CI/workflow, or branch-policy evidence",
+      value: partial
+    });
+  }
+
   return finalizeObservation(record);
 }
 
@@ -405,6 +545,8 @@ export function parseGateBoundObservation(input: unknown): StructuredResult<Gate
   const authorityDecisionRef = requiredString(object.value, "authorityDecisionRef");
   const validForAction = requiredBoolean(object.value, "validForAction");
   const logicalMutationId = requiredString(object.value, "logicalMutationId");
+  const attemptGeneration = requiredString(object.value, "attemptGeneration");
+  const consumed = requiredBoolean(object.value, "consumed");
   const gateCriticalEvidence = readEvidenceItems(object.value.gateCriticalEvidence, "gateCriticalEvidence");
   for (const part of [
     gateType,
@@ -414,6 +556,8 @@ export function parseGateBoundObservation(input: unknown): StructuredResult<Gate
     authorityDecisionRef,
     validForAction,
     logicalMutationId,
+    attemptGeneration,
+    consumed,
     gateCriticalEvidence
   ]) {
     if (part.status !== "PASS") {
@@ -429,7 +573,9 @@ export function parseGateBoundObservation(input: unknown): StructuredResult<Gate
     observedHeadSha: observedHeadSha.value as string,
     authorityDecisionRef: authorityDecisionRef.value as string,
     validForAction: validForAction.value as boolean,
+    consumed: consumed.value as boolean,
     logicalMutationId: logicalMutationId.value as string,
+    attemptGeneration: attemptGeneration.value as string,
     gateCriticalEvidence: gateCriticalEvidence.value as GateCriticalEvidenceItem[]
   });
 }
@@ -443,6 +589,9 @@ export function parseGateFreshnessVerification(input: unknown): StructuredResult
   const observationStartedAt = requiredIso(object.value, "observationStartedAt");
   const observationCompletedAt = requiredIso(object.value, "observationCompletedAt");
   const sourceObservationId = requiredString(object.value, "sourceObservationId");
+  const logicalMutationId = requiredString(object.value, "logicalMutationId");
+  const attemptGeneration = requiredString(object.value, "attemptGeneration");
+  const verificationPurpose = requiredString(object.value, "verificationPurpose");
   const freshnessStatus = readEnum(object.value, "freshnessStatus", [
     "FRESH",
     "EXPIRED",
@@ -452,15 +601,22 @@ export function parseGateFreshnessVerification(input: unknown): StructuredResult
   const evidenceReferences = readStringArray(object.value, "evidenceReferences");
   const retrievalProvenance = readProvenance(object.value.retrievalProvenance);
   const gateCriticalEvidence = readEvidenceItems(object.value.gateCriticalEvidence, "gateCriticalEvidence");
+  const sourceNativeBindings = readEvidenceItems(object.value.sourceNativeBindings, "sourceNativeBindings");
+  const evidenceComparison = readEvidenceComparison(object.value.evidenceComparison);
   const parts = [
     observationId,
     observationStartedAt,
     observationCompletedAt,
     sourceObservationId,
+    logicalMutationId,
+    attemptGeneration,
+    verificationPurpose,
     freshnessStatus,
     evidenceReferences,
     retrievalProvenance,
-    gateCriticalEvidence
+    gateCriticalEvidence,
+    sourceNativeBindings,
+    evidenceComparison
   ];
   for (const part of parts) {
     if (part.status !== "PASS") {
@@ -473,10 +629,15 @@ export function parseGateFreshnessVerification(input: unknown): StructuredResult
     observationStartedAt: observationStartedAt.value as string,
     observationCompletedAt: observationCompletedAt.value as string,
     sourceObservationId: sourceObservationId.value as string,
+    logicalMutationId: logicalMutationId.value as string,
+    attemptGeneration: attemptGeneration.value as string,
+    verificationPurpose: verificationPurpose.value as string,
     freshnessStatus: freshnessStatus.value as GateFreshnessVerificationV1["freshnessStatus"],
     evidenceReferences: evidenceReferences.value as string[],
     retrievalProvenance: retrievalProvenance.value as RetrievalProvenance,
-    gateCriticalEvidence: gateCriticalEvidence.value as GateCriticalEvidenceItem[]
+    gateCriticalEvidence: gateCriticalEvidence.value as GateCriticalEvidenceItem[],
+    sourceNativeBindings: sourceNativeBindings.value as GateCriticalEvidenceItem[],
+    evidenceComparison: evidenceComparison.value as GateFreshnessVerificationV1["evidenceComparison"]
   };
   if (typeof object.value.ttlExpired === "boolean") {
     record.ttlExpired = object.value.ttlExpired;
@@ -490,6 +651,10 @@ export function parseGateUseClaim(input: unknown): StructuredResult<GateUseClaim
     return mapFail(object);
   }
   const observationId = requiredString(object.value, "observationId");
+  const claimId = requiredString(object.value, "claimId");
+  const claimantId = requiredString(object.value, "claimantId");
+  const claimedAt = requiredIso(object.value, "claimedAt");
+  const claimResult = readEnum(object.value, "claimResult", ["CLAIMED", "CLAIM_REJECTED"]);
   const sourceObservationId = requiredString(object.value, "sourceObservationId");
   const logicalMutationId = requiredString(object.value, "logicalMutationId");
   const attemptGeneration = requiredString(object.value, "attemptGeneration");
@@ -502,7 +667,17 @@ export function parseGateUseClaim(input: unknown): StructuredResult<GateUseClaim
     "TERMINAL_NO_MUTATION",
     "TERMINAL_OUTCOME_UNKNOWN"
   ]);
-  for (const part of [observationId, sourceObservationId, logicalMutationId, attemptGeneration, claimState]) {
+  for (const part of [
+    observationId,
+    claimId,
+    claimantId,
+    claimedAt,
+    claimResult,
+    sourceObservationId,
+    logicalMutationId,
+    attemptGeneration,
+    claimState
+  ]) {
     if (part.status !== "PASS") {
       return mapFail(part);
     }
@@ -510,6 +685,10 @@ export function parseGateUseClaim(input: unknown): StructuredResult<GateUseClaim
   const record: GateUseClaimV1 = {
     contractType: CONTRACT.GateUseClaim,
     observationId: observationId.value as string,
+    claimId: claimId.value as string,
+    claimantId: claimantId.value as string,
+    claimedAt: claimedAt.value as string,
+    claimResult: claimResult.value as GateUseClaimV1["claimResult"],
     sourceObservationId: sourceObservationId.value as string,
     logicalMutationId: logicalMutationId.value as string,
     attemptGeneration: attemptGeneration.value as string,
@@ -531,6 +710,7 @@ export function parseTerminalOutcome(input: unknown): StructuredResult<TerminalO
     return mapFail(object);
   }
   const observationId = requiredString(object.value, "observationId");
+  const claimId = requiredString(object.value, "claimId");
   const sourceObservationId = requiredString(object.value, "sourceObservationId");
   const logicalMutationId = requiredString(object.value, "logicalMutationId");
   const attemptGeneration = requiredString(object.value, "attemptGeneration");
@@ -541,36 +721,32 @@ export function parseTerminalOutcome(input: unknown): StructuredResult<TerminalO
     "TERMINAL_NO_MUTATION",
     "TERMINAL_OUTCOME_UNKNOWN"
   ]);
-  const mutationPerformed = requiredBoolean(object.value, "mutationPerformed");
-  const mutationAttempts = object.value.mutationAttempts;
+  const mutationPerformed = readMutationPerformed(object.value);
+  const mutationAttempts = readMutationAttempts(object.value);
   for (const part of [
     observationId,
+    claimId,
     sourceObservationId,
     logicalMutationId,
     attemptGeneration,
     claimState,
-    mutationPerformed
+    mutationPerformed,
+    mutationAttempts
   ]) {
     if (part.status !== "PASS") {
       return mapFail(part);
     }
   }
-  if (typeof mutationAttempts !== "number") {
-    return fail("FAILED", {
-      field: "mutationAttempts",
-      classification: "MISSING_FIELD",
-      message: "mutationAttempts is required and MUST NOT be inferred as 0"
-    });
-  }
   return ok({
     contractType: CONTRACT.TerminalOutcome,
     observationId: observationId.value as string,
+    claimId: claimId.value as string,
     sourceObservationId: sourceObservationId.value as string,
     logicalMutationId: logicalMutationId.value as string,
     attemptGeneration: attemptGeneration.value as string,
     claimState: claimState.value as TerminalOutcomeV1["claimState"],
-    mutationPerformed: mutationPerformed.value as boolean,
-    mutationAttempts
+    mutationPerformed: mutationPerformed.value as TerminalOutcomeV1["mutationPerformed"],
+    mutationAttempts: mutationAttempts.value as TerminalOutcomeV1["mutationAttempts"]
   });
 }
 
@@ -597,7 +773,11 @@ export function finalizeObservation<T extends BaseObservationFields>(record: T):
     const invalidated = {
       ...record,
       observationResult: "INVALIDATED" as const,
-      consistencyResult: "INVALIDATED" as const
+      consistencyResult: "INVALIDATED" as const,
+      failureClass: record.failureClass ?? "IDENTITY_MOVED",
+      unavailableFields: record.unavailableFields ?? [],
+      errorEvidenceReferences: record.errorEvidenceReferences ?? record.evidenceReferences,
+      retryability: record.retryability ?? "NEW_OBSERVATION_REQUIRED"
     };
     return fail("HOLD", {
       classification: "IDENTITY_MOVED",
@@ -605,6 +785,19 @@ export function finalizeObservation<T extends BaseObservationFields>(record: T):
       value: invalidated,
       retryability: "NEW_OBSERVATION_REQUIRED"
     });
+  }
+  if (FAILURE_RESULTS.includes(record.observationResult)) {
+    if (
+      record.failureClass === undefined ||
+      record.unavailableFields === undefined ||
+      record.errorEvidenceReferences === undefined ||
+      record.retryability === undefined
+    ) {
+      return fail("FAILED", {
+        classification: "MISSING_FAILURE_CONTRACT",
+        message: "PARTIAL, FAILED, and INVALIDATED observations MUST carry failureClass, unavailableFields, errorEvidenceReferences, and retryability"
+      });
+    }
   }
   if (record.observationResult === "PARTIAL") {
     return fail("HOLD", { classification: "PARTIAL_OBSERVATION", value: record });

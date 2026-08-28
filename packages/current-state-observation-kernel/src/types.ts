@@ -104,6 +104,23 @@ export interface ObservationIdentityBoundary {
   headSha?: string;
 }
 
+export interface FailureEvidence {
+  failureClass: string;
+  unavailableFields: string[];
+  errorEvidenceReferences: string[];
+  retryability: Retryability;
+}
+
+export type MutationPerformed = boolean | "UNKNOWN";
+export type ClaimResult = "CLAIMED" | "CLAIM_REJECTED";
+export type MutationAttemptCount = 0 | 1;
+
+export interface EvidenceComparison {
+  requiredEvidence: GateCriticalEvidenceItem[];
+  observedEvidence: GateCriticalEvidenceItem[];
+  missingRequiredMembers: string[];
+}
+
 export interface BaseObservationFields {
   contractType: ContractType;
   observationId: string;
@@ -120,6 +137,10 @@ export interface BaseObservationFields {
   repositoryIdentity: RepositoryIdentity;
   supersedesObservationId?: string;
   correctsObservationId?: string;
+  failureClass?: string;
+  unavailableFields?: string[];
+  errorEvidenceReferences?: string[];
+  retryability?: Retryability;
 }
 
 export interface RepositoryObservationV1 extends BaseObservationFields {
@@ -136,6 +157,10 @@ export interface PullRequestObservationV1 extends BaseObservationFields {
   observedBaseSha?: string;
   observedHeadSha?: string;
   mergeable?: boolean;
+  reviews: unknown[];
+  reviewThreads: unknown[];
+  ciWorkflowEvidence: unknown[];
+  branchPolicyEvidence: unknown[];
 }
 
 export interface BranchRelationObservationV1 extends BaseObservationFields {
@@ -154,8 +179,10 @@ export interface GateBoundObservationV1 extends BaseObservationFields {
   observedHeadSha: string;
   authorityDecisionRef: string;
   validForAction: boolean;
+  consumed: boolean;
   gateCriticalEvidence: GateCriticalEvidenceItem[];
   logicalMutationId: string;
+  attemptGeneration: string;
 }
 
 export interface GateFreshnessVerificationV1 {
@@ -164,8 +191,13 @@ export interface GateFreshnessVerificationV1 {
   observationStartedAt: string;
   observationCompletedAt: string;
   sourceObservationId: string;
+  logicalMutationId: string;
+  attemptGeneration: string;
+  verificationPurpose: string;
   freshnessStatus: FreshnessStatus;
   gateCriticalEvidence: GateCriticalEvidenceItem[];
+  evidenceComparison: EvidenceComparison;
+  sourceNativeBindings: GateCriticalEvidenceItem[];
   evidenceReferences: string[];
   retrievalProvenance: RetrievalProvenance;
   ttlExpired?: boolean;
@@ -174,6 +206,10 @@ export interface GateFreshnessVerificationV1 {
 export interface GateUseClaimV1 {
   contractType: typeof CONTRACT.GateUseClaim;
   observationId: string;
+  claimId: string;
+  claimantId: string;
+  claimedAt: string;
+  claimResult: ClaimResult;
   sourceObservationId: string;
   logicalMutationId: string;
   attemptGeneration: string;
@@ -184,12 +220,13 @@ export interface GateUseClaimV1 {
 export interface TerminalOutcomeV1 {
   contractType: typeof CONTRACT.TerminalOutcome;
   observationId: string;
+  claimId: string;
   sourceObservationId: string;
   logicalMutationId: string;
   attemptGeneration: string;
   claimState: ClaimState;
-  mutationPerformed: boolean;
-  mutationAttempts: number;
+  mutationPerformed: MutationPerformed;
+  mutationAttempts: MutationAttemptCount;
 }
 
 export type VersionedRecord =

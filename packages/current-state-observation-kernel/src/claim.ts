@@ -19,6 +19,10 @@ function claimsForObservation(state: KernelState, sourceObservationId: string): 
   );
 }
 
+function allClaims(state: KernelState): readonly GateUseClaimV1[] {
+  return state.records.filter((record): record is GateUseClaimV1 => record.contractType === CONTRACT.GateUseClaim);
+}
+
 function terminalsForObservation(state: KernelState, sourceObservationId: string): readonly TerminalOutcomeV1[] {
   return state.records.filter(
     (record): record is TerminalOutcomeV1 =>
@@ -28,6 +32,13 @@ function terminalsForObservation(state: KernelState, sourceObservationId: string
 
 function isTerminal(state: GateUseClaimV1["claimState"]): boolean {
   return (TERMINAL_STATES as readonly string[]).includes(state);
+}
+
+function isActiveAttempt(claim: GateUseClaimV1): boolean {
+  if (claim.claimResult === "CLAIM_REJECTED") {
+    return false;
+  }
+  return claim.claimState === "CLAIMED" || claim.claimState === "AVAILABLE";
 }
 
 export function attemptGateUseClaim(input: {
@@ -54,7 +65,9 @@ export function attemptGateUseClaim(input: {
   }
 
   const existingClaims = claimsForObservation(input.state, input.claim.sourceObservationId);
-  const successfulClaims = existingClaims.filter((claim) => claim.claimState === "CLAIMED");
+  const successfulClaims = existingClaims.filter(
+    (claim) => claim.claimState === "CLAIMED" && claim.claimResult === "CLAIMED"
+  );
   if (successfulClaims.length >= 1) {
     return rejectCompetingClaim();
   }
@@ -73,17 +86,14 @@ export function attemptGateUseClaim(input: {
     });
   }
 
-  const activeSameGeneration = existingClaims.filter(
+  const activeSameGeneration = allClaims(input.state).filter(
     (claim) =>
       claim.logicalMutationId === input.claim.logicalMutationId &&
       claim.attemptGeneration === input.claim.attemptGeneration &&
-      (claim.claimState === "CLAIMED" || claim.claimState === "AVAILABLE")
+      isActiveAttempt(claim)
   );
   if (activeSameGeneration.length >= 1) {
-    return fail("HOLD", {
-      classification: "ATTEMPT_GENERATION_ACTIVE",
-      message: "active mutation attempts per logicalMutationId + attemptGeneration <= 1"
-    });
+    return rejectCompetingClaim();
   }
 
   const phase = input.winningAttemptPhase ?? input.claim.winningAttemptPhase;
@@ -91,7 +101,11 @@ export function attemptGateUseClaim(input: {
     return rejectCompetingClaim();
   }
 
-  const claimed: GateUseClaimV1 = { ...input.claim, claimState: "CLAIMED" };
+  const claimed: GateUseClaimV1 = {
+    ...input.claim,
+    claimState: "CLAIMED",
+    claimResult: "CLAIMED"
+  };
   return ok({
     record: claimed,
     state: appendRecord(input.state, claimed),
@@ -125,15 +139,23 @@ export function recordTerminalOutcome(input: {
     return mapFail(reuse);
   }
 
+  if (input.outcome.claimId.length === 0) {
+    return fail("FAILED", {
+      field: "claimId",
+      classification: "MISSING_FIELD",
+      message: "TerminalOutcome@v1 MUST retain the reverse claimId reference"
+    });
+  }
+
   if (input.ambiguous === true) {
     const unknown: TerminalOutcomeV1 = {
       ...input.outcome,
       claimState: "TERMINAL_OUTCOME_UNKNOWN",
-      mutationPerformed: false
+      mutationPerformed: "UNKNOWN"
     };
     return fail("HOLD", {
       classification: "TERMINAL_OUTCOME_UNKNOWN",
-      message: "ambiguous outcome → TERMINAL_OUTCOME_UNKNOWN and HOLD",
+      message: "ambiguous outcome → TERMINAL_OUTCOME_UNKNOWN, mutationPerformed=UNKNOWN, HOLD; reconciliation required; no blind retry",
       value: { record: unknown, state: appendRecord(input.state, unknown) },
       retryability: "WAIT"
     });
@@ -148,7 +170,7 @@ export function recordTerminalOutcome(input: {
   }
 
   const terminals = terminalsForObservation(input.state, input.outcome.sourceObservationId);
-  if (terminals.some((terminal) => terminal.mutationPerformed) && input.outcome.mutationPerformed) {
+  if (terminals.some((terminal) => terminal.mutationPerformed === true) && input.outcome.mutationPerformed === true) {
     return fail("HOLD", {
       classification: "MUTATION_ATTEMPTS_EXCEEDED",
       message: "mutation attempts per observation <= 1"
@@ -175,6 +197,13 @@ export function canStartExecutableAttempt(input: {
       classification: "CLAIM_REJECTED",
       retryability: "WAIT",
       message: "MUST NOT start a new executable attempt while the winning attempt is non-terminal"
+    });
+  }
+  if (input.lastTerminal?.mutationPerformed === "UNKNOWN" || input.lastTerminal?.claimState === "TERMINAL_OUTCOME_UNKNOWN") {
+    return fail("HOLD", {
+      classification: "TERMINAL_OUTCOME_UNKNOWN",
+      retryability: "WAIT",
+      message: "TERMINAL_OUTCOME_UNKNOWN → HOLD → reconciliation required → no blind retry"
     });
   }
   if (input.lastTerminal?.claimState === "TERMINAL_NO_MUTATION") {

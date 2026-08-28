@@ -2,13 +2,17 @@ export { CONTRACT, CLAIM_STATES, FRESHNESS_STATUSES, TERMINAL_STATES } from "./t
 export type {
   AuthorityResult,
   BranchRelationObservationV1,
+  ClaimResult,
   ContractType,
+  EvidenceComparison,
+  FailureEvidence,
   GateBoundObservationV1,
   GateFreshnessVerificationV1,
   GateUseClaimV1,
   KernelState,
   KernelStatus,
   MutationEligibility,
+  MutationPerformed,
   PullRequestObservationV1,
   RepositoryObservationV1,
   TerminalOutcomeV1,
@@ -41,4 +45,4 @@ export {
   recordTerminalOutcome
 } from "./claim.js";
 export { evaluateAuthority, evaluateMutationEligibility } from "./eligibility.js";
-export { appendRecord, emptyKernelState, findByObservationId, recordsOfType, VERSIONED_CONTRACTS } from "./state.js";
+export { appendRecord, acceptRecord, emptyKernelState, findByObservationId, recordsOfType, VERSIONED_CONTRACTS } from "./state.js";

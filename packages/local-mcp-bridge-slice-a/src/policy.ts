@@ -1,13 +1,18 @@
 import type {
   AuthorityResult,
-  ContainmentEvidence,
   DataZone,
   DataZoneDecision,
   DependencyEntry,
   ObservationAccessClass,
   TrustedConfigurationValidationRecord,
-  VerifiedDecision,
 } from './contracts';
+import {
+  isImmutableConfigurationExactRef,
+  isPermittedDataZoneAuthorityRef,
+  resolveTrustedContainment,
+  resolveTrustedDecision,
+  type TrustedDecisionClass,
+} from './trustRegistry';
 
 const accessRank: Record<ObservationAccessClass, number> = {
   ALLOW_OBSERVE: 0,
@@ -48,22 +53,17 @@ function stricterAccessClass(a: ObservationAccessClass, b: ObservationAccessClas
   return accessRank[a] >= accessRank[b] ? a : b;
 }
 
-function looksImmutableExactRef(value: string): boolean {
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return false;
-  return !['latest', 'main', 'current', 'head'].includes(normalized);
-}
-
 export function validateTrustedConfiguration(
   validation: TrustedConfigurationValidationRecord | undefined,
 ): boolean {
   if (!validation) return false;
   if (!validation.configurationIdentity.trim()) return false;
-  if (!looksImmutableExactRef(validation.configurationExactRef)) return false;
+  if (!isImmutableConfigurationExactRef(validation.configurationExactRef)) return false;
   if (validation.integrityResult !== 'PASS') return false;
   if (validation.configurationAuthorityState !== 'VALID') return false;
   if (!validation.configurationAuthorityRef?.trim()) return false;
   if (validation.configurationAuthorityRef === validation.configurationIdentity) return false;
+  if (!isPermittedDataZoneAuthorityRef(validation.configurationAuthorityRef)) return false;
   if (!validation.targetScopeMatch) return false;
   if (validation.authorityCycleDetected) return false;
   if (!validation.validatedAt.trim()) return false;
@@ -74,12 +74,13 @@ function validateDecisionAuthority(decision: DataZoneDecision): 'AUTHORITATIVE' 
   switch (decision.dataZoneSource) {
     case 'LOCKED_POLICY':
     case 'EXPLICIT_AUTHORITY_DECISION':
-      return decision.dataZoneAuthority === 'AUTHORITATIVE' && !!decision.dataZoneDecisionRef?.trim()
+      return decision.dataZoneAuthority === 'AUTHORITATIVE' &&
+        isPermittedDataZoneAuthorityRef(decision.dataZoneDecisionRef)
         ? 'AUTHORITATIVE'
         : 'INVALID';
     case 'TRUSTED_CONFIGURATION':
       return decision.dataZoneAuthority === 'AUTHORITATIVE' &&
-        !!decision.dataZoneDecisionRef?.trim() &&
+        isPermittedDataZoneAuthorityRef(decision.dataZoneDecisionRef) &&
         validateTrustedConfiguration(decision.trustedConfigurationValidation)
         ? 'AUTHORITATIVE'
         : 'INVALID';
@@ -131,10 +132,12 @@ export function evaluateDataAccessDecisions(
   return 'ALLOW';
 }
 
-export function evaluateVerifiedDecision(
-  decision: VerifiedDecision | undefined,
+export function evaluateTrustedDecisionRef(
+  decisionClass: TrustedDecisionClass,
+  decisionRef: string | undefined,
   targetIdentity: string,
 ): AuthorityResult {
+  const decision = resolveTrustedDecision(decisionClass, decisionRef);
   if (!decision) return 'HOLD';
   if (decision.verificationState !== 'VERIFIED') return 'HOLD';
   if (decision.targetIdentity !== targetIdentity) return 'HOLD';
@@ -186,10 +189,11 @@ export function evaluateDependencyEntries(entries: readonly DependencyEntry[] | 
   return sawHold ? 'HOLD' : 'ALLOW';
 }
 
-export function evaluateContainmentEvidence(
-  evidence: ContainmentEvidence | undefined,
+export function evaluateTrustedContainmentRef(
+  evidenceRef: string | undefined,
   targetIdentity: string,
 ): AuthorityResult {
+  const evidence = resolveTrustedContainment(evidenceRef);
   if (!evidence) return 'DENY';
   if (evidence.verificationState !== 'VERIFIED') return 'DENY';
   if (evidence.targetIdentity !== targetIdentity) return 'DENY';

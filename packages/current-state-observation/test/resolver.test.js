@@ -168,6 +168,37 @@ test('canonical identity treats NFC-equivalent strings as equal', () => {
   assert.equal(validateClaimBinding(scenario.observation, scenario.claim).result, 'PASS');
 });
 
+test('pre-action Authority resolution before Claim fails closed', () => {
+  const scenario = makeHappyScenario();
+  scenario.preActionAuthorityContext.resolvedAt = '2026-08-28T20:30:02+09:00';
+  assert.equal(shadowEvaluate(scenario).recommendation, 'NO_MUTATION');
+});
+
+test('unbound Policy rules cannot enable revision-independent authority', () => {
+  const scenario = makeHappyScenario();
+  scenario.initialAuthorityContext.policyRevision = { ...scenario.initialAuthorityContext.policyRevision, identity: { ...policyRevisionIdentity, policyRevisionId: 'OTHER' }, revisionIndependentAllowed: true };
+  assert.equal(resolveAuthority(scenario.initialAuthorityContext).result, 'UNRESOLVED');
+});
+
+test('decision authority domain mismatch is excluded from current Authority', () => {
+  const scenario = makeHappyScenario();
+  const decision = makeDecision({ decisionId: 'D-WRONG-DOMAIN', outcome: 'GO' });
+  decision.authorityDomain = 'DEPLOY';
+  decision.actorAuthorityBasis = { ...decision.actorAuthorityBasis, authorityDomain: 'DEPLOY' };
+  scenario.initialAuthorityContext.decisions = [decision];
+  assert.equal(resolveAuthority(scenario.initialAuthorityContext).result, 'UNRESOLVED');
+});
+
+test('Authority resolution records evaluated and excluded Decision provenance', () => {
+  const scenario = makeHappyScenario();
+  const future = makeDecision({ decisionId: 'D-FUTURE-EXCLUDED', outcome: 'GO' });
+  future.effectiveAt = '2026-08-29T20:00:00+09:00';
+  scenario.initialAuthorityContext.decisions.push(future);
+  const result = resolveAuthority(scenario.initialAuthorityContext);
+  assert.deepEqual(result.evaluatedDecisionIds, ['D-GO-1', 'D-FUTURE-EXCLUDED']);
+  assert.equal(result.excludedDecisions.some((entry) => entry.decisionId === 'D-FUTURE-EXCLUDED' && entry.reason === 'FUTURE'), true);
+});
+
 test('wrong action claim binding prevents eligibility', () => {
   const scenario = makeHappyScenario();
   scenario.claim = { ...scenario.claim, actionType: 'READY' };

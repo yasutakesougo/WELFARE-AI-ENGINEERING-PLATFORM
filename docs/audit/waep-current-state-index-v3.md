@@ -9,6 +9,7 @@ Branch: main
 Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Latest Main Merge: PR #22
 Latest Main Merge Subject: docs: lock authority claim resolution contract v1
+Current-State Reconciliation PR: #29 / OPEN / DRAFT
 Index Mode: READ-ONLY EVIDENCE + RECONCILIATION RECORD
 Ready / Merge / Deploy: NOT AUTHORIZED BY THIS INDEX
 ```
@@ -146,47 +147,26 @@ Correction前にcurrent-main baseline reconciliationが必要である。
 | PR | State | Head / Merge | Relation / Interpretation |
 | --- | --- | --- | --- |
 | #9 | OPEN / DRAFT | `7ed4ef2538...` | diverged: ahead 8 / behind 20; stale Portfolio candidate; direct merge HOLD |
-| #14 | OPEN / DRAFT | `a1441d676e...` | diverged: ahead 3 / behind 13; content reconciled by later main history; HISTORICAL / SUPERSEDED candidate |
+| #14 | CLOSED / UNMERGED | `a1441d676e...` | HISTORICAL / SUPERSEDED; evidence preserved |
 | #15 | OPEN / DRAFT | `c561b13bc9...` | diverged: ahead 1 / behind 13; Slice A correction required |
-| #16 | OPEN / DRAFT | `a199ae6cc7...` | diverged: ahead 1 / behind 13; historical predecessor of #17 |
+| #16 | CLOSED / UNMERGED | `a199ae6cc7...` | HISTORICAL PREDECESSOR OF #17; evidence preserved |
 | #17 | OPEN / DRAFT | `332d671eea...` | diverged: ahead 4 / behind 13; active DKC candidate line |
 | #20 | CLOSED / MERGED | `bf53dcd1d7...` | Current-State sync after PR #19 is on main |
 | #21 | OPEN / DRAFT | `ee2351a6e4...` | diverged: ahead 6 / behind 3; active CSOC implementation correction line |
 | #22 | CLOSED / MERGED | `ebc13ef072...` | current main; Authority Claim Resolution lock canonicalized |
-| #26 | OPEN / DRAFT | `83417f0803...` | ahead 1 / behind 0; MSR Correction-1 predecessor; superseded by #27 |
+| #26 | CLOSED / UNMERGED | `83417f0803...` | SUPERSEDED BY #27; evidence preserved |
 | #27 | OPEN / DRAFT | `5b37831f3c...` | ahead 4 / behind 0; active accepted MSR Research Evidence line |
+| #29 | OPEN / DRAFT | `79361bf841...` at initial publication | Current-State Reconciliation V3 line; Ready not authorized |
 
-## Historical / Superseded Draft Disposition
-
-### PR #14
-
-```text
-Disposition: HISTORICAL / SUPERSEDED
-Reason: Post-Merge content was reconciled through later current-state synchronization already present on main.
-Direct Merge: NOT RECOMMENDED
-Evidence Preservation: REQUIRED
-```
-
-### PR #16
+## Historical / Superseded Draft Cleanup
 
 ```text
-Disposition: HISTORICAL PREDECESSOR
-Successor: PR #17
-Direct Merge: NOT RECOMMENDED
-Evidence Preservation: REQUIRED
+PR #14: CLOSED / UNMERGED / HISTORICAL EVIDENCE PRESERVED
+PR #16: CLOSED / UNMERGED / HISTORICAL EVIDENCE PRESERVED
+PR #26: CLOSED / UNMERGED / HISTORICAL EVIDENCE PRESERVED
 ```
 
-### PR #26
-
-```text
-Disposition: SUPERSEDED RESEARCH CORRECTION
-Successor: PR #27
-Research Evidence Accepted Baseline: PR #27
-Direct Merge: NOT RECOMMENDED
-Evidence Preservation: REQUIRED
-```
-
-Closing a superseded Draft does not delete its commits, review history, or discussion evidence.
+Draft cleanupはsuccessor PRのReadyまたはMerge Authorityを付与しない。
 
 ## GitHub Technical Guardrail Observation
 
@@ -217,7 +197,7 @@ UNKNOWN / HOLD != PASS
 ## Current Gate
 
 ```text
-Repository Reconciliation: V3 CANDIDATE / INDEPENDENT REVIEW REQUIRED
+Repository Reconciliation: V3 REVIEWED / DRAFT PR #29 OPEN
 Portfolio Foundation: DEFINITION CANDIDATE / REVIEW REQUIRED
 Learning System: LOCKED / CANONICAL ON MAIN
 Authority Claim Resolution: LOCKED / CANONICAL ON MAIN

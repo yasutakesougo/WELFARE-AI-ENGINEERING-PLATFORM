@@ -9,8 +9,9 @@ Audit Date: 2026-08-29 JST
 Source Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Source Latest Merge: PR #22
 Target Index: docs/audit/waep-current-state-index-v3.md
-State: CORRECTION APPLIED / INDEPENDENT REVIEW REQUIRED
-Repository Mutation Scope: DOCS ONLY
+Current-State PR: #29 / OPEN / DRAFT
+State: CORRECTION APPLIED / REVIEWED / POST-REVIEW CLEANUP APPLIED
+Repository Mutation Scope: DOCS + SUPERSEDED DRAFT CLOSURE
 Ready / Merge / Deploy: NOT AUTHORIZED BY THIS RECORD
 ```
 
@@ -57,7 +58,7 @@ Severity: P1
 Observed: README and Current-State Index V2 identify 7998a83c... as Current Main.
 Actual: main = ebc13ef...
 Correction: New Current-State Index V3 binds exact current main.
-State: CORRECTED / PENDING INDEPENDENT REVIEW
+Review Result: CLOSED
 ```
 
 ### CS-V3-P1-002 — Active workstream table incomplete
@@ -67,16 +68,18 @@ Severity: P1
 Observed: Previous index does not contain PR #21, #22, #26, or #27.
 Impact: MSR acceptance, CSOC correction, and Authority Claim Resolution lock are absent from the current snapshot.
 Correction: V3 adds active and historical disposition for these lines.
-State: CORRECTED / PENDING INDEPENDENT REVIEW
+Review Result: CLOSED
 ```
 
 ### CS-V3-P2-001 — Superseded Drafts remain operationally ambiguous
 
 ```text
 Severity: P2
-Observed: PR #14, #16, and #26 remain OPEN / DRAFT despite later successor or reconciled evidence.
-Correction: V3 classifies them as HISTORICAL / SUPERSEDED candidates before closure.
-State: CORRECTED / PENDING INDEPENDENT REVIEW
+Observed: PR #14, #16, and #26 remained OPEN / DRAFT despite later successor or reconciled evidence.
+Correction: V3 classified them before closure.
+Execution Result: PR #14 / #16 / #26 CLOSED / UNMERGED
+Evidence Preservation: YES
+State: CLOSED
 ```
 
 ### CS-V3-P2-002 — GitHub enforcement is weaker than logical governance
@@ -100,7 +103,7 @@ Head: 332d671eea5d268998fdaef551eac0ed9ca2ace8
 Current-main relation: diverged / ahead 4 / behind 13
 Revision: Definition Correction-2
 Next Definition Gate: Independent Definition Re-Review-2
-Precondition added by reconciliation: current-main baseline reconciliation
+Precondition: current-main baseline reconciliation
 ```
 
 This precondition does not change DKC semantics.
@@ -114,7 +117,7 @@ Active PR: #21
 Head: ee2351a6e4566f7c01d1dc003acd7f38e8bdb8e0
 Current-main relation: diverged / ahead 6 / behind 3
 Next Gate: Independent Implementation Re-Review-2
-Precondition added by reconciliation: current-main baseline reconciliation
+Precondition: current-main baseline reconciliation
 ```
 
 The local result `69 tests passed / tsc --noEmit passed` remains implementation evidence.
@@ -134,71 +137,76 @@ Next Gate: DKC-MSR-ARCHITECTURE-DESIGN-V1 Definition Start GO / HOLD
 
 Research Evidence Acceptance does not grant Technology Adoption or Implementation Start.
 
-## 5. Historical Draft Disposition
+## 5. Superseded Draft Cleanup Execution
 
 ### PR #14
 
-PR #14 is retained as historical evidence for Learning System Post-Merge Reconciliation.
-
-Later reconciliation and synchronization are already present in main history.
-
-Disposition is `HISTORICAL / SUPERSEDED`.
+```text
+Before: OPEN / DRAFT
+After: CLOSED / UNMERGED
+Disposition: HISTORICAL / SUPERSEDED
+Evidence Comment: RECORDED
+Historical Evidence: PRESERVED
+```
 
 ### PR #16
 
-PR #16 is the historical predecessor of PR #17.
-
-Disposition is `HISTORICAL PREDECESSOR`.
+```text
+Before: OPEN / DRAFT
+After: CLOSED / UNMERGED
+Disposition: HISTORICAL PREDECESSOR OF PR #17
+Evidence Comment: RECORDED
+Historical Evidence: PRESERVED
+```
 
 ### PR #26
 
-PR #26 is the Research Report Correction-1 predecessor of PR #27.
-
-PR #27 contains the accepted Research Evidence line.
-
-Disposition is `SUPERSEDED BY PR #27`.
-
-## 6. Planned Closure Semantics
-
-Closing PR #14, #16, or #26 is repository hygiene only.
-
-Closure does not delete commits or discussion evidence.
-
-Closure does not assert that historical content was merged verbatim.
-
-Closure does not authorize any successor PR for Ready or Merge.
-
-## 7. Validation Targets
-
 ```text
-CS-V3-V01 Current main exact SHA matches GitHub branch main.
-CS-V3-V02 Latest merge identity is PR #22.
-CS-V3-V03 Authority Claim Resolution locked state is represented.
-CS-V3-V04 MSR PR #27 accepted evidence state is represented.
-CS-V3-V05 DKC PR #17 exact head and divergence are represented.
-CS-V3-V06 CSOC PR #21 exact head and divergence are represented.
-CS-V3-V07 PR #15 stale baseline is represented.
-CS-V3-V08 PR #14 historical disposition is explicit.
-CS-V3-V09 PR #16 predecessor relationship is explicit.
-CS-V3-V10 PR #26 successor relationship is explicit.
-CS-V3-V11 Ready is not authorized.
-CS-V3-V12 Merge is not authorized.
-CS-V3-V13 Deploy is not authorized.
-CS-V3-V14 Runtime / LIVE WRITE is not authorized.
-CS-V3-V15 Research Evidence Accepted != Technology Adopted is preserved.
+Before: OPEN / DRAFT
+After: CLOSED / UNMERGED
+Disposition: SUPERSEDED BY PR #27
+Evidence Comment: RECORDED
+Historical Evidence: PRESERVED
 ```
 
-## 8. Current Gate
+Closing these Drafts was repository hygiene only.
+
+Closure did not authorize any successor PR for Ready or Merge.
+
+## 6. Validation Targets
+
+```text
+CS-V3-V01 Current main exact SHA matches GitHub branch main. PASS
+CS-V3-V02 Latest merge identity is PR #22. PASS
+CS-V3-V03 Authority Claim Resolution locked state is represented. PASS
+CS-V3-V04 MSR PR #27 accepted evidence state is represented. PASS
+CS-V3-V05 DKC PR #17 exact head and divergence are represented. PASS
+CS-V3-V06 CSOC PR #21 exact head and divergence are represented. PASS
+CS-V3-V07 PR #15 stale baseline is represented. PASS
+CS-V3-V08 PR #14 historical disposition and closure are explicit. PASS
+CS-V3-V09 PR #16 predecessor relationship and closure are explicit. PASS
+CS-V3-V10 PR #26 successor relationship and closure are explicit. PASS
+CS-V3-V11 Ready is not authorized. PASS
+CS-V3-V12 Merge is not authorized. PASS
+CS-V3-V13 Deploy is not authorized. PASS
+CS-V3-V14 Runtime / LIVE WRITE is not authorized. PASS
+CS-V3-V15 Research Evidence Accepted != Technology Adopted is preserved. PASS
+```
+
+## 7. Current Gate
 
 ```text
 WAEP-CURRENT-STATE-RECONCILIATION-V3
 Correction: APPLIED
-Independent Review: REQUIRED
+Independent Review-1: PASS / RECONCILED on pre-cleanup reviewed head
+Post-Review Cleanup: APPLIED
+Post-Cleanup Re-Review: REQUIRED
+PR #29: OPEN / DRAFT
 Ready: NOT AUTHORIZED
 Merge: NOT AUTHORIZED
 Deploy: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 
 Next Gate:
-Independent Current-State Reconciliation Review-1
+Independent Current-State Reconciliation Re-Review-1
 ```

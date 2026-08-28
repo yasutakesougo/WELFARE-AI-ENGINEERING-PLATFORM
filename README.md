@@ -9,11 +9,14 @@ Cross-repository AI engineering, knowledge capitalization, governance, and welfa
 ```text
 Revision: Definition Correction-3
 Independent Definition Final Re-Review-4: PASS
-Definition Lock Eligibility: PASS / LOCKABLE
-Definition Lock: AWAITING HUMAN GO / HOLD
+Human Definition Lock: GO
+Definition State: LOCKED
+Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
+Architecture Centerline: LOCKED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-Next Gate: WAEP-LEARNING-SYSTEM-V1 Definition Lock GO / HOLD
+PR #13: OPEN / DRAFT / NOT MERGED
+Next Gate: PR #13 READY GO / HOLD
 ```

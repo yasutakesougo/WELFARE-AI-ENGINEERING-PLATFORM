@@ -10,21 +10,35 @@ Trigger: Independent Definition Re-Review-3
 Re-Review-3 Result: P0 = 0 / P1 = 2 / P2 = 2
 Independent Definition Final Re-Review-4: PASS
 Reviewed Head (Re-Review-4): a92421fe43e2c51b635e35fb1516f437d7e5034b
-Architecture Centerline: PASS / RETAINED
-Definition Lock Eligibility: PASS / LOCKABLE
-Definition Lock: AWAITING HUMAN GO / HOLD
+P0 / P1 / P2: 0 / 0 / 0
+Human Definition Lock: GO
+Definition Lock Authority: AUTHORIZED
+Definition State: LOCKED
+Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
+Architecture Centerline: LOCKED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Runtime Authorization: NO CHANGE
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-Next Gate: WAEP-LEARNING-SYSTEM-V1 Definition Lock GO / HOLD
+PR #13: OPEN / DRAFT / NOT MERGED
+Next Gate: PR #13 READY GO / HOLD
 ```
 
-This document is **definition only**. Independent Definition Final
-Re-Review-4 PASS / LOCKABLE does **not** itself grant Human Definition Lock
-Authorization, Implementation Start, Runtime Activation, Ready, Merge,
-Deploy, or LIVE WRITE.
+This document is the **LOCKED** Definition Correction-3. Human Definition
+Lock GO authorizes Definition Lock only.
+
+```text
+Definition Lock GO
+  != PR READY
+  != Merge
+  != Implementation Start
+  != Runtime Activation
+  != Automatic Knowledge Promotion / Runtime Distribution
+```
+
+Repository WRITE for lock-status synchronization is not implied as a general
+write grant by Definition Lock GO (WAEP 01-CURRENT-AUTHORITY boundary).
 
 Correction-3 does **not** change the Architecture. Correction-2 boundaries
 remain:
@@ -1510,40 +1524,59 @@ Definition Lockability: PASS / LOCKABLE
 
 Archive: `docs/learning/reviews/independent-definition-final-re-review-4.md`.
 
+Human Definition Lock **GO** was subsequently received. Definition State is
+**LOCKED** at Lock Baseline
+`533376fcd018d4db75cfe0cddab348da60cf0ab6`.
+
+Archive: `docs/learning/reviews/definition-lock-go.md`.
+
 ```text
-Independent Review PASS
-  != Human Definition Lock Authorization
+Independent Review PASS != Human Definition Lock Authorization
+Human Definition Lock GO != Implementation Start / Ready / Merge
 ```
 
 ---
 
-## 28. Definition Correction-3 + Final Re-Review-4 Verdict
+## 28. Definition Lock Verdict
 
 ```text
 WAEP-LEARNING-SYSTEM-V1
 Definition Correction-3
 Independent Definition Final Re-Review-4: PASS
 Reviewed Head: a92421fe43e2c51b635e35fb1516f437d7e5034b
-Architecture Centerline: PASS / RETAINED
-Payload Release Resolution: CANONICALIZED
-CURRENT Time Semantics: CANONICALIZED
-Verification Policy Identity: CANONICALIZED
-Effectiveness Evaluation Scope: CANONICALIZED
-Decision Authority Field: NORMALIZED
-Definition Lock Eligibility: PASS / LOCKABLE
-Definition Lock: AWAITING HUMAN GO / HOLD
+Human Definition Lock: GO
+Definition Lock Authority: AUTHORIZED
+Definition State: LOCKED
+Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
+Architecture Centerline: LOCKED
+Payload Release Resolution: LOCKED
+CURRENT Time Semantics: LOCKED
+Verification Policy Identity: LOCKED
+Effectiveness Evaluation Scope: LOCKED
+Decision Authority Field: LOCKED
 Implementation Start: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
 Automatic Runtime Distribution: NOT AUTHORIZED
-Next Gate: WAEP-LEARNING-SYSTEM-V1 Definition Lock GO / HOLD
+PR #13: OPEN / DRAFT / NOT MERGED
+Next Gate: PR #13 READY GO / HOLD
 ```
 
-Until Human Definition Lock GO is granted:
+Until PR #13 READY GO and subsequent Merge / Implementation gates are
+separately authorized:
 
 ```text
-Implementation Start     = NOT AUTHORIZED
-Runtime Activation       = NOT AUTHORIZED
-Automatic Promotion      = PROHIBITED
-Automatic Distribution   = NOT AUTHORIZED
+PR Ready                  = AWAITING READY GO / HOLD
+Merge to main             = NOT AUTHORIZED by Definition Lock GO
+Implementation Start      = NOT AUTHORIZED
+Runtime Activation        = NOT AUTHORIZED
+Automatic Promotion       = PROHIBITED
+Automatic Distribution    = NOT AUTHORIZED
+```
+
+Intended sequence after READY GO:
+
+```text
+PR #13 Ready → Merge Definition to main (正本化)
+  → Implementation Definition (separate gate)
 ```

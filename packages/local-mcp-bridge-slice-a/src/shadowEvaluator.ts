@@ -1,10 +1,10 @@
 import type {
   AuthorityResult,
-  DataZoneDecision,
   SearchBounds,
   ShadowRequest,
   ShadowResult,
 } from './contracts';
+import { evaluateDataAccessDecisions } from './policy';
 
 const ALLOWED_CAPABILITIES = new Set([
   'repository.observe',
@@ -50,18 +50,6 @@ export function validateSearchBounds(bounds: SearchBounds | undefined): Authorit
     : 'DENY';
 }
 
-export function evaluateDataAccess(decision: DataZoneDecision | undefined): AuthorityResult {
-  if (!decision) return 'HOLD';
-  switch (decision.observationAccessClass) {
-    case 'ALLOW_OBSERVE':
-      return 'ALLOW';
-    case 'HOLD_OBSERVE':
-      return 'HOLD';
-    case 'DENY_OBSERVE':
-      return 'DENY';
-  }
-}
-
 function combine(results: readonly AuthorityResult[]): AuthorityResult {
   if (results.includes('DENY')) return 'DENY';
   if (results.includes('HOLD')) return 'HOLD';
@@ -83,7 +71,7 @@ export function evaluateShadow(request: ShadowRequest): ShadowResult {
     if (request.preAccessEligibility === 'INELIGIBLE') dataAccessResult = 'DENY';
     else if (request.preAccessEligibility === 'UNKNOWN' || request.preAccessEligibility === undefined)
       dataAccessResult = 'HOLD';
-    else dataAccessResult = evaluateDataAccess(request.dataZoneDecision);
+    else dataAccessResult = evaluateDataAccessDecisions(request.dataZoneDecisions);
   }
 
   let containmentResult: AuthorityResult = 'ALLOW';

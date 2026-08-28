@@ -7,8 +7,7 @@ Definition State: LOCKED / CANONICAL ON MAIN
 Human Definition Lock: GO
 Lock Baseline: 533376fcd018d4db75cfe0cddab348da60cf0ab6
 Definition Merge Commit: bc2d4b02d2b674bdd047086bcfa6a9ce3a0457ca
-Reconciliation Source Baseline: 820104bf5fc520561a70e11467f9043b958dc247
-Repository Current Main / PR #19 Merge Commit: 7998a83c22bf8e61d725da61cca0f797690ad561
+Repository Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Implementation: NOT AUTHORIZED
 Runtime Activation: NOT AUTHORIZED
 Automatic Knowledge Promotion: PROHIBITED
@@ -18,11 +17,7 @@ PR #13: MERGED
 
 `Definition Merge Commit`は、PR #13によるLearning Definitionの正本化点を示す。
 
-`Reconciliation Source Baseline`は、Reconciliation V2が開始された時点の
-historical anchorを示す。
-
-`Repository Current Main / PR #19 Merge Commit`は、PR #19を含むCurrent Repository
-Stateを示す。
+`Repository Current Main Exact SHA`はCurrent Repository Stateの観測identityである。
 
 両者を同一のidentityとして扱わない。
 
@@ -30,13 +25,28 @@ Stateを示す。
 | --- | --- |
 | `waep-learning-system-v1.md` | Definition Correction-3（LOCKED / canonical on main） |
 | `contracts/` | External Decision Contracts |
+| `implementation/slice-a-learning-event-contract-v1.md` | Slice A Implementation Definition (replayed onto current main) |
 | `reviews/post-merge-reconciliation.md` | PR #13 Post-Merge Reconciliation |
 | `reviews/definition-lock-go.md` | Human Definition Lock GO archive |
 | `reviews/independent-definition-final-re-review-4.md` | Final Re-Review-4 PASS archive |
+| `reviews/slice-a-implementation-definition-review-1.md` | Slice A Implementation Definition Review-1 archive |
+| `reviews/slice-a-current-main-reconciliation-v1.md` | Slice A current-main reconciliation record |
 | `projections/registry-projection-v1.md` | Derived Registry Projection compatibility |
 
-Next implementation-definition candidateはSlice A — Learning Event Contractである。
+## Slice A Status
 
-Slice AはPR #15に存在するが、Current Repository BaselineとのReconciliationが必要である。
+```text
+Source PR: #15 / OPEN / DRAFT / HISTORICAL DIVERGED LINE
+Replay Branch: cursor/slice-a-current-main-reconciliation-bbff
+Current-Main Baseline: ebc13ef072a861a53043687af13d9b2c548c73ce
+Parent Definition: LOCKED / UNCHANGED
+Review-1: PASS WITH CORRECTIONS (P0=0 / P1=4 / P2=5)
+Correction-1: NOT COMPLETE
+Implementation Start: NOT AUTHORIZED
+```
+
+Next gateはSlice A Implementation Definition Correction-1 → Re-Review-2である。
+
+本ReplayはCorrection-1完了を主張しない。
 
 Implementation Startは認可されていない。

@@ -59,13 +59,73 @@ Merge Commit: eeb126644df5238d61990f5767ec47880810f663
 Changed Files: 3
 ```
 
-The requested pre-merge Human Ready preflight is no longer an executable current gate because the PR has already merged. V4 does not infer that a valid Ready or Merge authority existed merely from the merged GitHub state.
+Pre-merge publication verification recorded:
+
+```text
+Publication Verification: PASS
+State at verification: OPEN / DRAFT
+Unresolved Review Threads: 0
+Commit Statuses: 0 observed
+PR-triggered Workflow Runs: 0 observed
+Next Gate at that point: Human Ready GO / HOLD
+```
+
+A later independent final PR review recorded:
+
+```text
+Ready Transition: COMPLETE / VERIFIED
+State: OPEN / READY
+Independent Final PR Review: PASS / TECHNICALLY MERGE-CANDIDATE
+P0 / P1 / P2: 0 / 0 / 0
+Next Gate: Human Merge GO / HOLD
+```
+
+The observed PR discussion evidence does not itself provide an explicit Human Merge GO record before the merge. GitHub merged state alone is not treated as Authority proof.
 
 ```text
 GitHub MERGED state != proof of prior Human Merge GO
 ```
 
-Any governance judgment about the historical #50 Ready/Merge chain requires its decision evidence to be inspected separately.
+### Post-Merge Review Findings
+
+After the merge completed, an automated Codex review was submitted against the merged head and raised seven new findings:
+
+```text
+Post-Merge Review Target:
+bf1432921a92172ab62eddcd19a8f9acc57cdf30
+
+P1: 5
+P2: 2
+```
+
+P1 findings:
+
+```text
+1. effect safety can be bypassed when technically_retryable=false
+2. EFFECT_APPLIED can incorrectly block normal RUNNING -> SUCCEEDED completion
+3. REVALIDATION_REQUIRED can fall through to RECOVERY_ELIGIBLE
+4. revoked authority can degrade from policy denial to REAUTHORIZE_REQUIRED
+5. terminal parent protection is not enforced during child propagation
+```
+
+P2 findings:
+
+```text
+1. EFFECT_NOT_STARTED is not accepted as retry-eligible evidence
+2. checkpoint DEFINITION_MISMATCH can collapse to generic HOLD_REQUIRED
+```
+
+Because these findings were created after the merge, the earlier final PR review cannot close them retroactively.
+
+```text
+Current Main Slice C Status:
+POST-MERGE CORRECTION REQUIRED
+
+P0 / P1 / P2:
+0 / 5 / 2
+```
+
+This is now a current-main blocker and takes precedence over treating Slice C as fully closed.
 
 ## DEVELOPMENT-KNOWLEDGE-COMPOUND-V1 — PR #30
 
@@ -238,7 +298,7 @@ main branch-protection governance assessment
 ```text
 A. V4 current-state observation fixed on main@eeb126644d...
 ↓
-B. #50 historical Ready/Merge authority evidence audit
+B. DARK Slice C post-merge correction disposition (P1=5 / P2=2)
 ↓
 C. DKC #30/#35 current-main compatibility reconciliation
 ↓

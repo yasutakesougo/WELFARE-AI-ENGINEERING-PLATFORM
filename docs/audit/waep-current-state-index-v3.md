@@ -12,9 +12,9 @@ Latest Main Merge: PR #22
 Current-State Reconciliation PR: #29 / OPEN / READY (isDraft=false)
 Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
   (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
-Final tip: f53f32f96795589319da12e728909706ff0c1158
-Tip / Head OID: f53f32f96795589319da12e728909706ff0c1158
-Index sync commit: f53f32f96795589319da12e728909706ff0c1158
+Final tip: 60edf28301a1301fe970af56b34be3e58f4d4cd1
+Tip / Head OID: 60edf28301a1301fe970af56b34be3e58f4d4cd1
+Index sync commit: 60edf28301a1301fe970af56b34be3e58f4d4cd1
   (Index sync / Tip / Final tip = self-bind commit OID; reachable ancestor of live branch HEAD.
    Live branch HEAD is tip-bind child of Index sync. Tip OID is a real commit object — not phantom.)
 Index Mode: READ-ONLY EVIDENCE + RECONCILIATION RECORD
@@ -215,7 +215,7 @@ Review carry-forward: PASS WITH CORRECTIONS / P0-P1-P2 = 0-4-5
 | #26 | CLOSED / UNMERGED | MSR predecessor; superseded by #27 |
 | #27 | OPEN / DRAFT | active accepted MSR Research Evidence line |
 | #28 | OPEN / DRAFT | DKC-MSR Architecture; Review-1 CORRECTION REQUIRED (unfixed) |
-| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded; Tip / Head OID f53f32f96795589319da12e728909706ff0c1158 |
+| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded; Tip / Head OID 60edf28301a1301fe970af56b34be3e58f4d4cd1 |
 | #30 | OPEN / DRAFT | active DKC current-main line; LOCKED / Impl Start HOLD |
 | #32 | OPEN / READY (isDraft=false) | active CSOC current-main line; Ready GO recorded |
 | #34 | OPEN / DRAFT | stacked DKC-MSR line on #30 (separate identity from #28) |

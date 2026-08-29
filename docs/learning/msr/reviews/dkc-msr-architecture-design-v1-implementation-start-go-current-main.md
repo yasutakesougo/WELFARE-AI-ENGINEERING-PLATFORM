@@ -17,12 +17,12 @@ Implementation Start is authorized for the reviewed and locked `DKC-MSR-ARCHITEC
 
 ```text
 Implementation Start: GO
-Repository implementation work within reviewed architecture scope: AUTHORIZED
 ```
 
-## Authority Not Granted
+## Separate Gates Preserved
 
 ```text
+Repository Implementation Mutation / WRITE: NOT AUTHORIZED BY THIS DECISION
 Dependency Addition: NOT AUTHORIZED BY THIS DECISION
 Technology Adoption: NOT AUTHORIZED BY THIS DECISION
 Repository Source Adapter Execution against external/live repositories: NOT AUTHORIZED
@@ -35,6 +35,7 @@ LIVE WRITE: NOT AUTHORIZED
 ```
 
 ```text
+Implementation Start GO != WRITE GO
 Implementation Start GO != Dependency Addition GO
 Implementation Start GO != Source Adapter Execution GO
 Implementation Start GO != Ready GO

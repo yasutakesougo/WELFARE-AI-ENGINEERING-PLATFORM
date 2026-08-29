@@ -39,6 +39,19 @@ function baseRequest(): AdmissionRequest {
   };
 }
 
+function existingFor(req: AdmissionRequest) {
+  const id = deriveIdentity(req.source.sourceEventId, req.source.contentDigest);
+  return {
+    canonicalEventIdentity: id.canonicalEventIdentity,
+    identityMaterialHex: id.materialHex,
+    sourceEventId: req.source.sourceEventId,
+    sourceRevision: req.source.sourceRevision,
+    sourceContentDigest: req.source.contentDigest,
+    learningEventId: id.learningEventId,
+    contentDigest: 'event-digest',
+  };
+}
+
 describe('identity contract', () => {
   it('uses deterministic LEID1 SHA-256 identity', () => {
     const a = deriveIdentity('EV-1', 'digest-1');
@@ -60,20 +73,21 @@ describe('identity contract', () => {
       canonicalIdentityMaterial('a', 'bc').toString('hex'),
     );
   });
+
+  it('fails closed on canonical identity collision evidence', () => {
+    const req = baseRequest();
+    const existing = existingFor(req);
+    req.existingEvent = { ...existing, identityMaterialHex: '00' };
+    const result = prepareAdmission(req);
+    expect(result.domainResult).toBe('HELD');
+    expect(result.reasonCodes).toContain('IDENTITY_DIGEST_COLLISION');
+  });
 });
 
 describe('duplicate and revision matrix', () => {
   it('exact duplicate returns DUPLICATE_NO_OP', () => {
     const req = baseRequest();
-    const id = deriveIdentity(req.source.sourceEventId, req.source.contentDigest);
-    req.existingEvent = {
-      canonicalEventIdentity: id.canonicalEventIdentity,
-      sourceEventId: req.source.sourceEventId,
-      sourceRevision: req.source.sourceRevision,
-      sourceContentDigest: req.source.contentDigest,
-      learningEventId: id.learningEventId,
-      contentDigest: 'event-digest',
-    };
+    req.existingEvent = existingFor(req);
     const result = prepareAdmission(req);
     expect(result.domainResult).toBe('DUPLICATE_NO_OP');
     expect(result.durabilityPlan.kind).toBe('ATTEMPT_ONLY');
@@ -81,15 +95,7 @@ describe('duplicate and revision matrix', () => {
 
   it('revision-only same digest is no-op with audit flag', () => {
     const req = baseRequest();
-    const id = deriveIdentity(req.source.sourceEventId, req.source.contentDigest);
-    req.existingEvent = {
-      canonicalEventIdentity: id.canonicalEventIdentity,
-      sourceEventId: req.source.sourceEventId,
-      sourceRevision: 'rev-old',
-      sourceContentDigest: req.source.contentDigest,
-      learningEventId: id.learningEventId,
-      contentDigest: 'event-digest',
-    };
+    req.existingEvent = { ...existingFor(req), sourceRevision: 'rev-old' };
     const result = prepareAdmission(req);
     expect(result.domainResult).toBe('DUPLICATE_NO_OP');
     expect(result.ingestionAttemptRecord.revisionMetadataDifference).toBe(true);
@@ -97,12 +103,14 @@ describe('duplicate and revision matrix', () => {
 
   it('same sourceEventId and revision with changed digest is HELD', () => {
     const req = baseRequest();
+    const old = deriveIdentity(req.source.sourceEventId, 'different');
     req.existingEvent = {
-      canonicalEventIdentity: 'old',
+      canonicalEventIdentity: old.canonicalEventIdentity,
+      identityMaterialHex: old.materialHex,
       sourceEventId: req.source.sourceEventId,
       sourceRevision: req.source.sourceRevision,
       sourceContentDigest: 'different',
-      learningEventId: 'LE-old',
+      learningEventId: old.learningEventId,
       contentDigest: 'event-digest',
     };
     const result = prepareAdmission(req);
@@ -111,7 +119,15 @@ describe('duplicate and revision matrix', () => {
   });
 });
 
-describe('release boundary', () => {
+describe('classification and release boundary', () => {
+  it('rejects unsupported classification', () => {
+    const req = baseRequest();
+    req.classification.sourceClassification = 'UNKNOWN';
+    const result = prepareAdmission(req);
+    expect(result.domainResult).toBe('INVALID');
+    expect(result.reasonCodes).toContain('UNSUPPORTED_CLASSIFICATION');
+  });
+
   it('holds unresolved release requirement', () => {
     const req = baseRequest();
     req.releaseRequirement.sourcePolicyReleaseRequirement = 'UNRESOLVED';
@@ -128,6 +144,7 @@ describe('release boundary', () => {
       subjectPayloadDigest: req.payload.allowedPayloadDigest,
       destinationLearningPlane: req.payload.destinationLearningPlane,
       conditions: [],
+      conditionEvidenceRefs: [],
     };
     expect(prepareAdmission(req).domainResult).toBe('DENIED');
   });
@@ -142,13 +159,14 @@ describe('release boundary', () => {
       subjectPayloadDigest: req.payload.allowedPayloadDigest,
       destinationLearningPlane: req.payload.destinationLearningPlane,
       conditions: [],
+      conditionEvidenceRefs: [],
     };
     const result = prepareAdmission(req);
     expect(result.domainResult).toBe('HELD');
     expect(result.reasonCodes).toContain('RELEASE_SUBJECT_MISMATCH');
   });
 
-  it('holds unresolved ALLOW_WITH_CONDITIONS', () => {
+  it('holds unresolved ALLOW_WITH_CONDITIONS and retains evidence refs', () => {
     const req = baseRequest();
     req.releaseRequirement.callerStricterRequirement = true;
     req.releaseDecision = {
@@ -158,12 +176,26 @@ describe('release boundary', () => {
       subjectPayloadDigest: req.payload.allowedPayloadDigest,
       destinationLearningPlane: req.payload.destinationLearningPlane,
       conditions: ['UNRESOLVED'],
+      conditionEvidenceRefs: ['evidence://condition-1'],
     };
-    expect(prepareAdmission(req).domainResult).toBe('HELD');
+    const result = prepareAdmission(req);
+    expect(result.domainResult).toBe('HELD');
+    expect(result.ingestionAttemptRecord.conditionEvidenceRefs).toEqual(['evidence://condition-1']);
   });
 });
 
-describe('audit durability semantics', () => {
+describe('event and audit contract', () => {
+  it('constructs complete immutable event envelope with top-level digest and lineage', () => {
+    const result = prepareAdmission(baseRequest());
+    expect(result.domainResult).toBe('ADMITTED');
+    expect(result.learningEventCandidate?.contentDigest).toMatch(/^[0-9a-f]{64}$/);
+    expect(result.learningEventCandidate?.lineage).toEqual({
+      derivedFromLearningEventRefs: [],
+      derivedFromKnowledgeRefs: [],
+      derivedFromDecisionRefs: [],
+    });
+  });
+
   it('ADMITTED prepares event + audit as one logical durability unit', () => {
     const result = prepareAdmission(baseRequest());
     expect(result.domainResult).toBe('ADMITTED');

@@ -115,8 +115,6 @@ def authority_decision(freshness: AuthorityFreshness) -> Decision:
 
 
 def capability_decision(bound: CapabilitySnapshot, observed: CapabilitySnapshot) -> Decision:
-    if bound.snapshot_id == observed.snapshot_id and bound.snapshot_digest == observed.snapshot_digest:
-        return Decision.ALLOW_CONTINUE
     materially_bound = (
         "runtime_identity",
         "runtime_version",
@@ -132,6 +130,8 @@ def capability_decision(bound: CapabilitySnapshot, observed: CapabilitySnapshot)
     )
     if any(getattr(bound, field) != getattr(observed, field) for field in materially_bound):
         return Decision.REAUTHORIZE_REQUIRED
+    if bound.snapshot_id == observed.snapshot_id and bound.snapshot_digest == observed.snapshot_digest:
+        return Decision.ALLOW_CONTINUE
     return Decision.HOLD_REQUIRED
 
 

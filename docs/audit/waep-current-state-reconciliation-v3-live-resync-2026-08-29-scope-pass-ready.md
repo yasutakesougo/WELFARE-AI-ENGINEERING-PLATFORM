@@ -2,18 +2,12 @@
 
 ```text
 Record: WAEP-CURRENT-STATE-RECONCILIATION-V3-LIVE-RESYNC
-Audit Timestamp: 2026-08-29 08:57 JST
+Audit Timestamp: 2026-08-29 JST
 Mode: DOCS / STATE RECONCILIATION ONLY
 Repository: yasutakesougo/WELFARE-AI-ENGINEERING-PLATFORM
 Branch: docs/waep-current-state-reconciliation-v3
 PR: #29
 Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
-Pre-sync tip: 72fe83f7372eeb8606160f9abffcab5340324c9e
-Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
-  (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
-Final tip: 60edf28301a1301fe970af56b34be3e58f4d4cd1
-Index sync commit: 60edf28301a1301fe970af56b34be3e58f4d4cd1
-  (Index sync / Tip / Final tip = self-bind commit OID; reachable ancestor of live branch HEAD)
 ```
 
 ## Purpose
@@ -22,13 +16,35 @@ Identity-trail note for the live resync that aligns Index V3 / Reconciliation V3
 with Ready and Scope PASS state. Does not authorize Merge, Implementation Start,
 Deploy, or LIVE WRITE.
 
-## Live PR Identity Capture (gh-verified before edit)
+Binding rule for #29: isDraft=false / Ready GO recorded; exact Index identity =
+path + blob + bytes + sha256 at Index content commit — not a self-referential Tip OID
+(self-SHA fixed-point impossible).
+
+## Index artifact identity
+
+```text
+Index path: docs/audit/waep-current-state-index-v3.md
+Index content commit: 94123df6e36f1b550094ad84399443eeb0ce7f2c
+Index blob: f6267401f67bb9d61f5fcaa73ef10c0f743c36e7
+bytes: 10943
+sha256: 7f0f6faffe5462a8f1e72bfbdc2015049ac68081b6e7bf7154adec2ae2cc0209
+
+#29 State: OPEN / READY (isDraft=false)
+#29 Ready GO: RECORDED
+#29 Head OID: NOT EMBEDDED (self-referential commit OID impossible)
+Tip binding: LIVE PR HEAD (OID not embedded in Index)
+
+Observation: this record commit is a child of Index content commit
+  (may differ from content commit; does not change Index blob if note-only)
+```
+
+## Live PR Identity Capture (gh-verified)
 
 | PR | isDraft | headRefOid | mergeable | title (abbrev) | ahead/behind |
 | --- | --- | --- | --- | --- | --- |
 | #15 | true | c561b13bc989617cb0a21681a65b206d4f82fbb7 | CONFLICTING | Slice A Impl Definition + Review-1 | 1 / 13 |
 | #28 | true | 5491d03e406bbbd2bbf9ecf82893ab76b3b1f01e | MERGEABLE | DKC-MSR Architecture Definition Start | 6 / 0 |
-| #29 | false | 72fe83f7372eeb8606160f9abffcab5340324c9e | MERGEABLE | WAEP current-state reconciliation v3 | 13 / 0 |
+| #29 | false | NOT EMBEDDED (LIVE PR HEAD) | MERGEABLE | WAEP current-state reconciliation v3 | (live) |
 | #30 | true | 04c03424b280c5200ce01105d96b2679d8542697 | MERGEABLE | DKC Correction-2 current-main | 9 / 0 |
 | #32 | false | f90e4e1945d25b83fbd4336a3a0a9dc0eea45659 | MERGEABLE | CSOC Slice A Correction-2 current-main | 6 / 0 |
 | #35 | true | 58f8dd1c0691723c760f9c7f5fb3129b96c0c08d | MERGEABLE | DKC-IMPLEMENTATION-SCOPE-V1 | 12 / 0 |
@@ -56,7 +72,7 @@ Deploy, or LIVE WRITE.
 
 1. #35 → Scope Re-Review-1 PASS / 0-0-0
 2. #30 → HOLD maintained; blocker = Human Implementation Start GO absent
-3. #29 → READY / tip bind
+3. #29 → READY / Head OID NOT EMBEDDED (no self tip OID)
 4. #32 → READY / tip f90e4e1 / tree 9671c3b
 5. #36 → Current Slice A reconciliation candidate
 6. #15 → STALE / SUPERSESSION-DISPOSITION PENDING vs #36

@@ -21,7 +21,7 @@ PR Publication / Ready / Merge / Deploy / LIVE WRITE: NOT AUTHORIZED
 baseline main: 7616e42f6bc012adf2485bf5ecc6a8f41ee7f07e
 branch: feat/dark-impl-slice-a
 pre-correction reviewed head: 0332bcc9e174f9c8403847d247d7270ce9ae676e
-correction source/test head: bead31a8e37a99e24abb1cca777790dd3cf36196
+final Correction-1 source/test head: dbda6cc5baca0bd1128cf632e6ed498981a3b836
 ```
 
 ## Implemented Paths
@@ -60,12 +60,13 @@ Correction-1 applies:
 - unknown child authority dimensions produce `HOLD_REQUIRED`
 - known authority widening produces `REAUTHORIZE_REQUIRED`
 - optional model-provider and MCP-configuration capability identities participate in drift checks
+- material capability fields are compared before any same-ID/digest fast path, so inconsistent same-identity snapshots cannot hide drift
 - `now >= lease_expires_at` rejects canonical writes
 - ledger history validation requires unique IDs, strictly increasing sequence, and backward-only correction/supersession/reconciliation links
 
 ## Validation
 
-Exact Correction-1 source/test contents were executed using the repository's existing Python standard-library test harness:
+Exact final Correction-1 source/test contents were executed using the repository's existing Python standard-library test harness:
 
 ```text
 python tests/durable_run_kernel/test_kernel.py
@@ -74,11 +75,11 @@ python tests/durable_run_kernel/test_kernel.py
 Result:
 
 ```text
-Ran 25 tests
+Ran 26 tests
 OK
 ```
 
-The 25 tests cover DK-R1 through DK-R14 and additional negative cases for:
+The 26 tests cover DK-R1 through DK-R14 and additional negative cases for:
 
 ```text
 revocation without evidence -> UNKNOWN
@@ -90,6 +91,7 @@ exact lease expiry -> STALE_LEASE_REJECTED
 child subset proof unavailable -> HOLD_REQUIRED
 model provider drift -> REAUTHORIZE_REQUIRED
 MCP configuration drift -> REAUTHORIZE_REQUIRED
+same snapshot ID/digest with material drift -> REAUTHORIZE_REQUIRED
 non-monotonic ledger sequence -> HOLD_REQUIRED
 forward correction link -> HOLD_REQUIRED
 unknown tool binding -> UNKNOWN / HOLD_REQUIRED

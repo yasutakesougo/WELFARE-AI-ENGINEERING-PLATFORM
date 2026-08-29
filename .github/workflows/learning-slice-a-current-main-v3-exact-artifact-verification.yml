@@ -1,0 +1,65 @@
+name: Learning Slice A Current Main V3 Exact Artifact Verification
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-learning-slice-a:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact Learning Slice A artifact
+        uses: actions/checkout@v4
+        with:
+          ref: 9b28b95639e2b2faa5f55d45008f433f2c74f71c
+          persist-credentials: false
+
+      - name: Verify exact identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b28b95639e2b2faa5f55d45008f433f2c74f71c"
+          test "$(git rev-parse HEAD:src/learning/slice-a.ts)" = "4ea31a5d05bcb5d6c784f5aabfd47bedb5b5e186"
+          test "$(git rev-parse HEAD:tests/learning/slice-a.test.ts)" = "0b647c0e1281c80fed49563ecf0d85c3dda335e0"
+          test "$(git rev-parse HEAD:package.json)" = "4e8166d6f9537af2142e7f6f9992c46116970e5c"
+          test "$(git rev-parse HEAD:tsconfig.json)" = "0d18d1c0c5cbcbc1ad6556e1fba1f0a3bfc1c67b"
+          test -z "$(git status --porcelain)"
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record toolchain
+        shell: bash
+        run: |
+          node --version
+          npm --version
+
+      - name: Install authorized pinned dev toolchain
+        shell: bash
+        run: npm install --ignore-scripts --package-lock=false
+
+      - name: Record resolved top-level toolchain
+        shell: bash
+        run: |
+          npm ls --depth=0 @types/node typescript vitest
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify no durable repository mutation
+        shell: bash
+        run: |
+          rm -rf node_modules
+          test -z "$(git status --porcelain)"
+          echo "repository_mutation=NONE"
+          echo "lockfile_present=NO"
+          echo "transitive_resolution_lockfile_fixed=NO"

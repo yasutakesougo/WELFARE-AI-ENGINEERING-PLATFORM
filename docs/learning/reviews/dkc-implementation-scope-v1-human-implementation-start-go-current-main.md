@@ -14,16 +14,16 @@ Independent Scope Re-Review-1: PASS / 0-0-0
 
 ## Authority Granted
 
-This decision authorizes Implementation Start only for the reviewed `DKC-IMPLEMENTATION-SCOPE-V1` boundary reattached on PR #54.
+This decision authorizes the Implementation Start gate only for the reviewed `DKC-IMPLEMENTATION-SCOPE-V1` boundary reattached on PR #54.
 
 ```text
 Implementation Start: GO
-Repository implementation work within reviewed scope: AUTHORIZED
 ```
 
-## Authority Not Granted
+## Separate Gates Preserved
 
 ```text
+Repository Implementation Mutation / WRITE: NOT AUTHORIZED BY THIS DECISION
 Dependency Addition: governed by separate Human GO
 Ready: NOT AUTHORIZED BY THIS DECISION
 Merge: NOT AUTHORIZED
@@ -35,6 +35,7 @@ SharePoint / M365 / Entra / Customer Production Mutation: NOT AUTHORIZED
 ```
 
 ```text
+Implementation Start GO != WRITE GO
 Implementation Start GO != Ready GO
 Implementation Start GO != Merge GO
 Implementation Start GO != Deploy GO

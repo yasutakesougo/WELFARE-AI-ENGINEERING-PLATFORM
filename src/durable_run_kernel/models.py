@@ -70,17 +70,23 @@ class AuthorityBinding:
     authority_subject_identity: str
     worker_identity: str
     run_id: str
-    target_identity: str
+    target_repository_identity: Optional[str]
+    target_system_identity: Optional[str]
+    target_resource_identity: str
     action_identity: str
     operation_class: str
-    tool_identity: str
+    tool_identity: Optional[str]
+    tool_class: Optional[str]
     gate_identity: str
     scope_identity: str
     definition_identity: str
     capability_snapshot_id: str
     decision_issued_at: datetime
     decision_expires_at: Optional[datetime]
+    freshness_policy: Optional[str]
     authority_generation: int
+    revocation_source_ref: Optional[str] = None
+    supersession_ref: Optional[str] = None
     revoked: bool = False
     superseded: bool = False
 
@@ -91,15 +97,19 @@ class AuthorityObservation:
     authority_subject_identity: str
     worker_identity: str
     run_id: str
-    target_identity: str
+    target_repository_identity: Optional[str]
+    target_system_identity: Optional[str]
+    target_resource_identity: str
     action_identity: str
     operation_class: str
-    tool_identity: str
+    tool_identity: Optional[str]
+    tool_class: Optional[str]
     gate_identity: str
     scope_identity: str
     definition_identity: str
     capability_snapshot_id: str
     authority_generation: int
+    freshness_policy_current: Optional[bool] = None
 
 
 @dataclass(frozen=True)
@@ -116,6 +126,8 @@ class CapabilitySnapshot:
     adapter_version: str
     captured_at: datetime
     snapshot_digest: str
+    model_provider_identity: Optional[str] = None
+    mcp_configuration_identity: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -134,6 +146,16 @@ class EffectIdentity:
 
 
 @dataclass(frozen=True)
+class ReconciliationObservation:
+    logical_mutation_id: str
+    target_identity: str
+    attempt_generation: int
+    effect_observation_source: str
+    reconciliation_evidence_refs: Tuple[str, ...]
+    reconciled_state: EffectState
+
+
+@dataclass(frozen=True)
 class Lease:
     lease_id: str
     lease_owner_id: str
@@ -146,16 +168,16 @@ class Lease:
 
 @dataclass(frozen=True)
 class AuthorityEnvelope:
-    repository_scope: FrozenSet[str]
-    target_scope: FrozenSet[str]
-    action_scope: FrozenSet[str]
-    tool_scope: FrozenSet[str]
-    network_scope: FrozenSet[str]
-    credential_scope: FrozenSet[str]
-    write_scope: FrozenSet[str]
-    budget_ceiling: int
-    valid_until: datetime
-    capability_scope: FrozenSet[str]
+    repository_scope: Optional[FrozenSet[str]]
+    target_scope: Optional[FrozenSet[str]]
+    action_scope: Optional[FrozenSet[str]]
+    tool_scope: Optional[FrozenSet[str]]
+    network_scope: Optional[FrozenSet[str]]
+    credential_scope: Optional[FrozenSet[str]]
+    write_scope: Optional[FrozenSet[str]]
+    budget_ceiling: Optional[int]
+    valid_until: Optional[datetime]
+    capability_scope: Optional[FrozenSet[str]]
 
 
 @dataclass(frozen=True)

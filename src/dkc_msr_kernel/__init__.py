@@ -1,0 +1,41 @@
+"""DKC-MSR Slice A pure canonical identity / contract kernel."""
+
+from .kernel import (
+    AUTHORITY,
+    CANONICAL_SNAPSHOT_KEY_V1,
+    RESULT_HOLD_UNKNOWN,
+    RESULT_INVALID_IDENTITY,
+    RESULT_INVALID_SCHEMA,
+    RESULT_PERSISTENCE_PROHIBITED,
+    RESULT_VALID,
+    SOURCE_OBJECT_KEY_V1,
+    KernelResult,
+    construct_canonical_snapshot_key,
+    normalize_path_snapshot,
+    stable_repository_identity,
+    validate_derived_projection_manifest,
+    validate_evidence_entity_link,
+    validate_sensitive_data_gate_record,
+    validate_source_object_key,
+    validate_source_repository_identity,
+)
+
+__all__ = [
+    "AUTHORITY",
+    "CANONICAL_SNAPSHOT_KEY_V1",
+    "RESULT_HOLD_UNKNOWN",
+    "RESULT_INVALID_IDENTITY",
+    "RESULT_INVALID_SCHEMA",
+    "RESULT_PERSISTENCE_PROHIBITED",
+    "RESULT_VALID",
+    "SOURCE_OBJECT_KEY_V1",
+    "KernelResult",
+    "construct_canonical_snapshot_key",
+    "normalize_path_snapshot",
+    "stable_repository_identity",
+    "validate_derived_projection_manifest",
+    "validate_evidence_entity_link",
+    "validate_sensitive_data_gate_record",
+    "validate_source_object_key",
+    "validate_source_repository_identity",
+]

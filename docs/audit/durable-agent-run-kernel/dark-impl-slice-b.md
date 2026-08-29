@@ -19,10 +19,12 @@ Independent Scope Review-1: PASS / 0-0-0
 - explicit ResumeDecision vocabulary
 - exact Definition Identity/Digest binding
 - result reference/digest compatibility checks
-- current-authority-evidence requirement
-- capability snapshot drift handling through Slice A semantics
+- explicit current authority snapshot identity + AuthorityFreshness requirement
+- exact checkpoint-to-bound CapabilitySnapshot identity check
+- capability drift handling through Slice A semantics
 - replay-class-specific reuse/revalidation behavior
 - non-replayable effect handling through Slice A effect semantics
+- effect safety precedence: APPLIED/UNKNOWN/CONFLICT cannot be weakened by missing current authority
 - checkpoint lineage validation
 
 ## Acceptance Traceability
@@ -42,17 +44,49 @@ DK-B-R11 capability drift on resume -> REAUTHORIZE_REQUIRED
 DK-B-R12 invalid checkpoint lineage -> HOLD_REQUIRED
 ```
 
-Additional positive-lineage test verifies a valid linear checkpoint chain is accepted as reuse-eligible.
+Additional deterministic cases verify:
+- valid linear checkpoint lineage -> ALLOW_REUSE
+- checkpoint CapabilitySnapshot identity mismatch -> HOLD_REQUIRED
+- EFFECT_APPLIED without current authority -> DUPLICATE_MUTATION_PROHIBITED
+- EFFECT_UNKNOWN without current authority -> RECONCILIATION_REQUIRED before reauthorization
 
-## Local Deterministic Validation
+## Implementation Corrections
+
+### Correction-1
+
+- replaced boolean `current_authority_evidence_present` with explicit `current_authority_snapshot_id` + `AuthorityFreshness`
+- bound checkpoint `capability_snapshot_id` to the supplied bound CapabilitySnapshot identity
+
+### Correction-2
+
+Independent post-Correction-1 inspection found that current-authority evaluation occurred before non-replayable effect safety. That ordering could return `REAUTHORIZE_REQUIRED` for an already-applied or unknown effect when current authority evidence was absent.
+
+Corrected ordering:
+
+```text
+EFFECT_APPLIED -> DUPLICATE_MUTATION_PROHIBITED
+EFFECT_UNKNOWN -> RECONCILIATION_REQUIRED
+EFFECT_CONFLICT / EFFECT_IN_FLIGHT -> HOLD_REQUIRED
+EFFECT_NOT_APPLIED -> current authority/capability evaluation -> REAUTHORIZE_REQUIRED as required
+```
+
+This preserves:
+
+```text
+EFFECT_UNKNOWN != Safe To Retry
+Prior Authority Decision != Current Authority Decision
+Reauthorization != Proof That Prior Effect Did Not Occur
+```
+
+## Exact Post-Correction Validation
 
 ```text
 python tests/durable_run_kernel/test_resume.py
-Ran 13 tests
+Ran 16 tests in 0.001s
 OK
 ```
 
-Validation was performed against the exact new Slice B module/test contents using the existing Slice A public contract signatures. This is local deterministic validation, not GitHub CI.
+Validation used the exact final Slice B checkpoint/resume/test contents with the unchanged final Slice A models/rules contracts. This is local deterministic validation, not GitHub CI.
 
 ## Scope Boundary
 

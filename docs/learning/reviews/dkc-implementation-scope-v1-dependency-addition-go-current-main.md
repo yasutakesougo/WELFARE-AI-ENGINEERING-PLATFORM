@@ -12,7 +12,7 @@ Implementation Start: GO
 
 ## Authority Granted
 
-Dependency addition required to implement the reviewed `DKC-IMPLEMENTATION-SCOPE-V1` is authorized, subject to the reviewed implementation scope and repository policy.
+The Dependency Addition gate required for the reviewed `DKC-IMPLEMENTATION-SCOPE-V1` is GO.
 
 ```text
 Dependency Addition: GO
@@ -20,9 +20,10 @@ Scope Expansion: NOT AUTHORIZED
 Technology Adoption Beyond Reviewed Need: NOT AUTHORIZED
 ```
 
-## Authority Not Granted
+## Separate Gates Preserved
 
 ```text
+Repository Dependency Mutation / WRITE: NOT AUTHORIZED BY THIS DECISION
 Ready: NOT AUTHORIZED BY THIS DECISION
 Merge: NOT AUTHORIZED
 Deploy: NOT AUTHORIZED
@@ -32,6 +33,7 @@ SharePoint / M365 / Entra / Customer Production Mutation: NOT AUTHORIZED
 ```
 
 ```text
+Dependency Addition GO != WRITE GO
 Dependency Addition GO != Ready GO
 Dependency Addition GO != Merge GO
 ```

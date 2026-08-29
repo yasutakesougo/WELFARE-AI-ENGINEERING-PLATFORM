@@ -1,0 +1,76 @@
+name: Gates 62 65 68 Independent Verifier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  dkc62:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ebcd33a6f766be879a6b444b27257da898637bdf
+          persist-credentials: false
+      - name: Verify exact DKC head
+        run: test "$(git rev-parse HEAD)" = "ebcd33a6f766be879a6b444b27257da898637bdf"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify dependency correction
+        working-directory: packages/development-knowledge-compound-kernel
+        run: |
+          node --version
+          npm --version
+          npm ci
+          npm audit
+          npm test
+          npm run typecheck
+
+  msr68:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d34f499ce24bb1fbcf0f5110e4c2376ab7d29d09
+          persist-credentials: false
+      - name: Verify exact MSR head
+        run: test "$(git rev-parse HEAD)" = "d34f499ce24bb1fbcf0f5110e4c2376ab7d29d09"
+      - name: Run exact MSR Slice A tests
+        run: |
+          python --version
+          python -m unittest discover -s tests/dkc_msr_kernel -p 'test_*.py' -v
+      - name: Verify no test mutation
+        run: test -z "$(git status --porcelain)"
+
+  dark65-current-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 73e5c0e6faba026d9c3b2a4f2bdba74a3fe675a1
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify current main
+        run: test "$(git rev-parse HEAD)" = "73e5c0e6faba026d9c3b2a4f2bdba74a3fe675a1"
+      - name: Synthetic merge exact DARK head onto current main
+        run: |
+          git config user.name verifier
+          git config user.email verifier@example.invalid
+          git fetch origin e90deafa24c30779ada73689d15692f1b9caacaa
+          git merge --no-ff --no-commit e90deafa24c30779ada73689d15692f1b9caacaa
+          git diff --check --cached
+          git write-tree
+      - name: Run full durable kernel tests on synthetic merge
+        run: python -m unittest discover -s tests/durable_run_kernel -p 'test_*.py' -v

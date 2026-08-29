@@ -1,0 +1,46 @@
+name: Verify Learning Slice A Current Main V2
+
+on:
+  push:
+    branches:
+      - verify/learning-slice-a-current-main-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 09739787ff82adc8e9fbd149e0c0273f6cbb38db
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record identity
+        run: |
+          node --version
+          npm --version
+          git rev-parse HEAD
+          test "$(git rev-parse HEAD)" = "09739787ff82adc8e9fbd149e0c0273f6cbb38db"
+
+      - name: Install authorized pinned dev toolchain
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Verify pinned package versions
+        run: |
+          node -e "const p=require('./node_modules/typescript/package.json'); if(p.version!=='5.9.2') process.exit(1); console.log('typescript',p.version)"
+          node -e "const p=require('./node_modules/vitest/package.json'); if(p.version!=='3.2.4') process.exit(1); console.log('vitest',p.version)"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test

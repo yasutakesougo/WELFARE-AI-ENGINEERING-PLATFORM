@@ -223,7 +223,7 @@ Runtime Activation / LIVE WRITE: NOT AUTHORIZED
 Audit Timestamp: 2026-08-29 08:57 JST (approx capture)
 Mode: DOCS / STATE RECONCILIATION ONLY
 Pre-sync #29 tip: 72fe83f7372eeb8606160f9abffcab5340324c9e
-Final #29 tip: 08764efed24578416b3b0849ae7cb810511f574e
+Final #29 tip: c4befd914369a4d5b506145b4ecc8cd2fd018f0e
 Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 ```
 

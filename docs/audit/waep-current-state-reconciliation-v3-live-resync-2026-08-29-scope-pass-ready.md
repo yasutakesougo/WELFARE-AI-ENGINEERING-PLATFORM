@@ -9,8 +9,7 @@ Branch: docs/waep-current-state-reconciliation-v3
 PR: #29
 Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Pre-sync tip: 72fe83f7372eeb8606160f9abffcab5340324c9e
-Final tip: 08764efed24578416b3b0849ae7cb810511f574e
-Tip-bind note: Final tip names the resync content commit; branch HEAD may be this OID or +1 tip-bind commit
+Final tip: c4befd914369a4d5b506145b4ecc8cd2fd018f0e
 ```
 
 ## Purpose

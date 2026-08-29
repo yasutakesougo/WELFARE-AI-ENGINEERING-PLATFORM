@@ -214,7 +214,7 @@ function validateRelease(
   required: boolean,
   payload: PayloadInput,
   decision: ReleaseDecisionInput | null | undefined,
-): { result: 'CONTINUE' } | { result: DomainResult; reasonCode: string } {
+): { result: 'CONTINUE' } | { result: Exclude<DomainResult, 'ADMITTED'>; reasonCode: string } {
   if (!required && !decision) return { result: 'CONTINUE' };
   if (required && !decision) return { result: 'HELD', reasonCode: 'MISSING_DEPENDENCY' };
   if (!decision) return { result: 'CONTINUE' };

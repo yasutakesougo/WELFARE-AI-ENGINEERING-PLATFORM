@@ -1,0 +1,49 @@
+name: One-shot Main Protection Stage 1 Apply
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply authorized Stage 1 branch protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method PUT \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "repos/${GH_REPO}/branches/main/protection" \
+            --input - <<'JSON'
+          {
+            "required_status_checks": null,
+            "enforce_admins": true,
+            "required_pull_request_reviews": {
+              "dismiss_stale_reviews": false,
+              "require_code_owner_reviews": false,
+              "required_approving_review_count": 0,
+              "require_last_push_approval": false
+            },
+            "restrictions": null,
+            "required_conversation_resolution": true,
+            "allow_force_pushes": false,
+            "allow_deletions": false
+          }
+          JSON
+
+      - name: Verify Stage 1 protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GH_REPO}/branches/main/protection"

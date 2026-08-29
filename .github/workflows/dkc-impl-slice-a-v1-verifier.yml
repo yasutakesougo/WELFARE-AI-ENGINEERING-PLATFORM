@@ -15,8 +15,11 @@ jobs:
       - name: Checkout exact implementation target
         uses: actions/checkout@v4
         with:
-          ref: 3d23f45c6228ae6ca8a1f7a42c14701c6f097071
+          ref: 606725280790de3444bde258239719e39037024f
           persist-credentials: false
+
+      - name: Verify exact target
+        run: test "$(git rev-parse HEAD)" = "606725280790de3444bde258239719e39037024f"
 
       - name: Setup Node 22
         uses: actions/setup-node@v4
@@ -32,13 +35,6 @@ jobs:
         working-directory: packages/development-knowledge-compound-kernel
         run: npm install --package-lock-only --ignore-scripts
 
-      - name: Emit lockfile candidate
-        working-directory: packages/development-knowledge-compound-kernel
-        run: |
-          echo '===DKC_LOCKFILE_BEGIN==='
-          cat package-lock.json
-          echo '===DKC_LOCKFILE_END==='
-
       - name: Clean install from generated lockfile
         working-directory: packages/development-knowledge-compound-kernel
         run: npm ci
@@ -50,3 +46,19 @@ jobs:
       - name: Typecheck
         working-directory: packages/development-knowledge-compound-kernel
         run: npm run typecheck
+
+      - name: Capture npm audit evidence
+        working-directory: packages/development-knowledge-compound-kernel
+        shell: bash
+        run: |
+          npm audit --json > npm-audit.json || true
+          node -e 'const a=require("./npm-audit.json"); console.log(JSON.stringify(a.metadata?.vulnerabilities ?? {}, null, 2))'
+
+      - name: Upload lockfile and audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: dkc-slice-a-lock-and-audit
+          path: |
+            packages/development-knowledge-compound-kernel/package-lock.json
+            packages/development-knowledge-compound-kernel/npm-audit.json
+          if-no-files-found: error

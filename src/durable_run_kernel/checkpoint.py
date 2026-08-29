@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Tuple
 
-from .models import CapabilitySnapshot, DefinitionIdentity, EffectIdentity, EffectState, ReplayClass
+from .models import AuthorityFreshness, CapabilitySnapshot, DefinitionIdentity, EffectIdentity, EffectState, ReplayClass
 
 
 class ResumeDecision(str, Enum):
@@ -46,7 +46,8 @@ class ResumeEvidence:
     expected_result_reference: str
     expected_result_digest: str
     active_definition_identity: DefinitionIdentity
-    current_authority_evidence_present: bool
+    current_authority_snapshot_id: str
+    current_authority_freshness: AuthorityFreshness
     bound_capability_snapshot: CapabilitySnapshot
     observed_capability_snapshot: CapabilitySnapshot
     snapshot_freshness_current: Optional[bool] = None

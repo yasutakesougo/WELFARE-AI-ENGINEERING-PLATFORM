@@ -55,5 +55,56 @@ class DurableRunKernelSliceCTests(unittest.TestCase):
     def test_dk_c_r18_missing_resume_evidence_holds(self): self.assertEqual(recovery_decision(RunState.SUSPENDED, evidence(resume_decision=None)), TransitionDecision.HOLD_REQUIRED)
     def test_dk_c_r19_resume_duplicate_prohibition_preserved(self): self.assertEqual(recovery_decision(RunState.SUSPENDED, evidence(resume_decision=ResumeDecision.DUPLICATE_MUTATION_PROHIBITED)), TransitionDecision.DUPLICATE_MUTATION_PROHIBITED)
 
+    # Post-Merge Correction-1 regression cases.
+    def test_c1_p1_effect_safety_precedes_nonretryable_gate_unknown(self):
+        self.assertEqual(
+            retry_decision(RunState.FAILED, evidence(effect_state=EffectState.EFFECT_UNKNOWN), technically_retryable=False),
+            TransitionDecision.RECONCILIATION_REQUIRED,
+        )
+
+    def test_c1_p1_effect_safety_precedes_nonretryable_gate_applied(self):
+        self.assertEqual(
+            retry_decision(RunState.FAILED, evidence(effect_state=EffectState.EFFECT_APPLIED), technically_retryable=False),
+            TransitionDecision.DUPLICATE_MUTATION_PROHIBITED,
+        )
+
+    def test_c1_p1_applied_effect_allows_running_to_succeeded_completion(self):
+        self.assertEqual(
+            transition_decision(RunState.RUNNING, RunState.SUCCEEDED, evidence(effect_state=EffectState.EFFECT_APPLIED)),
+            TransitionDecision.ALLOW_TRANSITION,
+        )
+
+    def test_c1_p1_revalidation_required_blocks_recovery(self):
+        self.assertEqual(
+            recovery_decision(RunState.SUSPENDED, evidence(resume_decision=ResumeDecision.REVALIDATION_REQUIRED)),
+            TransitionDecision.HOLD_REQUIRED,
+        )
+
+    def test_c1_p1_revoked_authority_preserves_policy_denial(self):
+        self.assertEqual(
+            transition_decision(RunState.SUSPENDED, RunState.AUTHORIZED, evidence(current_authority_freshness=AuthorityFreshness.REVOKED)),
+            TransitionDecision.DENY_POLICY,
+        )
+
+    def test_c1_p1_terminal_parent_protected_from_late_child_propagation(self):
+        for parent_state in (RunState.SUCCEEDED, RunState.FAILED, RunState.DENIED, RunState.CANCELLED):
+            with self.subTest(parent_state=parent_state):
+                self.assertEqual(
+                    parent_propagation_decision(ChildPropagation(RunState.FAILED, parent_state, True)),
+                    TransitionDecision.TERMINAL_STATE_PROTECTED,
+                )
+
+    def test_c1_p2_effect_not_started_is_retry_eligible(self):
+        self.assertEqual(
+            retry_decision(RunState.FAILED, evidence(effect_state=EffectState.EFFECT_NOT_STARTED), technically_retryable=True),
+            TransitionDecision.RETRY_ELIGIBLE,
+        )
+
+    def test_c1_p2_checkpoint_definition_mismatch_is_preserved(self):
+        self.assertEqual(
+            recovery_decision(RunState.SUSPENDED, evidence(resume_decision=ResumeDecision.DEFINITION_MISMATCH)),
+            TransitionDecision.DEFINITION_MISMATCH,
+        )
+
 
 if __name__ == "__main__": unittest.main()

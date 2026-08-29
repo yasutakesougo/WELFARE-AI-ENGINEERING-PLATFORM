@@ -1,0 +1,52 @@
+name: DKC Slice A Independent Verifier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact implementation target
+        uses: actions/checkout@v4
+        with:
+          ref: 3d23f45c6228ae6ca8a1f7a42c14701c6f097071
+          persist-credentials: false
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record toolchain
+        run: |
+          node --version
+          npm --version
+
+      - name: Generate package-local lockfile candidate
+        working-directory: packages/development-knowledge-compound-kernel
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Emit lockfile candidate
+        working-directory: packages/development-knowledge-compound-kernel
+        run: |
+          echo '===DKC_LOCKFILE_BEGIN==='
+          cat package-lock.json
+          echo '===DKC_LOCKFILE_END==='
+
+      - name: Clean install from generated lockfile
+        working-directory: packages/development-knowledge-compound-kernel
+        run: npm ci
+
+      - name: Test
+        working-directory: packages/development-knowledge-compound-kernel
+        run: npm test
+
+      - name: Typecheck
+        working-directory: packages/development-knowledge-compound-kernel
+        run: npm run typecheck

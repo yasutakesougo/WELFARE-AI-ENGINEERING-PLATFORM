@@ -164,6 +164,27 @@ class AuthorityBinding:
 
 
 @dataclass(frozen=True)
+class AuthorityRequest:
+    target_repository: Optional[str] = None
+    target_system: Optional[str] = None
+    target_resource: Optional[str] = None
+    operation: Optional[str] = None
+    tool: Optional[str] = None
+    credential_ref: Optional[str] = None
+    network_destination: Optional[str] = None
+    write_target: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class MutableScopeGenerations:
+    resource_set: GenerationBinding
+    operation_set: GenerationBinding
+    tool_set: GenerationBinding
+    destination_set: GenerationBinding
+    write_target_set: GenerationBinding
+
+
+@dataclass(frozen=True)
 class ExecutionRegrantDecision:
     previous_root_execution_grant_id: str
     previous_authority_decision_ref: str
@@ -179,6 +200,10 @@ class ExecutionRegrantDecision:
     target_scope: FrozenSet[str]
     operation_scope: FrozenSet[str]
     new_root_execution_grant_id: str
+    previous_regrant_decision_ref: Optional[str] = None
+    regrant_sequence: int = 1
+    cumulative_budget_granted: Optional[int] = None
+    cumulative_budget_consumed: Optional[int] = None
 
 
 @dataclass(frozen=True)

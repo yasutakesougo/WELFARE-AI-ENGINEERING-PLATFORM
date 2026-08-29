@@ -26,6 +26,7 @@ PR #13: MERGED
 | `waep-learning-system-v1.md` | Definition Correction-3（LOCKED / canonical on main） |
 | `contracts/` | External Decision Contracts |
 | `implementation/slice-a-learning-event-contract-v1.md` | Slice A Implementation Definition (replayed onto current main) |
+| `implementation/slice-a-learning-event-contract-v1-correction-1.md` | Slice A Implementation Definition Correction-1 normative overlay |
 | `reviews/post-merge-reconciliation.md` | PR #13 Post-Merge Reconciliation |
 | `reviews/definition-lock-go.md` | Human Definition Lock GO archive |
 | `reviews/independent-definition-final-re-review-4.md` | Final Re-Review-4 PASS archive |
@@ -37,16 +38,21 @@ PR #13: MERGED
 
 ```text
 Source PR: #15 / OPEN / DRAFT / HISTORICAL DIVERGED LINE
+Current Candidate PR: #36 / OPEN / DRAFT
 Replay Branch: cursor/slice-a-current-main-reconciliation-bbff
 Current-Main Baseline: ebc13ef072a861a53043687af13d9b2c548c73ce
 Parent Definition: LOCKED / UNCHANGED
 Review-1: PASS WITH CORRECTIONS (P0=0 / P1=4 / P2=5)
-Correction-1: NOT COMPLETE
+Correction-1: APPLIED / PENDING INDEPENDENT RE-REVIEW
+Correction-1 Commit: 0c875c149356e1731f2176ca62232b9e8384e41b
 Implementation Start: NOT AUTHORIZED
+Ready / Merge / Deploy / LIVE WRITE: NOT AUTHORIZED
 ```
 
-Next gateはSlice A Implementation Definition Correction-1 → Re-Review-2である。
+Correction-1はReview-1のP1 4件に対する規範修正を適用した。
 
-本ReplayはCorrection-1完了を主張しない。
+Correction authorはfinding closureを主張しない。
+
+次Gateは`Slice A — Independent Implementation Definition Re-Review-2`である。
 
 Implementation Startは認可されていない。

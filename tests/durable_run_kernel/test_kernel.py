@@ -247,6 +247,17 @@ class DurableRunKernelTests(unittest.TestCase):
         )
         self.assertEqual(capability_decision(a, b), Decision.REAUTHORIZE_REQUIRED)
 
+    def test_same_snapshot_identity_cannot_hide_material_drift(self):
+        a = CapabilitySnapshot(
+            "cap-1", "python", "3.12", frozenset({"stdlib"}), "isolated", "none", "slice",
+            "none", "none", "v1", T0, "same", model_provider_identity="model-a"
+        )
+        b = CapabilitySnapshot(
+            "cap-1", "python", "3.12", frozenset({"stdlib"}), "isolated", "none", "slice",
+            "none", "none", "v1", T0, "same", model_provider_identity="model-b"
+        )
+        self.assertEqual(capability_decision(a, b), Decision.REAUTHORIZE_REQUIRED)
+
     def test_dk_r9_prohibited_raw_data_is_rejected(self):
         self.assertEqual(
             persistence_decision(PersistabilityClass.PROHIBITED_RAW_DATA),

@@ -13,6 +13,7 @@ Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
   (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
 Final tip: c8502902306dc1388030dc5cd1570c1c890291c8
 Index sync commit: c8502902306dc1388030dc5cd1570c1c890291c8
+  (Index sync / Tip / Final tip = self-bind commit OID; reachable ancestor of live branch HEAD)
 ```
 
 ## Purpose

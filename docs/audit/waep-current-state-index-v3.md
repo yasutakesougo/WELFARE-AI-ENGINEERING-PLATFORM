@@ -15,6 +15,8 @@ Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
 Final tip: c8502902306dc1388030dc5cd1570c1c890291c8
 Tip / Head OID: c8502902306dc1388030dc5cd1570c1c890291c8
 Index sync commit: c8502902306dc1388030dc5cd1570c1c890291c8
+  (Index sync / Tip / Final tip = self-bind commit OID; reachable ancestor of live branch HEAD.
+   Live branch HEAD is tip-bind child of Index sync. Tip OID is a real commit object — not phantom.)
 Index Mode: READ-ONLY EVIDENCE + RECONCILIATION RECORD
 Merge / Deploy / Implementation Start / LIVE WRITE: NOT AUTHORIZED BY THIS INDEX
 ```

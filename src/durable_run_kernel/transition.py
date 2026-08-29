@@ -14,6 +14,7 @@ class TransitionDecision(str, Enum):
     RECOVERY_ELIGIBLE = "RECOVERY_ELIGIBLE"
     REAUTHORIZE_REQUIRED = "REAUTHORIZE_REQUIRED"
     RECONCILIATION_REQUIRED = "RECONCILIATION_REQUIRED"
+    DUPLICATE_MUTATION_PROHIBITED = "DUPLICATE_MUTATION_PROHIBITED"
     DEFINITION_MISMATCH = "DEFINITION_MISMATCH"
     STALE_LEASE_REJECTED = "STALE_LEASE_REJECTED"
     TERMINAL_STATE_PROTECTED = "TERMINAL_STATE_PROTECTED"
@@ -53,6 +54,8 @@ def _safety_precondition(evidence: TransitionEvidence) -> Optional[TransitionDec
         return TransitionDecision.STALE_LEASE_REJECTED
     if evidence.effect_state is EffectState.EFFECT_UNKNOWN:
         return TransitionDecision.RECONCILIATION_REQUIRED
+    if evidence.effect_state is EffectState.EFFECT_APPLIED:
+        return TransitionDecision.DUPLICATE_MUTATION_PROHIBITED
     if evidence.effect_state in (EffectState.EFFECT_CONFLICT, EffectState.EFFECT_IN_FLIGHT):
         return TransitionDecision.HOLD_REQUIRED
     if evidence.current_authority_freshness is not AuthorityFreshness.CURRENT:
@@ -114,8 +117,6 @@ def retry_decision(
     if safety is not None:
         return safety
 
-    if evidence.effect_state is EffectState.EFFECT_APPLIED:
-        return TransitionDecision.HOLD_REQUIRED
     if evidence.effect_state is EffectState.EFFECT_NOT_APPLIED or evidence.effect_state is None:
         return TransitionDecision.RETRY_ELIGIBLE
     return TransitionDecision.HOLD_REQUIRED
@@ -132,10 +133,11 @@ def recovery_decision(
     if safety is not None:
         return safety
 
-    if evidence.resume_decision in (
-        ResumeDecision.RECONCILIATION_REQUIRED,
-        ResumeDecision.DUPLICATE_MUTATION_PROHIBITED,
-    ):
+    if evidence.resume_decision is None:
+        return TransitionDecision.HOLD_REQUIRED
+    if evidence.resume_decision is ResumeDecision.DUPLICATE_MUTATION_PROHIBITED:
+        return TransitionDecision.DUPLICATE_MUTATION_PROHIBITED
+    if evidence.resume_decision is ResumeDecision.RECONCILIATION_REQUIRED:
         return TransitionDecision.RECONCILIATION_REQUIRED
     if evidence.resume_decision is ResumeDecision.REAUTHORIZE_REQUIRED:
         return TransitionDecision.REAUTHORIZE_REQUIRED

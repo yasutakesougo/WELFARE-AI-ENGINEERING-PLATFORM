@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from .checkpoint import CheckpointLineage, CheckpointRecord, ResumeDecision, ResumeEvidence
-from .models import Decision, EffectState, ReconciliationObservation, ReplayClass
+from .models import AuthorityFreshness, Decision, EffectState, ReconciliationObservation, ReplayClass
 from .rules import capability_decision, effect_decision
 
 
@@ -56,8 +56,13 @@ def evaluate_checkpoint_resume(
     if checkpoint.result_digest != evidence.expected_result_digest:
         return ResumeDecision.HOLD_REQUIRED
 
-    if not evidence.current_authority_evidence_present:
+    if not evidence.current_authority_snapshot_id:
         return ResumeDecision.REAUTHORIZE_REQUIRED
+    if evidence.current_authority_freshness is not AuthorityFreshness.CURRENT:
+        return ResumeDecision.REAUTHORIZE_REQUIRED
+
+    if checkpoint.capability_snapshot_id != evidence.bound_capability_snapshot.snapshot_id:
+        return ResumeDecision.HOLD_REQUIRED
 
     capability = capability_decision(
         evidence.bound_capability_snapshot,

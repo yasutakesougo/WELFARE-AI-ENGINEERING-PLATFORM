@@ -23,5 +23,7 @@ jobs:
         run: python --version
       - name: Run durable kernel tests
         run: python -m unittest discover -s tests/durable_run_kernel -p 'test_*.py' -v
+      - name: Remove interpreter cache artifacts
+        run: find . -type d -name __pycache__ -prune -exec rm -rf {} +
       - name: Check repository cleanliness
         run: test -z "$(git status --porcelain)"

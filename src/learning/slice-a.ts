@@ -3,6 +3,14 @@ import { createHash } from 'node:crypto';
 export const IDENTITY_CONTRACT = 'WAEP-LEARNING-EVENT-IDENTITY@v1' as const;
 export const INGESTION_ATTEMPT_CONTRACT = 'LearningEventIngestionAttempt@v1' as const;
 export const LEARNING_EVENT_CONTRACT = 'LearningEvent@v1' as const;
+export const SUPPORTED_CLASSIFICATIONS = [
+  'UNTRUSTED',
+  'INTERNAL',
+  'PRODUCTION',
+  'SYNTHETIC',
+  'AI_GENERATED',
+  'LAB',
+] as const;
 
 export type DomainResult = 'ADMITTED' | 'DUPLICATE_NO_OP' | 'HELD' | 'DENIED' | 'INVALID';
 export type AckState = 'DURABILITY_PENDING' | 'ACKNOWLEDGEABLE';
@@ -39,6 +47,7 @@ export interface ReleaseDecisionInput {
   subjectPayloadDigest: string;
   destinationLearningPlane: string;
   conditions: ConditionState[];
+  conditionEvidenceRefs: string[];
 }
 
 export interface ReleaseRequirementInput {
@@ -50,6 +59,7 @@ export interface ReleaseRequirementInput {
 
 export interface ExistingEventObservation {
   canonicalEventIdentity: string;
+  identityMaterialHex: string;
   sourceEventId: string;
   sourceRevision: string;
   sourceContentDigest: string;
@@ -79,10 +89,16 @@ export interface LearningEventCandidate {
     required: boolean;
     learningPayloadReleaseDecisionRef: string | null;
   };
+  lineage: {
+    derivedFromLearningEventRefs: string[];
+    derivedFromKnowledgeRefs: string[];
+    derivedFromDecisionRefs: string[];
+  };
   ingestion: {
     ingestedAt: string;
     ingestionContractVersion: typeof LEARNING_EVENT_CONTRACT;
   };
+  contentDigest: string;
 }
 
 export interface IngestionAttemptRecord {
@@ -122,6 +138,26 @@ function uint64be(value: number): Buffer {
   const out = Buffer.alloc(8);
   out.writeBigUInt64BE(BigInt(value));
   return out;
+}
+
+function stableValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, nested]) => [key, stableValue(nested)]),
+    );
+  }
+  return value;
+}
+
+function stableJson(value: unknown): string {
+  return JSON.stringify(stableValue(value));
+}
+
+function sha256Text(value: string): string {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
 export function canonicalIdentityMaterial(sourceEventId: string, sourceContentDigest: string): Buffer {
@@ -182,12 +218,10 @@ function validateRelease(
   if (!required && !decision) return { result: 'CONTINUE' };
   if (required && !decision) return { result: 'HELD', reasonCode: 'MISSING_DEPENDENCY' };
   if (!decision) return { result: 'CONTINUE' };
-
   if (decision.outcome === 'UNAVAILABLE') return { result: 'HELD', reasonCode: 'RELEASE_RESOLUTION_UNAVAILABLE' };
   if (decision.outcome === 'MALFORMED') return { result: 'INVALID', reasonCode: 'MALFORMED_RELEASE_DECISION' };
   if (decision.outcome === 'HOLD') return { result: 'HELD', reasonCode: 'RELEASE_HOLD' };
   if (decision.outcome === 'DENY') return { result: 'DENIED', reasonCode: 'RELEASE_DENIED' };
-
   if (
     payload.allowedPayloadRef !== decision.subjectPayloadRef ||
     payload.allowedPayloadDigest !== decision.subjectPayloadDigest ||
@@ -195,7 +229,6 @@ function validateRelease(
   ) {
     return { result: 'HELD', reasonCode: 'RELEASE_SUBJECT_MISMATCH' };
   }
-
   if (decision.outcome === 'ALLOW_WITH_CONDITIONS') {
     if (decision.conditions.some((x) => x === 'UNRESOLVED')) {
       return { result: 'HELD', reasonCode: 'RELEASE_CONDITION_UNRESOLVED' };
@@ -215,16 +248,8 @@ function makeAttempt(
   revisionMetadataDifference: boolean,
   resolvedLearningEventRef: string | null,
 ): IngestionAttemptRecord {
-  const auditMaterial = JSON.stringify({
-    attemptId: request.attemptId,
-    requestedEventIdentity,
-    sourceEventId: request.source.sourceEventId,
-    sourceRevision: request.source.sourceRevision,
-    result,
-    reasonCodes,
-    resolvedLearningEventRef,
-  });
-  return {
+  const conditionEvidenceRefs = request.releaseDecision?.conditionEvidenceRefs ?? [];
+  const auditWithoutDigest = {
     attemptId: request.attemptId,
     contractVersion: INGESTION_ATTEMPT_CONTRACT,
     requestedEventIdentity,
@@ -234,9 +259,12 @@ function makeAttempt(
     reasonCodes,
     resolvedLearningEventRef,
     releaseDecisionRef: request.releaseDecision?.ref ?? null,
-    conditionEvidenceRefs: [],
+    conditionEvidenceRefs,
     revisionMetadataDifference,
-    contentDigest: createHash('sha256').update(auditMaterial).digest('hex'),
+  };
+  return {
+    ...auditWithoutDigest,
+    contentDigest: sha256Text(stableJson(auditWithoutDigest)),
   };
 }
 
@@ -279,14 +307,25 @@ export function prepareAdmission(request: AdmissionRequest): PreparedIngestionOu
   ) {
     return terminal(request, null, 'INVALID', ['SOURCE_IDENTITY_INVALID']);
   }
+  if (!SUPPORTED_CLASSIFICATIONS.includes(request.classification.sourceClassification as (typeof SUPPORTED_CLASSIFICATIONS)[number])) {
+    return terminal(request, null, 'INVALID', ['UNSUPPORTED_CLASSIFICATION']);
+  }
 
   const identity = deriveIdentity(request.source.sourceEventId, request.source.contentDigest);
+  const existing = request.existingEvent;
+  if (
+    existing &&
+    existing.canonicalEventIdentity === identity.canonicalEventIdentity &&
+    existing.identityMaterialHex !== identity.materialHex
+  ) {
+    return terminal(request, identity.canonicalEventIdentity, 'HELD', ['IDENTITY_DIGEST_COLLISION']);
+  }
+
   const releaseReq = deriveReleaseRequired(request.releaseRequirement);
   if (releaseReq.kind === 'HELD') {
     return terminal(request, identity.canonicalEventIdentity, 'HELD', [releaseReq.reasonCode]);
   }
 
-  const existing = request.existingEvent;
   if (existing && existing.sourceEventId === request.source.sourceEventId) {
     if (existing.sourceRevision === request.source.sourceRevision && existing.sourceContentDigest !== request.source.contentDigest) {
       return terminal(request, identity.canonicalEventIdentity, 'HELD', ['SOURCE_IDENTITY_CONFLICT']);
@@ -308,7 +347,7 @@ export function prepareAdmission(request: AdmissionRequest): PreparedIngestionOu
     return terminal(request, identity.canonicalEventIdentity, release.result, [release.reasonCode]);
   }
 
-  const event: LearningEventCandidate = {
+  const eventWithoutDigest = {
     learningEventId: identity.learningEventId,
     contractVersion: LEARNING_EVENT_CONTRACT,
     canonicalEventIdentity: identity.canonicalEventIdentity,
@@ -319,10 +358,19 @@ export function prepareAdmission(request: AdmissionRequest): PreparedIngestionOu
       required: releaseReq.required,
       learningPayloadReleaseDecisionRef: request.releaseDecision?.ref ?? null,
     },
+    lineage: {
+      derivedFromLearningEventRefs: [],
+      derivedFromKnowledgeRefs: [],
+      derivedFromDecisionRefs: [],
+    },
     ingestion: {
       ingestedAt: request.attemptedAt,
       ingestionContractVersion: LEARNING_EVENT_CONTRACT,
     },
+  };
+  const event: LearningEventCandidate = {
+    ...eventWithoutDigest,
+    contentDigest: sha256Text(stableJson(eventWithoutDigest)),
   };
   const attempt = makeAttempt(request, identity.canonicalEventIdentity, 'ADMITTED', [], false, event.learningEventId);
   return {

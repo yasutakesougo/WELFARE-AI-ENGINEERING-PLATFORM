@@ -1,0 +1,47 @@
+name: Verify Learning Slice A Exact Artifact V1
+
+on:
+  push:
+    branches:
+      - verify/learning-slice-a-exact-artifact-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact target artifact
+        uses: actions/checkout@v4
+        with:
+          ref: 6530666b62e3fbb163ab367976f987feaee8d218
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record identities
+        run: |
+          node --version
+          npm --version
+          git rev-parse HEAD
+          test "$(git rev-parse HEAD)" = "6530666b62e3fbb163ab367976f987feaee8d218"
+
+      - name: Install authorized pinned dev toolchain
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Verify pinned package versions
+        run: |
+          node -e "const p=require('./node_modules/typescript/package.json'); if(p.version!=='5.9.2') process.exit(1); console.log('typescript',p.version)"
+          node -e "const p=require('./node_modules/vitest/package.json'); if(p.version!=='3.2.4') process.exit(1); console.log('vitest',p.version)"
+          node -e "const p=require('./node_modules/@types/node/package.json'); if(p.version!=='22.18.0') process.exit(1); console.log('@types/node',p.version)"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test

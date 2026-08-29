@@ -66,10 +66,10 @@ jobs:
         run: test "$(git rev-parse HEAD)" = "73e5c0e6faba026d9c3b2a4f2bdba74a3fe675a1"
       - name: Synthetic merge exact DARK head onto current main
         run: |
+          test "$(git rev-parse origin/fix/dark-slice-c-post-merge-correction-1)" = "e90deafa24c30779ada73689d15692f1b9caacaa"
           git config user.name verifier
           git config user.email verifier@example.invalid
-          git fetch origin e90deafa24c30779ada73689d15692f1b9caacaa
-          git merge --no-ff --no-commit e90deafa24c30779ada73689d15692f1b9caacaa
+          git merge --no-ff --no-commit origin/fix/dark-slice-c-post-merge-correction-1
           git diff --check --cached
           git write-tree
       - name: Run full durable kernel tests on synthetic merge

@@ -37,6 +37,31 @@ def _map_effect_decision(decision: Decision) -> ResumeDecision:
     return mapping.get(decision, ResumeDecision.HOLD_REQUIRED)
 
 
+def _effect_resume_decision(
+    checkpoint: CheckpointRecord,
+    reconciliation: Optional[ReconciliationObservation],
+) -> Optional[ResumeDecision]:
+    if checkpoint.replay_class is not ReplayClass.NON_REPLAYABLE_EFFECT:
+        return None
+    if checkpoint.effect_identity is None or checkpoint.effect_state is None:
+        return ResumeDecision.HOLD_REQUIRED
+    if checkpoint.effect_state is EffectState.EFFECT_IN_FLIGHT:
+        return ResumeDecision.HOLD_REQUIRED
+    decision = effect_decision(
+        checkpoint.effect_identity,
+        checkpoint.effect_state,
+        reconciliation=reconciliation,
+    )
+    mapped = _map_effect_decision(decision)
+    if mapped in (
+        ResumeDecision.DUPLICATE_MUTATION_PROHIBITED,
+        ResumeDecision.RECONCILIATION_REQUIRED,
+        ResumeDecision.HOLD_REQUIRED,
+    ):
+        return mapped
+    return None
+
+
 def evaluate_checkpoint_resume(
     checkpoint: CheckpointRecord,
     evidence: ResumeEvidence,
@@ -55,6 +80,10 @@ def evaluate_checkpoint_resume(
         return ResumeDecision.HOLD_REQUIRED
     if checkpoint.result_digest != evidence.expected_result_digest:
         return ResumeDecision.HOLD_REQUIRED
+
+    effect_safety = _effect_resume_decision(checkpoint, reconciliation)
+    if effect_safety is not None:
+        return effect_safety
 
     if not evidence.current_authority_snapshot_id:
         return ResumeDecision.REAUTHORIZE_REQUIRED
@@ -85,16 +114,7 @@ def evaluate_checkpoint_resume(
         return ResumeDecision.REVALIDATION_REQUIRED
 
     if checkpoint.replay_class is ReplayClass.NON_REPLAYABLE_EFFECT:
-        if checkpoint.effect_identity is None or checkpoint.effect_state is None:
-            return ResumeDecision.HOLD_REQUIRED
-        if checkpoint.effect_state is EffectState.EFFECT_IN_FLIGHT:
-            return ResumeDecision.HOLD_REQUIRED
-        decision = effect_decision(
-            checkpoint.effect_identity,
-            checkpoint.effect_state,
-            reconciliation=reconciliation,
-        )
-        return _map_effect_decision(decision)
+        return ResumeDecision.REAUTHORIZE_REQUIRED
 
     return ResumeDecision.HOLD_REQUIRED
 

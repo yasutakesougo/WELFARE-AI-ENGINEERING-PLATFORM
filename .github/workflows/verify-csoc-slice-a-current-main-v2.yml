@@ -1,0 +1,44 @@
+name: Verify CSOC Slice A Current Main V2
+
+on:
+  push:
+    branches:
+      - verify/csoc-slice-a-current-main-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: bff6a2e18517333fee3f700e89bf9a6eec18b228
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record identity
+        run: |
+          git rev-parse HEAD
+          test "$(git rev-parse HEAD)" = "bff6a2e18517333fee3f700e89bf9a6eec18b228"
+          node --version
+          npm --version
+
+      - name: Install package dependencies
+        working-directory: packages/current-state-observation-kernel
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Typecheck
+        working-directory: packages/current-state-observation-kernel
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: packages/current-state-observation-kernel
+        run: npm test

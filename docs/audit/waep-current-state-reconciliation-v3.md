@@ -5,11 +5,15 @@
 ```text
 Record: WAEP-CURRENT-STATE-RECONCILIATION-V3
 Audit Date: 2026-08-29 JST
-Live Resync: post #35 Scope Re-Review-1 PASS + #29/#32 Ready GO tip bind
+Live Resync: post #35 Scope Re-Review-1 PASS + #29/#32 Ready GO (no self tip OID)
 Source Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Source Latest Merge: PR #22
-Current-State PR: #29 / OPEN / READY (isDraft=false)
-State: RECONCILED / LIVE RESYNC APPLIED
+Current-State PR: #29
+State: OPEN / READY (isDraft=false)
+Ready GO: RECORDED
+Tip binding: LIVE PR HEAD (OID not embedded; self-SHA fixed-point impossible)
+Head OID: NOT EMBEDDED
+Reconciliation State: RECONCILED / LIVE RESYNC APPLIED
 Merge / Deploy / Implementation Start / LIVE WRITE: NOT AUTHORIZED BY THIS RECORD
 ```
 
@@ -17,6 +21,7 @@ Merge / Deploy / Implementation Start / LIVE WRITE: NOT AUTHORIZED BY THIS RECOR
 
 本RecordはDefinition Lock、Implementation Start、Merge、Deploy、Runtime Activation、LIVE WRITEを新たに認可しない。
 Ready GO for #29 / #32 は既存記録の観測であり、本Resyncで新規作成しない。
+#29 Tip / Head OID を本Recordに埋め込まない（self-referential commit OIDは不可能）。
 
 ## 1. Original Drift
 
@@ -208,8 +213,9 @@ PR #35 Scope Review CORRECTION (superseded by Re-Review-1 PASS).
 ```text
 WAEP-CURRENT-STATE-RECONCILIATION-V3
 Recommended Mutation Sequence: EXECUTED
-Live Current-State Resync: APPLIED (Scope PASS + Ready tip bind)
+Live Current-State Resync: APPLIED (Scope PASS + Ready GO; no self tip OID)
 PR #29 Ready: GO (observed; not newly authored here)
+PR #29 Head OID: NOT EMBEDDED (self-SHA fixed-point impossible)
 PR #32 Ready: GO (observed; not newly authored here)
 Merge: NOT AUTHORIZED
 Deploy: NOT AUTHORIZED
@@ -217,27 +223,26 @@ Implementation Start: NOT AUTHORIZED
 Runtime Activation / LIVE WRITE: NOT AUTHORIZED
 ```
 
-## 11. Live Resync / Correction — 2026-08-29 JST (Scope PASS + Ready tip bind)
+## 11. Live Resync / Correction — 2026-08-29 JST (Scope PASS + Ready GO; no self tip OID)
 
 ```text
-Audit Timestamp: 2026-08-29 08:57 JST (approx capture)
+Audit Timestamp: 2026-08-29 08:57 JST (approx capture; identity trail refreshed later)
 Mode: DOCS / STATE RECONCILIATION ONLY
-Pre-sync #29 tip: 72fe83f7372eeb8606160f9abffcab5340324c9e
-Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
-  (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
-Final #29 tip: 60edf28301a1301fe970af56b34be3e58f4d4cd1
-Index sync commit: 60edf28301a1301fe970af56b34be3e58f4d4cd1
-  (Index sync / Tip / Final tip = self-bind commit OID; reachable ancestor of live branch HEAD)
+#29 State: OPEN / READY (isDraft=false)
+#29 Ready GO: RECORDED
+#29 Head OID: NOT EMBEDDED (self-referential commit OID impossible)
+Tip binding: LIVE PR HEAD (exact headRefOid lives on GitHub; not inside Index/Record)
+Index artifact identity: live-resync note ONLY (content commit + blob + bytes + sha256)
 Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 ```
 
-### Live identity capture (gh-verified before edit)
+### Live identity capture (gh-verified)
 
 | PR | isDraft | headRefOid | mergeable | ahead/behind vs main |
 | --- | --- | --- | --- | --- |
 | #15 | true | c561b13bc989617cb0a21681a65b206d4f82fbb7 | CONFLICTING | 1 / 13 |
 | #28 | true | 5491d03e406bbbd2bbf9ecf82893ab76b3b1f01e | MERGEABLE | 6 / 0 |
-| #29 | false | 72fe83f7372eeb8606160f9abffcab5340324c9e (pre-sync) | MERGEABLE | 13 / 0 |
+| #29 | false | NOT EMBEDDED (LIVE PR HEAD; self-SHA fixed-point impossible) | MERGEABLE | (live) |
 | #30 | true | 04c03424b280c5200ce01105d96b2679d8542697 | MERGEABLE | 9 / 0 |
 | #32 | false | f90e4e1945d25b83fbd4336a3a0a9dc0eea45659 | MERGEABLE | 6 / 0 |
 | #35 | true | 58f8dd1c0691723c760f9c7f5fb3129b96c0c08d | MERGEABLE | 12 / 0 |
@@ -249,7 +254,7 @@ Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 2. #30 → HOLD maintained; current blocker = Human Implementation Start GO absent;
    remove stale “#35 Review-1 CORRECTION REQUIRED” as Index current blocker;
    locked blobs intact; no Implementation Start GO created; #30 branch not rewritten
-3. #29 → draft=false / Ready GO / tip bind (pre-sync → final after this commit)
+3. #29 → draft=false / Ready GO recorded; Head OID NOT EMBEDDED (no self tip OID)
 4. #32 → draft=false / Ready GO / tip f90e4e1; package tree 9671c3b MATCH
 5. #36 → Current Slice A reconciliation candidate
 6. #15 → explicit STALE / SUPERSESSION-DISPOSITION PENDING (vs #36)

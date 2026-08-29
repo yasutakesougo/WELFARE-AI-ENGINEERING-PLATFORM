@@ -4,19 +4,21 @@
 
 ```text
 Audit Date: 2026-08-29 JST
-Live Resync: post #35 Scope Re-Review-1 PASS + #29/#32 Ready GO tip bind
+Live Resync: post #35 Scope Re-Review-1 PASS + #29/#32 Ready GO (no self tip OID)
 Repository: yasutakesougo/WELFARE-AI-ENGINEERING-PLATFORM
 Branch: main
 Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Latest Main Merge: PR #22
-Current-State Reconciliation PR: #29 / OPEN / READY (isDraft=false)
-Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
-  (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
-Final tip: 60edf28301a1301fe970af56b34be3e58f4d4cd1
-Tip / Head OID: 60edf28301a1301fe970af56b34be3e58f4d4cd1
-Index sync commit: 60edf28301a1301fe970af56b34be3e58f4d4cd1
-  (Index sync / Tip / Final tip = self-bind commit OID; reachable ancestor of live branch HEAD.
-   Live branch HEAD is tip-bind child of Index sync. Tip OID is a real commit object — not phantom.)
+
+Active PR: #29
+State: OPEN / READY (isDraft=false)
+Ready GO: RECORDED
+Tip binding: LIVE PR HEAD (OID not embedded in Index; self-SHA fixed-point impossible)
+Head OID: NOT EMBEDDED (self-referential commit OID impossible)
+Index artifact identity: recorded in live-resync note ONLY
+  (Index content commit + blob + bytes + sha256 after Index finalize;
+   not embedded inside this Index file)
+
 Index Mode: READ-ONLY EVIDENCE + RECONCILIATION RECORD
 Merge / Deploy / Implementation Start / LIVE WRITE: NOT AUTHORIZED BY THIS INDEX
 ```
@@ -215,7 +217,7 @@ Review carry-forward: PASS WITH CORRECTIONS / P0-P1-P2 = 0-4-5
 | #26 | CLOSED / UNMERGED | MSR predecessor; superseded by #27 |
 | #27 | OPEN / DRAFT | active accepted MSR Research Evidence line |
 | #28 | OPEN / DRAFT | DKC-MSR Architecture; Review-1 CORRECTION REQUIRED (unfixed) |
-| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded; Tip / Head OID 60edf28301a1301fe970af56b34be3e58f4d4cd1 |
+| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded; Head OID NOT EMBEDDED (self-SHA fixed-point impossible); artifact identity in live-resync note |
 | #30 | OPEN / DRAFT | active DKC current-main line; LOCKED / Impl Start HOLD |
 | #32 | OPEN / READY (isDraft=false) | active CSOC current-main line; Ready GO recorded |
 | #34 | OPEN / DRAFT | stacked DKC-MSR line on #30 (separate identity from #28) |
@@ -289,7 +291,7 @@ PR #35 Scope Review CORRECTION (superseded by Re-Review-1 PASS).
 ## Current Gate
 
 ```text
-Repository Reconciliation: V3 LIVE RESYNC APPLIED (Scope PASS + Ready tip bind)
+Repository Reconciliation: V3 LIVE RESYNC APPLIED (Scope PASS + Ready GO; no self tip OID)
 Portfolio Foundation: DEFINITION CANDIDATE / REVIEW REQUIRED
 Learning System: LOCKED / CANONICAL ON MAIN
 Authority Claim Resolution: LOCKED / CANONICAL ON MAIN

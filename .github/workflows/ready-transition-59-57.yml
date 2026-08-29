@@ -1,0 +1,37 @@
+name: One-shot Ready Transition 59 57
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  transition:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark PR 59 and 57 ready via GitHub GraphQL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for PR in 59 57; do
+            PR_ID="$(gh api "repos/${GH_REPO}/pulls/${PR}" --jq .node_id)"
+            gh api graphql \
+              -f query='mutation($id: ID!) { markPullRequestReadyForReview(input: {pullRequestId: $id}) { pullRequest { number isDraft headRefOid } } }' \
+              -f id="$PR_ID"
+          done
+
+      - name: Verify both are non-draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/${GH_REPO}/pulls/59" --jq .draft)" = "false"
+          test "$(gh api "repos/${GH_REPO}/pulls/57" --jq .draft)" = "false"

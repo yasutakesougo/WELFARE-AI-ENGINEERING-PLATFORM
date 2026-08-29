@@ -10,6 +10,10 @@ Branch: main
 Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Latest Main Merge: PR #22
 Current-State Reconciliation PR: #29 / OPEN / READY (isDraft=false)
+Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
+Final tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
+Tip / Head OID: 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3
+Index sync commit: 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3
 Index Mode: READ-ONLY EVIDENCE + RECONCILIATION RECORD
 Merge / Deploy / Implementation Start / LIVE WRITE: NOT AUTHORIZED BY THIS INDEX
 ```
@@ -208,7 +212,7 @@ Review carry-forward: PASS WITH CORRECTIONS / P0-P1-P2 = 0-4-5
 | #26 | CLOSED / UNMERGED | MSR predecessor; superseded by #27 |
 | #27 | OPEN / DRAFT | active accepted MSR Research Evidence line |
 | #28 | OPEN / DRAFT | DKC-MSR Architecture; Review-1 CORRECTION REQUIRED (unfixed) |
-| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded |
+| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded; Tip / Head OID 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3 |
 | #30 | OPEN / DRAFT | active DKC current-main line; LOCKED / Impl Start HOLD |
 | #32 | OPEN / READY (isDraft=false) | active CSOC current-main line; Ready GO recorded |
 | #34 | OPEN / DRAFT | stacked DKC-MSR line on #30 (separate identity from #28) |

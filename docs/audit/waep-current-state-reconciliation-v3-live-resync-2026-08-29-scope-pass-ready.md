@@ -9,7 +9,9 @@ Branch: docs/waep-current-state-reconciliation-v3
 PR: #29
 Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Pre-sync tip: 72fe83f7372eeb8606160f9abffcab5340324c9e
-Final tip: a2d86dd9d69d68de8f8dc8e6f3a657cfb8d72da1
+Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
+Final tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
+Index sync commit: 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3
 ```
 
 ## Purpose

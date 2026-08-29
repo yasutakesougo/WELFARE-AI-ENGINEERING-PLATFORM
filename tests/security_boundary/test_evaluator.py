@@ -14,6 +14,7 @@ from security_boundary.evaluator import (
     audit_chain_state,
     authentication_constraint,
     authority_binding_state,
+    authority_request_state,
     batch_state,
     budget_state,
     canonical_network_classification,
@@ -23,6 +24,7 @@ from security_boundary.evaluator import (
     dependency_constraint,
     derive_primary_class,
     evaluate_effective,
+    mutable_scope_state,
     network_binding_state,
     regrant_state,
     resume_state,
@@ -33,6 +35,7 @@ from security_boundary.evaluator import (
 from security_boundary.models import (
     AuthenticationState,
     AuthorityBinding,
+    AuthorityRequest,
     AuthorityState,
     BatchSnapshot,
     BindingState,
@@ -49,6 +52,7 @@ from security_boundary.models import (
     ExecutionPolicyDecision,
     ExecutionRegrantDecision,
     GenerationBinding,
+    MutableScopeGenerations,
     NetworkBinding,
     OperationSensitivity,
     ProvenanceClass,
@@ -77,6 +81,26 @@ def _effective(
         authority_state=authority,
         binding_states=bindings,
         budget=budget,
+    )
+
+
+def _authority_binding() -> AuthorityBinding:
+    return AuthorityBinding(
+        root_execution_grant_id="grant-1",
+        task_identity="task-1",
+        run_identity="run-1",
+        subject_identity="worker-1",
+        target_repository="repo:A",
+        target_system=None,
+        target_resource_set=frozenset({"repo:A"}),
+        allowed_operation_set=frozenset({"READ"}),
+        allowed_tool_set=frozenset({"repo-read"}),
+        credential_ref=None,
+        allowed_network_destination_set=frozenset({"api.example"}),
+        write_target_set=frozenset(),
+        authority_decision_ref="auth-1",
+        authority_generation=GenerationBinding(3, 3),
+        validity_window=ValidityWindow(valid_until=T0 + timedelta(hours=1)),
     )
 
 
@@ -144,7 +168,8 @@ def check_case(name: str) -> bool:
         snapshot = CredentialBinding(CredentialOperation.USE, frozenset({CredentialOperation.USE}), GenerationBinding(4, 5))
         return credential_binding_state(snapshot) is BindingState.GENERATION_MISMATCH
     if name == "binding_out_of_scope":
-        return _effective(bindings=(BindingState.OUT_OF_SCOPE,)).eligibility is Eligibility.BLOCKED
+        request = AuthorityRequest(target_repository="repo:B", operation="READ", tool="repo-read")
+        return authority_request_state(_authority_binding(), request, CTX, current_authority_generation=3) is BindingState.MISMATCH
     if name == "delegation_root_mismatch":
         snapshot = DelegationSnapshot(frozenset({"repo:A:read"}), frozenset({"repo:A:read"}), AuthorityState.CURRENT, GenerationBinding(1, 1), ValidityWindow(valid_until=T0 + timedelta(hours=1)), "grant-1", "grant-2")
         return delegation_state(snapshot, CTX) is BindingState.MISMATCH
@@ -215,25 +240,26 @@ class SecurityBoundaryTests(unittest.TestCase):
                 self.assertTrue(check_case(case["check"]))
 
     def test_authority_binding_requires_current_generation(self):
-        binding = AuthorityBinding(
-            root_execution_grant_id="grant-1",
-            task_identity="task-1",
-            run_identity="run-1",
-            subject_identity="worker-1",
-            target_repository="repo:A",
-            target_system=None,
-            target_resource_set=frozenset({"repo:A"}),
-            allowed_operation_set=frozenset({"READ"}),
-            allowed_tool_set=frozenset({"repo-read"}),
-            credential_ref=None,
-            allowed_network_destination_set=frozenset(),
-            write_target_set=frozenset(),
-            authority_decision_ref="auth-1",
-            authority_generation=GenerationBinding(3, 3),
-            validity_window=ValidityWindow(valid_until=T0 + timedelta(hours=1)),
-        )
+        binding = _authority_binding()
         self.assertEqual(authority_binding_state(binding, CTX, current_authority_generation=3), BindingState.MATCH)
         self.assertEqual(authority_binding_state(binding, CTX, current_authority_generation=4), BindingState.GENERATION_MISMATCH)
+
+    def test_authority_request_exact_binding(self):
+        binding = _authority_binding()
+        good = AuthorityRequest(target_repository="repo:A", target_resource="repo:A", operation="READ", tool="repo-read", network_destination="api.example")
+        bad = AuthorityRequest(target_repository="repo:A", operation="WRITE", tool="repo-read")
+        self.assertEqual(authority_request_state(binding, good, CTX, current_authority_generation=3), BindingState.MATCH)
+        self.assertEqual(authority_request_state(binding, bad, CTX, current_authority_generation=3), BindingState.OUT_OF_SCOPE)
+
+    def test_mutable_scope_generations_fail_closed(self):
+        snapshot = MutableScopeGenerations(
+            resource_set=GenerationBinding(1, 1),
+            operation_set=GenerationBinding(2, 2),
+            tool_set=GenerationBinding(3, 4),
+            destination_set=GenerationBinding(5, 5),
+            write_target_set=GenerationBinding(6, 6),
+        )
+        self.assertEqual(mutable_scope_state(snapshot), BindingState.GENERATION_MISMATCH)
 
     def test_explicit_regrant_contract(self):
         self.assertEqual(regrant_state(_regrant(), CTX, expected_previous_root_execution_grant_id="grant-old", expected_previous_authority_decision_ref="auth-old", previous_target_scope=frozenset({"repo:A"}), previous_operation_scope=frozenset({"READ"})), BindingState.MATCH)

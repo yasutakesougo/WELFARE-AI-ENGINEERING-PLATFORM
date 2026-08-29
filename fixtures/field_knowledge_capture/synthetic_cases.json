@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1",
+  "cases": [
+    {
+      "id": "eligible-basic",
+      "candidateId": "FIELD-CAND-001",
+      "scope": "SupportRecord",
+      "statement": "Use observable behavior wording rather than evaluative-only wording.",
+      "evidenceRefs": ["SYNTH-EVID-001"],
+      "sensitivityState": "PASS",
+      "authorityDecision": "ALLOW",
+      "verificationState": "PASS",
+      "applicability": "SOURCE_ONLY",
+      "supersessionState": "ACTIVE",
+      "expectedRetrievalEligible": true
+    },
+    {
+      "id": "sensitive-deny",
+      "candidateId": "FIELD-CAND-002",
+      "scope": "SupportRecord",
+      "statement": "Synthetic prohibited-content placeholder.",
+      "evidenceRefs": ["SYNTH-EVID-002"],
+      "sensitivityState": "SENSITIVE",
+      "authorityDecision": "ALLOW",
+      "verificationState": "PASS",
+      "applicability": "SOURCE_ONLY",
+      "supersessionState": "ACTIVE",
+      "expectedPersistence": "DENY"
+    },
+    {
+      "id": "unknown-hold",
+      "candidateId": "FIELD-CAND-003",
+      "scope": "SupportRecord",
+      "statement": "Synthetic unknown-state example.",
+      "evidenceRefs": ["SYNTH-EVID-003"],
+      "sensitivityState": "UNKNOWN",
+      "authorityDecision": "UNKNOWN",
+      "verificationState": "UNKNOWN",
+      "applicability": "UNKNOWN",
+      "supersessionState": "ACTIVE",
+      "expectedRetrievalEligible": false
+    }
+  ]
+}

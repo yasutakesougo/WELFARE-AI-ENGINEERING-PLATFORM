@@ -225,8 +225,8 @@ Mode: DOCS / STATE RECONCILIATION ONLY
 Pre-sync #29 tip: 72fe83f7372eeb8606160f9abffcab5340324c9e
 Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
   (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
-Final #29 tip: 6ca86848dfd5924d5cdfb270532a6e5d0758565d
-Index sync commit: 6ca86848dfd5924d5cdfb270532a6e5d0758565d
+Final #29 tip: c8502902306dc1388030dc5cd1570c1c890291c8
+Index sync commit: c8502902306dc1388030dc5cd1570c1c890291c8
 Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 ```
 

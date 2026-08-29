@@ -6,6 +6,7 @@ from typing import FrozenSet, Iterable, Sequence
 from .models import (
     AuthenticationState,
     AuthorityBinding,
+    AuthorityRequest,
     AuthorityState,
     BatchSnapshot,
     BindingState,
@@ -21,6 +22,7 @@ from .models import (
     EvaluationResult,
     ExecutionPolicyDecision,
     ExecutionRegrantDecision,
+    MutableScopeGenerations,
     NetworkBinding,
     OperationSensitivity,
     ProvenanceClass,
@@ -103,6 +105,58 @@ def authority_binding_state(
     return BindingState.MATCH
 
 
+def authority_request_state(
+    binding: AuthorityBinding,
+    request: AuthorityRequest,
+    context: EvaluationContext,
+    *,
+    current_authority_generation: int | None,
+) -> BindingState:
+    currentness = authority_binding_state(
+        binding,
+        context,
+        current_authority_generation=current_authority_generation,
+    )
+    if currentness is not BindingState.MATCH:
+        return currentness
+    exact_pairs = (
+        (request.target_repository, binding.target_repository),
+        (request.target_system, binding.target_system),
+        (request.credential_ref, binding.credential_ref),
+    )
+    for requested, granted in exact_pairs:
+        if requested is not None and requested != granted:
+            return BindingState.MISMATCH
+    scoped_pairs = (
+        (request.target_resource, binding.target_resource_set),
+        (request.operation, binding.allowed_operation_set),
+        (request.tool, binding.allowed_tool_set),
+        (request.network_destination, binding.allowed_network_destination_set),
+        (request.write_target, binding.write_target_set),
+    )
+    for requested, allowed in scoped_pairs:
+        if requested is not None and requested not in allowed:
+            return BindingState.OUT_OF_SCOPE
+    return BindingState.MATCH
+
+
+def mutable_scope_state(snapshot: MutableScopeGenerations) -> BindingState:
+    for binding in (
+        snapshot.resource_set,
+        snapshot.operation_set,
+        snapshot.tool_set,
+        snapshot.destination_set,
+        snapshot.write_target_set,
+    ):
+        state = generation_state(
+            binding.granted_generation,
+            binding.current_generation,
+        )
+        if state is not BindingState.MATCH:
+            return state
+    return BindingState.MATCH
+
+
 def regrant_state(
     decision: ExecutionRegrantDecision | None,
     context: EvaluationContext,
@@ -120,6 +174,8 @@ def regrant_state(
         return BindingState.MISMATCH
     if not decision.regrant_decision_ref or not decision.approving_authority:
         return BindingState.REQUIRED_MISSING
+    if decision.regrant_sequence < 1:
+        return BindingState.MISMATCH
     if decision.approved_additional_budget <= 0:
         return BindingState.MISMATCH
     if decision.approved_additional_budget > decision.requested_additional_budget:

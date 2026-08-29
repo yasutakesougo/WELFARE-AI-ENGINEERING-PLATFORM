@@ -1,0 +1,27 @@
+name: DARK Slice C Post-Merge Correction-1 Verifier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact correction target
+        uses: actions/checkout@v4
+        with:
+          ref: 58dcf926e709513efe5edd6e2b1ae8f02001bfd1
+          persist-credentials: false
+      - name: Verify exact target
+        run: test "$(git rev-parse HEAD)" = "58dcf926e709513efe5edd6e2b1ae8f02001bfd1"
+      - name: Record Python
+        run: python --version
+      - name: Run durable kernel tests
+        run: python -m unittest discover -s tests/durable_run_kernel -p 'test_*.py' -v
+      - name: Check repository cleanliness
+        run: test -z "$(git status --porcelain)"

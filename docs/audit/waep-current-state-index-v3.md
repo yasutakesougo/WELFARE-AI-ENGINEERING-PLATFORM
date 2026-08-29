@@ -11,9 +11,10 @@ Current Main Exact SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Latest Main Merge: PR #22
 Current-State Reconciliation PR: #29 / OPEN / READY (isDraft=false)
 Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
-Final tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
-Tip / Head OID: 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3
-Index sync commit: 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3
+  (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
+Final tip: 6ca86848dfd5924d5cdfb270532a6e5d0758565d
+Tip / Head OID: 6ca86848dfd5924d5cdfb270532a6e5d0758565d
+Index sync commit: 6ca86848dfd5924d5cdfb270532a6e5d0758565d
 Index Mode: READ-ONLY EVIDENCE + RECONCILIATION RECORD
 Merge / Deploy / Implementation Start / LIVE WRITE: NOT AUTHORIZED BY THIS INDEX
 ```
@@ -181,7 +182,7 @@ Next Gate: Human Scope Lock / related human gates (separate from #30 Start GO)
 ```text
 Current reconciliation candidate PR: #36
 State: OPEN / DRAFT
-Tip: b46f9791cec0299de2301bd98424f090fb38b0b2
+Tip: a31a976028eeb1c6aebe979f869c785a50b406d4
 Relation to current main: ahead 1 / behind 0
 Mode: DEFINITION ARTIFACT REPLAY ONLY onto main ebc13ef
 Correction-1: NOT COMPLETE
@@ -212,7 +213,7 @@ Review carry-forward: PASS WITH CORRECTIONS / P0-P1-P2 = 0-4-5
 | #26 | CLOSED / UNMERGED | MSR predecessor; superseded by #27 |
 | #27 | OPEN / DRAFT | active accepted MSR Research Evidence line |
 | #28 | OPEN / DRAFT | DKC-MSR Architecture; Review-1 CORRECTION REQUIRED (unfixed) |
-| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded; Tip / Head OID 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3 |
+| #29 | OPEN / READY (isDraft=false) | Current-State Reconciliation V3; Ready GO recorded; Tip / Head OID 6ca86848dfd5924d5cdfb270532a6e5d0758565d |
 | #30 | OPEN / DRAFT | active DKC current-main line; LOCKED / Impl Start HOLD |
 | #32 | OPEN / READY (isDraft=false) | active CSOC current-main line; Ready GO recorded |
 | #34 | OPEN / DRAFT | stacked DKC-MSR line on #30 (separate identity from #28) |

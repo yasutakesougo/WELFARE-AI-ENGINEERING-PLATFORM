@@ -10,8 +10,9 @@ PR: #29
 Main SHA: ebc13ef072a861a53043687af13d9b2c548c73ce
 Pre-sync tip: 72fe83f7372eeb8606160f9abffcab5340324c9e
 Content baseline tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
-Final tip: 4fc61dd09165444ec26bfb2117e28700a83cef7d
-Index sync commit: 9a5025eca1b5d84a2a17486dfec6dff2f201c5d3
+  (Content baseline tip ≠ branch HEAD; prior content tip before self-bind)
+Final tip: 6ca86848dfd5924d5cdfb270532a6e5d0758565d
+Index sync commit: 6ca86848dfd5924d5cdfb270532a6e5d0758565d
 ```
 
 ## Purpose
@@ -30,7 +31,7 @@ Deploy, or LIVE WRITE.
 | #30 | true | 04c03424b280c5200ce01105d96b2679d8542697 | MERGEABLE | DKC Correction-2 current-main | 9 / 0 |
 | #32 | false | f90e4e1945d25b83fbd4336a3a0a9dc0eea45659 | MERGEABLE | CSOC Slice A Correction-2 current-main | 6 / 0 |
 | #35 | true | 58f8dd1c0691723c760f9c7f5fb3129b96c0c08d | MERGEABLE | DKC-IMPLEMENTATION-SCOPE-V1 | 12 / 0 |
-| #36 | true | b46f9791cec0299de2301bd98424f090fb38b0b2 | MERGEABLE | Slice A current-main reconciliation | 1 / 0 |
+| #36 | true | a31a976028eeb1c6aebe979f869c785a50b406d4 | MERGEABLE | Slice A current-main reconciliation | 1 / 0 |
 
 ## Evidence Confirmations
 

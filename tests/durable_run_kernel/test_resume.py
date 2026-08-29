@@ -9,14 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from durable_run_kernel.checkpoint import CheckpointLineage, CheckpointRecord, ResumeDecision, ResumeEvidence
-from durable_run_kernel.models import (
-    AuthorityFreshness,
-    CapabilitySnapshot,
-    DefinitionIdentity,
-    EffectIdentity,
-    EffectState,
-    ReplayClass,
-)
+from durable_run_kernel.models import AuthorityFreshness, CapabilitySnapshot, DefinitionIdentity, EffectIdentity, EffectState, ReplayClass
 from durable_run_kernel.resume import checkpoint_lineage_decision, evaluate_checkpoint_resume
 
 T0 = datetime(2026, 8, 29, 8, 0, tzinfo=timezone.utc)
@@ -59,6 +52,8 @@ class DurableRunKernelSliceBTests(unittest.TestCase):
     def test_dk_b_r12_ambiguous_invalid_checkpoint_lineage(self): self.assertEqual(checkpoint_lineage_decision(CheckpointLineage((checkpoint(), checkpoint(checkpoint_id="cp-2", attempt_id="attempt-2", sequence=2, parent_checkpoint_id="not-cp-1")))), ResumeDecision.HOLD_REQUIRED)
     def test_valid_checkpoint_lineage(self): self.assertEqual(checkpoint_lineage_decision(CheckpointLineage((checkpoint(), checkpoint(checkpoint_id="cp-2", attempt_id="attempt-2", sequence=2, parent_checkpoint_id="cp-1")))), ResumeDecision.ALLOW_REUSE)
     def test_capability_binding_identity_mismatch_holds(self): self.assertEqual(evaluate_checkpoint_resume(checkpoint(capability_snapshot_id="cap-other"), evidence()), ResumeDecision.HOLD_REQUIRED)
+    def test_applied_effect_blocks_duplicate_without_current_authority(self): self.assertEqual(evaluate_checkpoint_resume(checkpoint(replay_class=ReplayClass.NON_REPLAYABLE_EFFECT, effect_identity=effect(), effect_state=EffectState.EFFECT_APPLIED), evidence(current_authority_snapshot_id="", current_authority_freshness=AuthorityFreshness.UNKNOWN)), ResumeDecision.DUPLICATE_MUTATION_PROHIBITED)
+    def test_unknown_effect_requires_reconciliation_before_reauthorization(self): self.assertEqual(evaluate_checkpoint_resume(checkpoint(replay_class=ReplayClass.NON_REPLAYABLE_EFFECT, effect_identity=effect(), effect_state=EffectState.EFFECT_UNKNOWN), evidence(current_authority_snapshot_id="", current_authority_freshness=AuthorityFreshness.UNKNOWN)), ResumeDecision.RECONCILIATION_REQUIRED)
 
 
 if __name__ == "__main__": unittest.main()

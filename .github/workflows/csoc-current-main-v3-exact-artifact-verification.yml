@@ -1,0 +1,61 @@
+name: CSOC Current Main V3 Exact Artifact Verification
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-csoc-exact-artifact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact CSOC artifact
+        uses: actions/checkout@v4
+        with:
+          ref: 426cd566bbaf1c68801d867b056bb540b0266aae
+          persist-credentials: false
+
+      - name: Verify exact identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "426cd566bbaf1c68801d867b056bb540b0266aae"
+          test "$(git rev-parse HEAD:packages/current-state-observation-kernel)" = "9671c3bce237efa444d1c5e7e462182d2e506583"
+          test -z "$(git status --porcelain)"
+          printf 'verified_commit=%s\n' "$(git rev-parse HEAD)"
+          printf 'verified_package_tree=%s\n' "$(git rev-parse HEAD:packages/current-state-observation-kernel)"
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: packages/current-state-observation-kernel/package-lock.json
+
+      - name: Record toolchain
+        shell: bash
+        run: |
+          node --version
+          npm --version
+
+      - name: Install exact dependencies
+        working-directory: packages/current-state-observation-kernel
+        run: npm ci
+
+      - name: Run tests
+        working-directory: packages/current-state-observation-kernel
+        run: npm test
+
+      - name: Run typecheck
+        working-directory: packages/current-state-observation-kernel
+        run: npm run typecheck
+
+      - name: Verify no repository mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "repository_mutation=NONE"

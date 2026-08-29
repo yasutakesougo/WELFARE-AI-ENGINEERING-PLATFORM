@@ -48,53 +48,18 @@ export interface CandidateResolutionResult {
 type JsonRecord = Record<string, unknown>;
 
 const CANDIDATE_FIELDS = new Set([
-  "candidateId",
-  "contractVersion",
-  "candidateVersion",
-  "observation",
-  "problem",
-  "suspectedRootCause",
-  "proposedRule",
-  "sourceRefs",
-  "evidenceRefs",
-  "scope",
-  "createdBy",
-  "creationMode",
-  "createdAt",
-  "contentDigest",
-  "nonAuthoritative",
+  "candidateId", "contractVersion", "candidateVersion", "observation", "problem",
+  "suspectedRootCause", "proposedRule", "sourceRefs", "evidenceRefs", "scope",
+  "createdBy", "creationMode", "createdAt", "contentDigest", "nonAuthoritative",
 ]);
-
-const REQUIRED_CANDIDATE_FIELDS = [...CANDIDATE_FIELDS].filter(
-  (field) => field !== "nonAuthoritative",
-);
-
-const AUTHORITY_FIELDS = new Set(
-  [
-    "active",
-    "current",
-    "status",
-    "lifecycleStatus",
-    "confidence",
-    "confidenceScore",
-    "validated",
-    "validationResult",
-    "validatedScope",
-    "productionSafe",
-    "runtimeEligible",
-    "runtimeBinding",
-    "maturity",
-    "supersessionState",
-    "authoritativeLifecycle",
-    "selfApprovalEligible",
-    "verified",
-    "verificationResult",
-    "authorityDecision",
-    "promotionDecision",
-    "runtimeBindingDecision",
-  ].map((field) => field.toLowerCase()),
-);
-
+const REQUIRED_CANDIDATE_FIELDS = [...CANDIDATE_FIELDS].filter((field) => field !== "nonAuthoritative");
+const AUTHORITY_FIELDS = new Set([
+  "active", "current", "status", "lifecyclestatus", "confidence", "confidencescore",
+  "validated", "validationresult", "validatedscope", "productionsafe", "runtimeeligible",
+  "runtimebinding", "maturity", "supersessionstate", "authoritativelifecycle",
+  "selfapprovaleligible", "verified", "verificationresult", "authoritydecision",
+  "promotiondecision", "runtimebindingdecision",
+]);
 const RELATION_ORDER: Record<EvidenceRelation, number> = {
   SUPPORTING: 0,
   CONTRADICTING: 1,
@@ -104,20 +69,28 @@ const RELATION_ORDER: Record<EvidenceRelation, number> = {
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
-
-function keysExactly(value: JsonRecord, allowed: readonly string[]): boolean {
-  const allowedSet = new Set(allowed);
-  return Object.keys(value).every((key) => allowedSet.has(key));
-}
-
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
-
-function uniqueSorted(values: string[]): string[] {
-  return [...new Set(values)].sort();
+function keysExactly(value: JsonRecord, allowed: readonly string[]): boolean {
+  const set = new Set(allowed);
+  return Object.keys(value).every((key) => set.has(key));
 }
-
+function compareCodePointSequence(a: string, b: string): number {
+  const left = Array.from(a);
+  const right = Array.from(b);
+  const length = Math.min(left.length, right.length);
+  for (let i = 0; i < length; i += 1) {
+    const l = left[i]!.codePointAt(0)!;
+    const r = right[i]!.codePointAt(0)!;
+    if (l !== r) return l < r ? -1 : 1;
+  }
+  if (left.length === right.length) return 0;
+  return left.length < right.length ? -1 : 1;
+}
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values)].sort(compareCodePointSequence);
+}
 function invalid(resultClass: ResultClass, errorId: string): CandidateResolutionResult {
   return {
     contractType: "CandidateResolutionResult@v1",
@@ -128,7 +101,6 @@ function invalid(resultClass: ResultClass, errorId: string): CandidateResolution
     evidenceConflict: false,
   };
 }
-
 function hold(reasonIds: string[]): CandidateResolutionResult {
   return {
     contractType: "CandidateResolutionResult@v1",
@@ -139,6 +111,18 @@ function hold(reasonIds: string[]): CandidateResolutionResult {
     evidenceConflict: false,
   };
 }
+function isResolutionResult(value: unknown): value is CandidateResolutionResult {
+  return isRecord(value)
+    && value.contractType === "CandidateResolutionResult@v1"
+    && typeof value.resultClass === "string"
+    && value.authority === "NON_AUTHORITATIVE"
+    && Array.isArray(value.errorIds)
+    && Array.isArray(value.holdReasonIds)
+    && typeof value.evidenceConflict === "boolean";
+}
+function validateStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isNonEmptyString);
+}
 
 function validateIdentity(input: unknown): DevelopmentEventIdentity | CandidateResolutionResult {
   if (!isRecord(input) || !keysExactly(input, ["sourceRepository", "sourceEventId"])) {
@@ -147,43 +131,22 @@ function validateIdentity(input: unknown): DevelopmentEventIdentity | CandidateR
   if (!isNonEmptyString(input.sourceRepository) || !isNonEmptyString(input.sourceEventId)) {
     return invalid("INVALID_IDENTITY", "INVALID_RESOLUTION_IDENTITY");
   }
-  return {
-    sourceRepository: input.sourceRepository,
-    sourceEventId: input.sourceEventId,
-  };
+  return { sourceRepository: input.sourceRepository, sourceEventId: input.sourceEventId };
 }
 
-function validateStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every(isNonEmptyString);
-}
-
-function validateCandidateShape(input: unknown): CandidateResolutionResult | JsonRecord {
-  if (!isRecord(input)) {
-    return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
-  }
-
+function validateCandidateShape(input: unknown): JsonRecord | CandidateResolutionResult {
+  if (!isRecord(input)) return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   for (const key of Object.keys(input)) {
-    if (!CANDIDATE_FIELDS.has(key)) {
-      if (AUTHORITY_FIELDS.has(key.toLowerCase())) {
-        return invalid("INVALID_AUTHORITY_FIELD", "AUTHORITY_FIELD_PROHIBITED");
-      }
-      return invalid("INVALID_SCHEMA", "UNKNOWN_FIELD");
+    if (CANDIDATE_FIELDS.has(key)) continue;
+    if (AUTHORITY_FIELDS.has(key.toLowerCase())) {
+      return invalid("INVALID_AUTHORITY_FIELD", "AUTHORITY_FIELD_PROHIBITED");
     }
+    return invalid("INVALID_SCHEMA", "UNKNOWN_FIELD");
   }
-
   for (const field of REQUIRED_CANDIDATE_FIELDS) {
-    if (!(field in input)) {
-      return invalid("INVALID_SCHEMA", "MISSING_REQUIRED_FIELD");
-    }
+    if (!(field in input)) return invalid("INVALID_SCHEMA", "MISSING_REQUIRED_FIELD");
   }
-
-  const requiredNonEmpty = [
-    "candidateId",
-    "candidateVersion",
-    "createdAt",
-    "contentDigest",
-  ];
-  for (const field of requiredNonEmpty) {
+  for (const field of ["candidateId", "candidateVersion", "createdAt", "contentDigest"]) {
     if (!isNonEmptyString(input[field])) {
       return invalid(
         "INVALID_SCHEMA",
@@ -191,128 +154,94 @@ function validateCandidateShape(input: unknown): CandidateResolutionResult | Jso
       );
     }
   }
-
   if (input.contractVersion !== "DEVELOPMENT-KNOWLEDGE-COMPOUND-V1") {
     return invalid("INVALID_SCHEMA", "INVALID_CONTRACT_VERSION");
   }
-
   for (const field of ["observation", "problem", "suspectedRootCause", "proposedRule"]) {
-    if (typeof input[field] !== "string") {
-      return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
-    }
+    if (typeof input[field] !== "string") return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   }
-
-  if (!validateStringArray(input.sourceRefs)) {
-    return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
-  }
-
+  if (!validateStringArray(input.sourceRefs)) return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   if (!isRecord(input.createdBy) || !keysExactly(input.createdBy, ["actorType", "actorId"])) {
     return invalid("INVALID_SCHEMA", "UNKNOWN_FIELD");
   }
   if (!["HUMAN", "AGENT", "SERVICE", "AUTOMATION"].includes(String(input.createdBy.actorType))) {
     return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   }
-  if (!isNonEmptyString(input.createdBy.actorId)) {
-    return invalid("INVALID_SCHEMA", "EMPTY_REQUIRED_VALUE");
-  }
-
+  if (!isNonEmptyString(input.createdBy.actorId)) return invalid("INVALID_SCHEMA", "EMPTY_REQUIRED_VALUE");
   if (!["HUMAN", "AGENT_ASSISTED", "AUTOMATED"].includes(String(input.creationMode))) {
     return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   }
-
-  if (!isRecord(input.scope) || !keysExactly(input.scope, ["observedIn", "proposedAppliesTo", "explicitlyNotValidatedFor"])) {
+  if (!isRecord(input.scope)
+      || !keysExactly(input.scope, ["observedIn", "proposedAppliesTo", "explicitlyNotValidatedFor"])) {
     return invalid("INVALID_SCHEMA", "UNKNOWN_FIELD");
   }
-  if (
-    !validateStringArray(input.scope.observedIn) ||
-    !validateStringArray(input.scope.proposedAppliesTo) ||
-    !validateStringArray(input.scope.explicitlyNotValidatedFor)
-  ) {
+  if (!validateStringArray(input.scope.observedIn)
+      || !validateStringArray(input.scope.proposedAppliesTo)
+      || !validateStringArray(input.scope.explicitlyNotValidatedFor)) {
     return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   }
-
   if ("nonAuthoritative" in input && input.nonAuthoritative !== true) {
     return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   }
-
   if (!Array.isArray(input.evidenceRefs)) {
     return invalid("INVALID_EVIDENCE_REFERENCE", "INVALID_FIELD_TYPE");
   }
-
-  for (const entry of input.evidenceRefs) {
-    if (!isRecord(entry) || !keysExactly(entry, ["evidenceRef", "relation", "lineage"])) {
+  for (const raw of input.evidenceRefs) {
+    if (!isRecord(raw) || !keysExactly(raw, ["evidenceRef", "relation", "lineage"])) {
       return invalid("INVALID_EVIDENCE_REFERENCE", "INVALID_FIELD_TYPE");
     }
-    if (!isNonEmptyString(entry.evidenceRef)) {
+    if (!isNonEmptyString(raw.evidenceRef)) {
       return invalid("INVALID_EVIDENCE_REFERENCE", "EMPTY_REQUIRED_VALUE");
     }
-    if (!(entry.relation === "SUPPORTING" || entry.relation === "CONTRADICTING" || entry.relation === "INCONCLUSIVE")) {
+    if (!(raw.relation === "SUPPORTING" || raw.relation === "CONTRADICTING" || raw.relation === "INCONCLUSIVE")) {
       return invalid("INVALID_EVIDENCE_REFERENCE", "INVALID_EVIDENCE_RELATION");
     }
-    if ("lineage" in entry) {
-      if (
-        !isRecord(entry.lineage) ||
-        !keysExactly(entry.lineage, ["derivedFromKnowledgeRefs", "derivedFromDecisionRefs"]) ||
-        !validateStringArray(entry.lineage.derivedFromKnowledgeRefs) ||
-        !validateStringArray(entry.lineage.derivedFromDecisionRefs)
-      ) {
+    if ("lineage" in raw) {
+      if (!isRecord(raw.lineage)
+          || !keysExactly(raw.lineage, ["derivedFromKnowledgeRefs", "derivedFromDecisionRefs"])
+          || !validateStringArray(raw.lineage.derivedFromKnowledgeRefs)
+          || !validateStringArray(raw.lineage.derivedFromDecisionRefs)) {
         return invalid("INVALID_EVIDENCE_REFERENCE", "INVALID_FIELD_TYPE");
       }
     }
   }
-
   return input;
 }
 
-function canonicalLineage(lineage: unknown): EvidenceLineage | undefined {
-  if (!isRecord(lineage)) return undefined;
+function canonicalLineage(value: unknown): EvidenceLineage | undefined {
+  if (!isRecord(value)) return undefined;
   return {
-    derivedFromKnowledgeRefs: uniqueSorted(lineage.derivedFromKnowledgeRefs as string[]),
-    derivedFromDecisionRefs: uniqueSorted(lineage.derivedFromDecisionRefs as string[]),
+    derivedFromKnowledgeRefs: uniqueSorted(value.derivedFromKnowledgeRefs as string[]),
+    derivedFromDecisionRefs: uniqueSorted(value.derivedFromDecisionRefs as string[]),
   };
 }
-
-function normalizeEvidence(entries: unknown[]): {
-  normalized: StructuredEvidenceReference[];
-  conflict: boolean;
-} {
+function lineageKey(lineage: EvidenceLineage | undefined): string {
+  if (!lineage) return "NONE";
+  return JSON.stringify([lineage.derivedFromKnowledgeRefs, lineage.derivedFromDecisionRefs]);
+}
+function normalizeEvidence(entries: unknown[]): { normalized: StructuredEvidenceReference[]; conflict: boolean } {
   const byIdentity = new Map<string, StructuredEvidenceReference>();
   const relationsByRef = new Map<string, Set<EvidenceRelation>>();
-
   for (const raw of entries) {
     const entry = raw as JsonRecord;
     const evidenceRef = entry.evidenceRef as string;
     const relation = entry.relation as EvidenceRelation;
     const lineage = "lineage" in entry ? canonicalLineage(entry.lineage) : undefined;
-    const lineageKey = lineage
-      ? JSON.stringify([lineage.derivedFromKnowledgeRefs, lineage.derivedFromDecisionRefs])
-      : "NONE";
-    const identity = JSON.stringify([evidenceRef, relation, lineageKey]);
+    const identity = JSON.stringify([evidenceRef, relation, lineageKey(lineage)]);
     if (!byIdentity.has(identity)) {
-      byIdentity.set(
-        identity,
-        lineage ? { evidenceRef, relation, lineage } : { evidenceRef, relation },
-      );
+      byIdentity.set(identity, lineage ? { evidenceRef, relation, lineage } : { evidenceRef, relation });
     }
     const set = relationsByRef.get(evidenceRef) ?? new Set<EvidenceRelation>();
     set.add(relation);
     relationsByRef.set(evidenceRef, set);
   }
-
   const normalized = [...byIdentity.values()].sort((a, b) => {
-    const refOrder = a.evidenceRef.localeCompare(b.evidenceRef);
+    const refOrder = compareCodePointSequence(a.evidenceRef, b.evidenceRef);
     if (refOrder !== 0) return refOrder;
     const relationOrder = RELATION_ORDER[a.relation] - RELATION_ORDER[b.relation];
     if (relationOrder !== 0) return relationOrder;
-    const aLineage = a.lineage
-      ? JSON.stringify([a.lineage.derivedFromKnowledgeRefs, a.lineage.derivedFromDecisionRefs])
-      : "NONE";
-    const bLineage = b.lineage
-      ? JSON.stringify([b.lineage.derivedFromKnowledgeRefs, b.lineage.derivedFromDecisionRefs])
-      : "NONE";
-    return aLineage.localeCompare(bLineage);
+    return compareCodePointSequence(lineageKey(a.lineage), lineageKey(b.lineage));
   });
-
   return {
     normalized,
     conflict: [...relationsByRef.values()].some((relations) => relations.size > 1),
@@ -323,33 +252,21 @@ interface PriorCandidate {
   candidateRef: string;
   resolutionKey: ResolutionKey;
 }
-
 interface ParsedContext {
   completeness: "COMPLETE" | "UNKNOWN";
   priorCandidates: PriorCandidate[];
   conflict: boolean;
 }
-
 function keyString(key: ResolutionKey): string {
-  return JSON.stringify([
-    key.contractType,
-    key.sourceRepository,
-    key.sourceEventId,
-    key.contentDigest,
-  ]);
+  return JSON.stringify([key.contractType, key.sourceRepository, key.sourceEventId, key.contentDigest]);
 }
-
 function validateResolutionKey(value: unknown): ResolutionKey | null {
-  if (
-    !isRecord(value) ||
-    !keysExactly(value, ["contractType", "sourceRepository", "sourceEventId", "contentDigest"]) ||
-    value.contractType !== "KnowledgeCandidate@v1" ||
-    !isNonEmptyString(value.sourceRepository) ||
-    !isNonEmptyString(value.sourceEventId) ||
-    !isNonEmptyString(value.contentDigest)
-  ) {
-    return null;
-  }
+  if (!isRecord(value)
+      || !keysExactly(value, ["contractType", "sourceRepository", "sourceEventId", "contentDigest"])
+      || value.contractType !== "KnowledgeCandidate@v1"
+      || !isNonEmptyString(value.sourceRepository)
+      || !isNonEmptyString(value.sourceEventId)
+      || !isNonEmptyString(value.contentDigest)) return null;
   return {
     contractType: "KnowledgeCandidate@v1",
     sourceRepository: value.sourceRepository,
@@ -357,31 +274,26 @@ function validateResolutionKey(value: unknown): ResolutionKey | null {
     contentDigest: value.contentDigest,
   };
 }
-
 function validateContext(input: unknown): ParsedContext | CandidateResolutionResult {
-  if (
-    !isRecord(input) ||
-    !keysExactly(input, ["contractType", "completeness", "priorCandidates"]) ||
-    input.contractType !== "CandidateResolutionContext@v1" ||
-    !(input.completeness === "COMPLETE" || input.completeness === "UNKNOWN") ||
-    !Array.isArray(input.priorCandidates)
-  ) {
+  if (!isRecord(input)
+      || !keysExactly(input, ["contractType", "completeness", "priorCandidates"])
+      || input.contractType !== "CandidateResolutionContext@v1"
+      || !(input.completeness === "COMPLETE" || input.completeness === "UNKNOWN")
+      || !Array.isArray(input.priorCandidates)) {
     return invalid("INVALID_SCHEMA", "INVALID_PRIOR_CONTEXT");
   }
-
   const logicalEntries = new Map<string, PriorCandidate>();
   const refsToKey = new Map<string, string>();
   const keyToRef = new Map<string, string>();
   let conflict = false;
-
   for (const raw of input.priorCandidates) {
-    if (!isRecord(raw) || !keysExactly(raw, ["candidateRef", "resolutionKey"]) || !isNonEmptyString(raw.candidateRef)) {
+    if (!isRecord(raw)
+        || !keysExactly(raw, ["candidateRef", "resolutionKey"])
+        || !isNonEmptyString(raw.candidateRef)) {
       return invalid("INVALID_SCHEMA", "INVALID_PRIOR_CONTEXT");
     }
     const resolutionKey = validateResolutionKey(raw.resolutionKey);
-    if (resolutionKey === null) {
-      return invalid("INVALID_SCHEMA", "INVALID_PRIOR_CONTEXT");
-    }
+    if (!resolutionKey) return invalid("INVALID_SCHEMA", "INVALID_PRIOR_CONTEXT");
     const serializedKey = keyString(resolutionKey);
     const priorRefForKey = keyToRef.get(serializedKey);
     if (priorRefForKey !== undefined && priorRefForKey !== raw.candidateRef) conflict = true;
@@ -389,17 +301,9 @@ function validateContext(input: unknown): ParsedContext | CandidateResolutionRes
     if (priorKeyForRef !== undefined && priorKeyForRef !== serializedKey) conflict = true;
     keyToRef.set(serializedKey, raw.candidateRef);
     refsToKey.set(raw.candidateRef, serializedKey);
-    logicalEntries.set(`${serializedKey}\u0000${raw.candidateRef}`, {
-      candidateRef: raw.candidateRef,
-      resolutionKey,
-    });
+    logicalEntries.set(`${serializedKey}\u0000${raw.candidateRef}`, { candidateRef: raw.candidateRef, resolutionKey });
   }
-
-  return {
-    completeness: input.completeness,
-    priorCandidates: [...logicalEntries.values()],
-    conflict,
-  };
+  return { completeness: input.completeness, priorCandidates: [...logicalEntries.values()], conflict };
 }
 
 export function resolveCandidate(
@@ -407,53 +311,48 @@ export function resolveCandidate(
   candidateDraft: unknown,
   contextInput: unknown,
 ): CandidateResolutionResult {
-  const identity = validateIdentity(developmentEventIdentity);
-  if ("resultClass" in identity) return identity;
-
-  const candidate = validateCandidateShape(candidateDraft);
-  if ("resultClass" in candidate) return candidate;
-
-  const context = validateContext(contextInput);
-  if ("resultClass" in context) return context;
+  const identityResult = validateIdentity(developmentEventIdentity);
+  if (isResolutionResult(identityResult)) return identityResult;
+  const candidateResult = validateCandidateShape(candidateDraft);
+  if (isResolutionResult(candidateResult)) return candidateResult;
+  const contextResult = validateContext(contextInput);
+  if (isResolutionResult(contextResult)) return contextResult;
 
   const holdReasons: string[] = [];
-  if (context.completeness === "UNKNOWN") holdReasons.push("PRIOR_CONTEXT_INCOMPLETE");
-  if (context.conflict) holdReasons.push("PRIOR_CONTEXT_CONFLICT");
+  if (contextResult.completeness === "UNKNOWN") holdReasons.push("PRIOR_CONTEXT_INCOMPLETE");
+  if (contextResult.conflict) holdReasons.push("PRIOR_CONTEXT_CONFLICT");
   if (holdReasons.length > 0) return hold(holdReasons);
 
   const resolutionKey: ResolutionKey = {
     contractType: "KnowledgeCandidate@v1",
-    sourceRepository: identity.sourceRepository,
-    sourceEventId: identity.sourceEventId,
-    contentDigest: candidate.contentDigest as string,
+    sourceRepository: identityResult.sourceRepository,
+    sourceEventId: identityResult.sourceEventId,
+    contentDigest: candidateResult.contentDigest as string,
   };
   const targetKey = keyString(resolutionKey);
-  const exactMatches = context.priorCandidates.filter(
+  const exactMatches = contextResult.priorCandidates.filter(
     (prior) => keyString(prior.resolutionKey) === targetKey,
   );
-  const sameSourceEvent = context.priorCandidates.filter(
-    (prior) =>
-      prior.resolutionKey.sourceRepository === resolutionKey.sourceRepository &&
-      prior.resolutionKey.sourceEventId === resolutionKey.sourceEventId,
+  const sameSourceEvent = contextResult.priorCandidates.filter(
+    (prior) => prior.resolutionKey.sourceRepository === resolutionKey.sourceRepository
+      && prior.resolutionKey.sourceEventId === resolutionKey.sourceEventId,
   );
-
-  const { normalized, conflict } = normalizeEvidence(candidate.evidenceRefs as unknown[]);
+  const { normalized, conflict } = normalizeEvidence(candidateResult.evidenceRefs as unknown[]);
 
   let resultClass: ResultClass;
   let candidateRef: string;
   let priorCandidateRefs: string[];
-
   if (exactMatches.length > 0) {
     resultClass = "VALID_EXISTING_IDEMPOTENT";
     candidateRef = exactMatches[0]!.candidateRef;
     priorCandidateRefs = [candidateRef];
   } else if (sameSourceEvent.length > 0) {
     resultClass = "VALID_NEW_VERSION";
-    candidateRef = candidate.candidateId as string;
+    candidateRef = candidateResult.candidateId as string;
     priorCandidateRefs = uniqueSorted(sameSourceEvent.map((prior) => prior.candidateRef));
   } else {
     resultClass = "VALID_NEW";
-    candidateRef = candidate.candidateId as string;
+    candidateRef = candidateResult.candidateId as string;
     priorCandidateRefs = [];
   }
 

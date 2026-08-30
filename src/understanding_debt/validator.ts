@@ -10,6 +10,13 @@ const ASSESSMENT_STATES = new Set([
   "UNKNOWN",
 ]);
 
+const CONSISTENCY_STATES = new Set([
+  "SUFFICIENT",
+  "INSUFFICIENT",
+  "CONTRADICTORY",
+  "UNKNOWN",
+]);
+
 const VALIDATOR_CLASSES = new Set<ValidatorClass>([
   "DETERMINISTIC_VALIDATOR",
   "INDEPENDENT_HUMAN_REVIEWER",
@@ -119,7 +126,7 @@ export function validateUnderstandingEvidence(
   if (!VALIDATOR_CLASSES.has(value.validation.validatorClass as ValidatorClass)) {
     return "INVALID";
   }
-  if (!ASSESSMENT_STATES.has(value.validation.consistencyState)) {
+  if (!CONSISTENCY_STATES.has(value.validation.consistencyState)) {
     return "INVALID";
   }
   if (

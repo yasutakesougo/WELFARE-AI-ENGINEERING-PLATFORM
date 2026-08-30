@@ -164,11 +164,13 @@ function validateCandidateShape(input: unknown): JsonRecord | CandidateResolutio
   if (!isRecord(input.createdBy) || !keysExactly(input.createdBy, ["actorType", "actorId"])) {
     return invalid("INVALID_SCHEMA", "UNKNOWN_FIELD");
   }
-  if (!["HUMAN", "AGENT", "SERVICE", "AUTOMATION"].includes(String(input.createdBy.actorType))) {
+  if (typeof input.createdBy.actorType !== "string"
+      || !["HUMAN", "AGENT", "SERVICE", "AUTOMATION"].includes(input.createdBy.actorType)) {
     return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   }
   if (!isNonEmptyString(input.createdBy.actorId)) return invalid("INVALID_SCHEMA", "EMPTY_REQUIRED_VALUE");
-  if (!["HUMAN", "AGENT_ASSISTED", "AUTOMATED"].includes(String(input.creationMode))) {
+  if (typeof input.creationMode !== "string"
+      || !["HUMAN", "AGENT_ASSISTED", "AUTOMATED"].includes(input.creationMode)) {
     return invalid("INVALID_SCHEMA", "INVALID_FIELD_TYPE");
   }
   if (!isRecord(input.scope)

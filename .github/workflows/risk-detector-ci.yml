@@ -1,0 +1,51 @@
+name: Risk Detector CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/risk_detector/**'
+      - 'tests/risk_detector/**'
+      - 'tsconfig.risk-detector.json'
+      - 'package.json'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/risk_detector/**'
+      - 'tests/risk_detector/**'
+      - 'tsconfig.risk-detector.json'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  risk-detector-ci:
+    name: risk-detector-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build Risk Detector
+        run: npm run build:risk-detector
+
+      - name: Run Risk Detector tests
+        run: npm test -- tests/risk_detector/classifier.test.ts
+
+      - name: Verify repository remains clean
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"

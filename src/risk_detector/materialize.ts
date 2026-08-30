@@ -39,6 +39,10 @@ function validateFiles(files: string[]): string[] {
   return [...files].sort();
 }
 
+function withOptionalIntent(input: RiskInput, intent: string | undefined): RiskInput {
+  return intent === undefined ? input : { ...input, intent };
+}
+
 export function materializeRiskInput(request: MaterializationRequest): MaterializedRiskInput {
   const changedFiles = validateFiles(request.changedFiles ?? []);
   const limitations: string[] = [];
@@ -56,8 +60,12 @@ export function materializeRiskInput(request: MaterializationRequest): Materiali
 
   if (request.mode === "PRELIMINARY_INPUT") {
     if (request.diff !== undefined) throw new Error("PRELIMINARY_INPUT must not include diff");
+    const input = withOptionalIntent(
+      { changedFiles, evidenceComplete: limitations.length === 0 },
+      request.intent
+    );
     return {
-      input: { changedFiles, intent: request.intent, evidenceComplete: limitations.length === 0 },
+      input,
       evidenceComplete: limitations.length === 0,
       limitations
     };
@@ -75,14 +83,18 @@ export function materializeRiskInput(request: MaterializationRequest): Materiali
   }
 
   const evidenceComplete = limitations.length === 0;
-  return {
-    input: {
+  const input = withOptionalIntent(
+    {
       changedFiles: changedFiles.slice(0, MAX_CHANGED_FILES),
-      intent: request.intent,
       diff: (request.diff ?? "").slice(0, MAX_DIFF_CHARS),
       evidenceComplete
     },
-    sourceIdentity,
+    request.intent
+  );
+
+  return {
+    input,
+    ...(sourceIdentity ? { sourceIdentity } : {}),
     evidenceComplete,
     limitations
   };

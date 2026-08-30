@@ -4,221 +4,158 @@
 
 ```text
 Target repository: yasutakesougo/ai-development-control-center
-PR: #119
+Original PR: #119
 Actual GitHub State: MERGED
 Merged Head: 8f4c73127590a48fda5cb5d9795768c94afe1b68
 Merge Commit: 1a3c3a1ec4089a5a2937415b140660efd6084878
-main: 1a3c3a1ec4089a5a2937415b140660efd6084878
 Merged At: 2026-08-30T08:37:46Z
-Merged By: yasutakesougo
 
 Governance State:
   MERGED WITHOUT RECORDED READY / MERGE AUTHORITY
-  (historical fact retained; not retroactively authorized)
+  historical fact retained; not retroactively authorized
 
-AUTHORITY_DRIFT Human Disposition (2026-08-30 JST):
+AUTHORITY_DRIFT Human Disposition:
   VERIFIED
   → ACCEPTED AS GOVERNANCE FAILURE
   → REMEDIATION RECORDED
   → CLOSED
 
-Technical correction (ADCC PR #120):
-  Exact-head npm run verify: PASS
-  Independent Implementation Re-Review: PASS / IMPLEMENTATION VERIFIED
-  Ready / Merge: NOT AUTHORIZED
+Current main retention:
+  ACCEPTED
+  subject to technical correction closure below
 
-This record does NOT retroactively authorize the PR #119 merge.
-Revert / Deploy / LIVE WRITE: NOT AUTHORIZED
+Revert:
+  NOT REQUIRED by governance disposition
+
+Deploy / LIVE WRITE:
+  NOT AUTHORIZED
 ```
 
-## 1. Exact merge-commit content confirmation
+## 1. Historical merge integrity
+
+The PR #119 merge identity remains historical evidence:
 
 ```text
+implementation HEAD: 8f4c73127590a48fda5cb5d9795768c94afe1b68
 merge commit: 1a3c3a1ec4089a5a2937415b140660efd6084878
-parents:
-  ^1 = 27c31e7f690e13eddb7f7b00d83e013ba0851947  (pre-merge main / PR base)
-  ^2 = 8f4c73127590a48fda5cb5d9795768c94afe1b68  (implementation HEAD)
-tree: 7ffd19074a56dce11ea6887d495adc6ed7db02d6
-HEAD tree: 7ffd19074a56dce11ea6887d495adc6ed7db02d6
-main vs merge: IDENTICAL (ahead 0 / behind 0)
 ```
 
-Files introduced by merge vs pre-merge main:
-
-| Path | Status | + / - |
-| --- | --- | --- |
-| `src/domain/portfolioMaintenanceManager.ts` | added | +292 / 0 |
-| `test/portfolioMaintenanceManager.test.ts` | added | +191 / 0 |
-
-No other repository paths changed.
-
-Content identity:
+Executable verification on the exact merged tree passed post-merge:
 
 ```text
-Implementation HEAD content == merge-commit tree == current main tree
+npm run typecheck: PASS
+npm test: PASS — 42 files / 916 tests
+npm run build: PASS
+npm run verify: PASS / exit 0
 ```
 
-## 2. npm run verify evidence (merge commit)
+This post-merge evidence does not repair the historical gate-order violation and does not retroactively authorize the merge.
 
-Executable verification was run after merge against exact merge commit
-`1a3c3a1ec4089a5a2937415b140660efd6084878`.
+## 2. AUTHORITY_DRIFT disposition
+
+The authority conflict remains a verified historical fact:
 
 ```text
-Node: v22.14.0
-npm: 10.9.7
-Runner: cursor-cloud bc-01a051c9-7f95-77f8-bbf3-b22607b7bedd
-Executed (UTC): 2026-08-30T08:39:47Z .. 2026-08-30T08:39:58Z
+Last recorded pre-merge implementation review:
+  HOLD — VERIFICATION EVIDENCE REQUIRED
+  Ready: NOT AUTHORIZED
+  Merge: NOT AUTHORIZED
+
+Observed repository state:
+  PR #119 advanced to Ready and MERGED
 ```
 
-| Step | Result |
-| --- | --- |
-| checkout merge commit | PASS |
-| `npm run typecheck` | PASS |
-| `npm test` | PASS (42 files / 916 tests) |
-| `npm run build` | PASS |
-| `npm run verify` | PASS (exit 0) |
-| post-verify HEAD | `1a3c3a1…` unchanged |
-| unexpected tracked mutation | 0 |
-
-Same tree had previously been verified pre-merge on HEAD `8f4c731…`
-(tree `7ffd190…`) in the same runner. That pre-merge local evidence was
-**not** published to PR #119 / Issue #77 (GitHub write 403). Therefore it
-does **not** count as a recorded authority-chain closure before merge.
-
-Verification classification after this reconciliation:
-
-```text
-Technical executable evidence on merged tree: NOW OBSERVED / PASS
-Gate-order requirement (verify before Ready/Merge): STILL VIOLATED
-VERIFICATION_DEBT:
-  technical absence = CLOSED by post-merge evidence
-  process-order debt = OPEN (evidence arrived after unauthorized merge)
-```
-
-## 3. Unauthorized merge event — AUTHORITY_DRIFT
-
-### Observed GitHub authority / gate trail on PR #119
-
-Last recorded implementation review on the PR:
-
-```text
-Independent Implementation Review-1
-submitted_at: 2026-08-30T08:28:40Z
-review url: .../pull/119#pullrequestreview-5060334154
-verdict: HOLD — VERIFICATION EVIDENCE REQUIRED
-P0/P1/P2: 0/0/1
-Ready: NOT AUTHORIZED
-Merge: NOT AUTHORIZED
-Deploy: NOT AUTHORIZED
-LIVE WRITE: NOT AUTHORIZED
-```
-
-Subsequent GitHub events:
-
-```text
-2026-08-30T08:35:30Z  ready_for_review  actor=yasutakesougo
-2026-08-30T08:37:46Z  merged            actor=yasutakesougo
-                                         commit=1a3c3a1ec4089a5a2937415b140660efd6084878
-2026-08-30T08:37:46Z  closed
-2026-08-30T08:37:55Z  head_ref_deleted
-```
-
-PR issue comments:
-
-```text
-count = 0
-```
-
-No PR comment / review event recording:
-
-```text
-Human Ready GO
-HEAD-unchanged readback as authority record
-Human Merge GO
-Exact-head verification PASS as authority record
-Independent Implementation Re-Review-1 PASS as authority record
-```
-
-### Issue #77 authority readback
-
-```text
-ADCC issue/PR #77 = unrelated ("Planning consistency repair before #66/#70");
-  comments containing Ready GO / Merge GO for Slice A = NONE OBSERVED
-WAEP Issue #77 = NOT READABLE from this runner (HTTP 403)
-Retrieved authority record set therefore lacks Human Ready GO / Merge GO
-for PR #119 Slice A.
-```
-
-### Drift statement
-
-```text
-Expected / referenced authority state:
-  Review HOLD remains until exact-head verify PASS is recorded
-  → Independent Implementation Re-Review PASS recorded
-  → Human Ready GO recorded
-  → Ready transition
-  → separate Human Merge GO recorded
-  → Merge
-
-Observed live repository state:
-  MERGED on main at 1a3c3a1…
-
-Decision basis:
-  GitHub merge advanced while Current Authority / Current Decision
-  still showed Ready NOT AUTHORIZED and Merge NOT AUTHORIZED
-  on the last recorded Independent Implementation Review-1.
-```
-
-Candidate classification / disposition:
+Human disposition is now fixed as:
 
 ```text
 class: AUTHORITY_DRIFT
-verificationState: VERIFIED (event trail + merge identity)
+verificationState: VERIFIED
 dispositionState: CLOSED
-  (Human Disposition GO: ACCEPTED AS GOVERNANCE FAILURE / REMEDIATION RECORDED)
-autoMutationAllowed: false
+humanDisposition:
+  ACCEPTED AS GOVERNANCE FAILURE
+  REMEDIATION RECORDED
 historicalUnauthorizedMergeEvidence: RETAIN
 retroactiveAuthorization: NOT PERMITTED
 revert: NOT REQUIRED
 ```
 
-## 4. Independent Post-Merge Review summary
+## 3. Technical correction closure
 
-See companion record:
-
-`docs/governance/reviews/portfolio-maintenance-manager-slice-a-independent-post-merge-review-1.md`
-
-Later technical correction superseded the earlier "Code Post-Merge Correction: NOT REQUIRED" statement. Correction is ADCC PR #120.
+### P1 — Correction-1 / ADCC PR #120
 
 ```text
-PR #119 content / tree integrity at merge: PASS
-Executable verify on merge commit 1a3c3a1: PASS
-Authority-chain compliance at merge time: FAIL (now disposition CLOSED)
-PR #120 Correction exact-head verify: PASS
-PR #120 Independent Implementation Re-Review: PASS
-Revert: NOT AUTHORIZED / NOT REQUIRED by disposition
-Deploy / LIVE WRITE: NOT AUTHORIZED
+PR #120: MERGED / CLOSED
+Correction implementation HEAD: d9cfacfedff02200d528f7c7fc14ed43cae9a499
+Exact-head npm run verify: PASS / exit 0
+Typecheck: PASS
+Tests: PASS — 42 files / 917 tests
+Build: PASS
+Independent Implementation Re-Review-2: PASS
+Human Ready GO: GRANTED
+Ready transition: COMPLETE
+Human Merge GO: GRANTED
+Merge commit: 3b54fcdf65c6e4d2278906505fc53d3f9e871213
+Deploy: NOT AUTHORIZED
+LIVE WRITE: NOT AUTHORIZED
 ```
 
-Companion technical records:
+### P2-A / P2-B — Correction-2 / ADCC PR #121
 
 ```text
-docs/governance/reviews/portfolio-maintenance-manager-slice-a-pr120-exact-head-verification-pass.md
-docs/governance/reviews/portfolio-maintenance-manager-slice-a-pr120-independent-implementation-re-review-pass.md
+P2-A: VERIFIED → CORRECTED → VERIFIED → MERGED → CLOSED
+P2-B: VERIFIED → CORRECTED → VERIFIED → MERGED → CLOSED
+
+PR #121: MERGED / CLOSED
+Correction implementation HEAD: 18fdf436c21377cac25969bd0134ebc1b5845965
+Exact-head npm run verify: PASS / exit 0
+Typecheck: PASS
+Tests: PASS — 42 files / 921 tests
+Build: PASS
+Post-verify HEAD: UNCHANGED
+Verification evidence: WAEP commit 0f3d2a547b82a7ff014fa6affe8b98ec5b91259b
+Verification Evidence comment: 5468007420
+Independent Implementation Re-Review-1: 5060490518 / PASS / P0 0 / P1 0 / P2 0
+Human Ready Reassessment: 5060490777 / HUMAN READY GO
+Ready transition: COMPLETE
+Human Merge GO: GRANTED
+Merge commit: 7985df87e09075e36af2b3af5f3446e742044004
+Merged at: 2026-08-30T10:03:24Z
+Deploy: NOT AUTHORIZED
+LIVE WRITE: NOT AUTHORIZED
 ```
+
+## 4. Overall Slice A technical closure
+
+```text
+Original PR #119 P1: CLOSED via PR #120
+Original PR #119 P2-A: CLOSED via PR #121
+Original PR #119 P2-B: CLOSED via PR #121
+Technical findings remaining from recorded post-merge review: 0
+Overall Slice A technical correction closure: COMPLETE
+AUTHORITY_DRIFT governance disposition: CLOSED
+Historical unauthorized-merge evidence retention: REQUIRED
+```
+
+This closure does not erase the historical governance failure and does not grant Deploy or LIVE WRITE authority.
 
 ## 5. Current gate
 
 ```text
+Current-State reconciliation: UPDATED / CONSISTENT WITH LIVE ADCC MERGE STATE
+Overall Slice A technical correction closure: COMPLETE
 AUTHORITY_DRIFT disposition: CLOSED
 Historical unauthorized-merge evidence: RETAINED
-PR #120 exact-head verify: PASS
-PR #120 Independent Implementation Re-Review: PASS / IMPLEMENTATION VERIFIED
-Technical correction closure eligibility: YES
+
+PR #89 Ready: NOT AUTHORIZED BY THIS RECORD
+PR #89 Merge: NOT AUTHORIZED BY THIS RECORD
+Deploy: NOT AUTHORIZED
+LIVE WRITE: NOT AUTHORIZED
 
 Next:
-  separate Human Ready GO / HOLD for PR #120
-  (PR #89 and PR #120 Ready/Merge remain NOT AUTHORIZED here)
+  Independent Current-State / Reconciliation Re-Review-1 of PR #89
+  → Human Ready GO / HOLD
+  → Ready transition only if separately authorized
+  → Merge only by later separate Human Merge GO
 ```
 
 ## Authority boundary
@@ -229,5 +166,4 @@ This reconciliation record != Merge GO
 This reconciliation record != retroactive merge authorization
 This reconciliation record != Deploy authorization
 This reconciliation record != LIVE WRITE authorization
-This reconciliation record != revert authorization
 ```

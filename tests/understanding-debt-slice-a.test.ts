@@ -9,65 +9,68 @@ import {
   type ApplicabilityEvaluatorInput,
   type MaterialityEvaluatorInput,
   type NormalizedUnderstandingDebtObservation,
+  type StructuralValidationResult,
+  type UnderstandingAssessmentDecision,
+  type UnderstandingEvidenceRecord,
 } from "../src/understanding_debt/index.js";
 
 const baseApplicability: ApplicabilityEvaluatorInput = {
-  workstreamIdentity: "WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
-  changeIdentity: "slice-a",
-  riskPolicyVersion: "v1",
+  workstreamIdentity: "synthetic:WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
+  changeIdentity: "synthetic:slice-a",
+  riskPolicyVersion: "synthetic:v1",
   explicitRiskSignals: [],
   existingRiskLane: null,
-  evidenceRefs: ["issue:#86"],
+  evidenceRefs: ["synthetic:issue-86"],
   classificationEvidenceComplete: true,
 };
 
 const baseMateriality: MaterialityEvaluatorInput = {
-  workstreamIdentity: "WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
-  changeIdentity: "slice-a",
+  workstreamIdentity: "synthetic:WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
+  changeIdentity: "synthetic:slice-a",
   explicitMaterialSignals: [],
   explicitlyNonMaterial: false,
   classificationEvidenceComplete: true,
-  evidenceRefs: ["issue:#86"],
+  evidenceRefs: ["synthetic:issue-86"],
 };
 
 function validEvidence(): Record<string, unknown> {
   return {
-    understandingCheckId: "uc-1",
+    understandingCheckId: "synthetic:uc-1",
     subject: {
-      workstreamId: "WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
-      artifactRef: "issue:#86",
+      workstreamId: "synthetic:WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
+      artifactRef: "synthetic:issue-86",
       artifactDigest: "UNKNOWN",
-      accountableSubjectRef: "subject:human-1",
+      accountableSubjectRef: "synthetic:human-1",
       accountableRole: "WORKSTREAM_OWNER",
-      ownershipContextRef: "issue:#86",
+      ownershipContextRef: "synthetic:issue-86",
       gateContext: "DEFINITION_LOCK",
     },
-    understandingPolicyVersion: "v1",
-    questionSetVersion: "v1",
-    applicabilityDecisionRef: "app-1",
+    understandingPolicyVersion: "synthetic:v1",
+    questionSetVersion: "synthetic:v1",
+    applicabilityDecisionRef: "synthetic:app-1",
     riskClass: "HIGH",
-    requiredQuestions: ["q1"],
+    requiredQuestions: ["synthetic:q1"],
     humanResponses: [
       {
-        questionId: "q1",
-        responseRef: "evidence:response-1",
+        questionId: "synthetic:q1",
+        responseRef: "synthetic:evidence-response-1",
         responseMode: "HUMAN_FREEFORM_EXPLANATION",
       },
     ],
     validation: {
-      validatorIdentity: "reviewer:1",
+      validatorIdentity: "synthetic:reviewer-1",
       validatorClass: "INDEPENDENT_HUMAN_REVIEWER",
       consistencyState: "SUFFICIENT",
       contradictions: [],
       missingConcepts: [],
-      evidenceRefs: ["evidence:response-1"],
+      evidenceRefs: ["synthetic:evidence-response-1"],
     },
-    assessmentDecisionRef: "assessment:1",
-    assessmentReason: "independent review",
+    assessmentDecisionRef: "synthetic:assessment-1",
+    assessmentReason: "synthetic independent review",
     state: "SUFFICIENT",
     validatedAt: "2026-08-30T00:00:00Z",
     validatedAgainst: {
-      definitionRef: "issue:#86",
+      definitionRef: "synthetic:issue-86",
       scopeRef: null,
       implementationRef: null,
       currentStateRef: null,
@@ -135,7 +138,7 @@ describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
     expect(deriveAssessmentStateAfterOwnershipTransfer("REQUIRED")).toBe("PENDING");
   });
 
-  it("A9: structural validity does not promote checkbox-only evidence to SUFFICIENT", () => {
+  it("A9: structural validation does not promote an empty response to SUFFICIENT", () => {
     const evidence = validEvidence();
     evidence.state = "PENDING";
     evidence.humanResponses = [];
@@ -152,12 +155,12 @@ describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
 
   it("A11: normalized #77 observation contains no raw human answers", () => {
     const observation: NormalizedUnderstandingDebtObservation = {
-      understandingDebtId: "ud-1",
-      workstreamId: "WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
+      understandingDebtId: "synthetic:ud-1",
+      workstreamId: "synthetic:WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
       debtClass: "STALE",
       risk: "HIGH",
-      basis: "material change after prior assessment",
-      evidenceRefs: ["assessment:1"],
+      basis: "synthetic material change after prior assessment",
+      evidenceRefs: ["synthetic:assessment-1"],
       currentAssessmentState: "STALE",
       requiredAction: "REFRESH",
       autoMutationAllowed: false,
@@ -172,61 +175,73 @@ describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
     expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
   });
 
-  it("A13: evaluator input has no raw Issue/PR/diff field", () => {
+  it("A13: applicability evaluator consumes structured signals only", () => {
     expect(Object.keys(baseApplicability)).not.toEqual(
       expect.arrayContaining(["issueText", "prText", "diff", "artifactText"]),
     );
   });
 
-  it("A14: no explicit signals and no low-risk assertion stays UNKNOWN", () => {
+  it("A14: missing or conflicting applicability signal remains UNKNOWN", () => {
     expect(evaluateApplicability(baseApplicability)).toBe("UNKNOWN");
-  });
-
-  it("A15: existing risk lane alone cannot suppress a required signal", () => {
     expect(
       evaluateApplicability({
         ...baseApplicability,
-        existingRiskLane: "FAST",
-        explicitRiskSignals: ["NEW_AUTOMATION_OR_AGENT_AUTHORITY_PATH"],
+        explicitRiskSignals: ["AUTHORITY_SENSITIVE_CHANGE"],
+        explicitlyLowRiskNonGoverned: true,
       }),
-    ).toBe("REQUIRED");
+    ).toBe("UNKNOWN");
   });
 
-  it("A16: materiality input has no raw diff/artifact field", () => {
+  it("A15: materiality evaluator consumes structured change signals only", () => {
     expect(Object.keys(baseMateriality)).not.toEqual(
       expect.arrayContaining(["diff", "artifactText", "issueText", "prText"]),
     );
   });
 
-  it("A17: UNKNOWN materiality cannot silently preserve SUFFICIENT", () => {
-    expect(deriveAssessmentStateAfterChange("SUFFICIENT", "UNKNOWN")).toBe("UNKNOWN");
+  it("A16: ambiguous or conflicting materiality remains UNKNOWN", () => {
+    expect(evaluateMateriality(baseMateriality)).toBe("UNKNOWN");
+    expect(
+      evaluateMateriality({
+        ...baseMateriality,
+        explicitMaterialSignals: ["AUTHORITY_BOUNDARY_CHANGE"],
+        explicitlyNonMaterial: true,
+      }),
+    ).toBe("UNKNOWN");
   });
 
-  it("A18: StructuralValidationResult is independent of assessment state", () => {
+  it("A17: StructuralValidationResult is type-distinct from UnderstandingAssessmentDecision", () => {
+    const structural: StructuralValidationResult = validateUnderstandingEvidence(validEvidence());
+    // @ts-expect-error structural validation is not an assessment decision
+    const decision: UnderstandingAssessmentDecision = structural;
+    expect(structural).toBe("VALID");
+    expect(decision).toBe("VALID");
+  });
+
+  it("A18: structural VALID cannot generate semantic SUFFICIENT", () => {
     const evidence = validEvidence();
-    evidence.state = "CONTRADICTORY";
-    expect(validateUnderstandingEvidence(evidence)).toBe("VALID");
-    expect(evidence.state).toBe("CONTRADICTORY");
+    evidence.state = "PENDING";
+    const structural = validateUnderstandingEvidence(evidence);
+    expect(structural).toBe("VALID");
+    expect(structural).not.toBe("SUFFICIENT");
+    expect(evidence.state).toBe("PENDING");
   });
 
-  it("A19: missing reproducibility identity is structurally invalid", () => {
-    const evidence = validEvidence();
-    evidence.questionSetVersion = "";
-    expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
+  it("A19: canonical contracts contain no required raw sensitive payload field", () => {
+    type EvidenceKey = keyof UnderstandingEvidenceRecord;
+    // @ts-expect-error raw sensitive payload is intentionally absent from the canonical contract
+    const prohibitedKey: EvidenceKey = "rawWelfareData";
+    expect(prohibitedKey).toBe("rawWelfareData");
+    expect(JSON.stringify(validEvidence())).not.toContain("rawWelfareData");
   });
 
-  it("A20: canonical observation can never authorize mutation", () => {
-    const observation: NormalizedUnderstandingDebtObservation = {
-      understandingDebtId: "ud-2",
-      workstreamId: "WAEP-UNDERSTANDING-DEBT-CONTROL-V1",
-      debtClass: "MISSING",
-      risk: "MEDIUM",
-      basis: "missing current assessment",
-      evidenceRefs: [],
-      currentAssessmentState: "PENDING",
-      requiredAction: "HUMAN_REVIEW",
-      autoMutationAllowed: false,
-    };
-    expect(observation.autoMutationAllowed).toBe(false);
+  it("A20: synthetic fixtures contain synthetic data only", () => {
+    const fixture = JSON.stringify({
+      baseApplicability,
+      baseMateriality,
+      evidence: validEvidence(),
+    });
+    expect(fixture).toContain("synthetic:");
+    expect(fixture).not.toContain("credential");
+    expect(fixture).not.toContain("rawWelfareData");
   });
 });

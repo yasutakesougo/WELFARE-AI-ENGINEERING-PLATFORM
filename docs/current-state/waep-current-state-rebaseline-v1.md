@@ -2,15 +2,15 @@
 
 ## Purpose
 
-WAEP PR #89 と ADCC PR #121 の merge 後に、4つの主要RepositoryのCurrent-Stateを再固定する。
+WAEP PR #89 と ADCC PR #121 の merge 後に、主要RepositoryのCurrent-Stateを再固定する。
 
-この文書はCurrent Repository State、Current Authority、Current Decision、Current Evidenceを分離して記録する。
+この文書は Current Repository State、Current Authority、Current Decision、Current Evidence を分離して記録する。
 
-この文書自体はExecution Authorityを付与しない。
+この文書自体は Execution Authority を付与しない。
 
 ## Observation Time
 
-2026-08-30T13:58Z 以降のGitHub live observation。
+2026-08-30T14:01Z 以降の GitHub live observation。
 
 ## Current Repository State
 
@@ -18,7 +18,7 @@ WAEP PR #89 と ADCC PR #121 の merge 後に、4つの主要RepositoryのCurren
 | --- | --- | --- | ---: |
 | WELFARE-AI-ENGINEERING-PLATFORM | Portfolio / Knowledge Authority | `985f2342385296df1333723790778367f0a931c8` | 7 |
 | ai-development-control-center | Agent Control Plane | `7985df87e09075e36af2b3af5f3446e742044004` | 4 |
-| severe-behavior-support-spfx | Engineering Validation | `66219ae16c3f2ca1ebee7bbe5b479c8286ac79e8` | UNOBSERVABLE FROM CURRENT TOKEN |
+| severe-behavior-support-spfx | Engineering Validation | prior anchor `66219ae16c3f2ca1ebee7bbe5b479c8286ac79e8` | UNKNOWN / current token unreadable |
 | audit-management-system-mvp | Production Learning | `acb5ec3f97f7a1d7ee27c3ba0cf0a61f92894ee6` | 24 |
 
 ## WAEP main safety state
@@ -70,9 +70,9 @@ Critical path is fixed as:
 
 ```text
 #97 human-owned Draft→Ready transition
-→ ADCC #122 verification evidence locality closure + Verification Re-Read
+→ ADCC #122 Human Ready GO / HOLD
 → Main Protection Stage 1 mechanical apply + readback
-→ Cross-Repository WRITE Pilot
+→ separate Cross-Repository WRITE authority decision
 → Controlled Cross-Repository WRITE
 → Independent Verification
 → Draft PR evidence
@@ -101,15 +101,15 @@ Historical/superseded closures executed during reconciliation:
 #34 CLOSED — exact locked DKC-MSR architecture integrated by merged #55 chain
 #35 CLOSED — reviewed DKC implementation scope integrated by later merged DKC chain
 #81 CLOSED — downstream RD-IMPL-SLICE-B implementation merged as #84
-#94 CLOSED — temporary MAC Slice C delivery; ADCC #118 live diff now contains published implementation artifacts
+#94 CLOSED — temporary MAC Slice C delivery; ADCC #118 live diff contains published artifacts
 ```
 
 Current classifications:
 
 | PR | Current disposition |
 | --- | --- |
-| #97 | READY_FOR_CURRENT_GATE — Human Ready GO recorded; mechanical Draft→Ready still not completed due connector GraphQL incompatibility |
-| #95 | ACTIVE_CURRENT — ADCC #122 exact-head verify PASS evidence; ADCC-side attachment still missing |
+| #97 | READY_FOR_CURRENT_GATE — Human Ready GO recorded; mechanical Draft→Ready incomplete because connector Ready mutation fails on GraphQL schema mismatch |
+| #95 | ACTIVE_CURRENT — ADCC #122 exact-head verify PASS durable evidence |
 | #93 | STACKED_DEPENDENT / ACTIVE_CURRENT — Cross-Repo WRITE Pilot definition chain |
 | #92 | ACTIVE_CURRENT — accepted Controlled Write Readiness research basis |
 | #91 | ACTIVE_CURRENT — this Current-State rebaseline |
@@ -124,19 +124,38 @@ Observed open PRs:
 #77 #90 #118 #122
 ```
 
-PR #118 remains DRAFT / OPEN. Its original one-file body is stale relative to the current three-file live delta, which now includes Correction-2 and Independent Scope Re-Review evidence plus the published Slice C implementation content.
+PR #118 remains DRAFT / OPEN and its original one-file body is stale relative to the live three-file scope/review delta plus published implementation content.
 
 PR #122 remains the Cross-Repo WRITE Pilot implementation vehicle.
 
-Exact verification evidence is durably recorded on WAEP #95 for exact head:
+Exact verification evidence for exact head:
 
 ```text
 8bded4750841c803315e37d7ef49d99e12c75b63
 ```
 
-ADCC-side issue comment attachment remains missing under the observed token surface.
+has now been attached directly to ADCC PR #122.
 
-Therefore Verification Re-Read / Human Ready GO remains blocked until evidence locality is closed and HEAD unchanged is reconfirmed.
+HEAD re-read after attachment remains exactly:
+
+```text
+8bded4750841c803315e37d7ef49d99e12c75b63
+```
+
+Verification Re-Read has completed with:
+
+```text
+Implementation Semantics: PASS
+Exact-Head Executable Verification: PASS
+Evidence Locality on PR #122: PASS
+HEAD Unchanged: PASS
+Verification HOLD: CLOSED
+Ready-Gate Eligibility: YES
+```
+
+Verification PASS does not itself grant Human Ready GO.
+
+Current next gate for ADCC #122 is Human Ready GO / HOLD bound to the exact head above.
 
 ### severe-behavior-support-spfx
 
@@ -152,7 +171,7 @@ LIVE WRITE remains NOT AUTHORIZED.
 
 Observed open PR count: 24.
 
-Production Evidence work remains READ ONLY / HOLD where business canonical truth is insufficient.
+Production Evidence work may continue READ ONLY where business canonical truth is not yet sufficient.
 
 Technical evidence must not be substituted for business canonical truth.
 
@@ -169,23 +188,28 @@ Observed repository mutation from failed attempt: NONE
 Merge GO: NOT AUTHORIZED
 ```
 
-### P1 — Repository safety
+### P1 — ADCC #122 Human Ready Gate
+
+```text
+Implementation Semantics: PASS
+Exact-head npm run verify: PASS
+Evidence attachment to ADCC #122: PASS
+HEAD unchanged: PASS
+Verification Re-Read: PASS
+Ready-Gate Eligibility: YES
+Human Ready GO / HOLD: PENDING SEPARATE HUMAN DECISION
+Ready transition: NOT EXECUTED BY RE-READ
+Merge: NOT AUTHORIZED
+Cross-Repo WRITE: NOT AUTHORIZED
+```
+
+### P2 — Repository safety
 
 ```text
 WAEP main protected=false
 Stage 1 Human Governance GO: RECORDED
 Stage 1 mechanical application: NOT OBSERVED
 Stage 1 readback: FAIL / NOT APPLIED
-```
-
-### P2 — Cross-Repo WRITE Pilot evidence locality
-
-```text
-ADCC #122 exact-head verify evidence: PASS / WAEP #95
-ADCC #122 canonical PR comment attachment: MISSING
-Verification Re-Read: ELIGIBLE only after attachment + HEAD unchanged reconfirm
-Human Ready GO: NOT YET ESTABLISHED ON ADCC #122
-Cross-Repo WRITE: NOT AUTHORIZED
 ```
 
 ### P3 — Product / Production evidence
@@ -215,16 +239,17 @@ WAEP historical/superseded open mass: REDUCED
 Authority separation: FIXED
 Main protection state: VERIFIED UNPROTECTED
 #97 Ready authority: RECORDED / mechanical transition incomplete
-ADCC #122 verification evidence: PASS / locality gap remains
-Current-State: REBASELINED / CRITICAL-GATE CLOSURE REQUIRED
+ADCC #122 verification evidence: PASS / attached on canonical PR surface
+ADCC #122 Verification HOLD: CLOSED
+Current-State: REBASELINED / HUMAN-GATE + REPOSITORY-SAFETY CLOSURE REQUIRED
 ```
 
 ## Next Actions
 
 ```text
 1. Complete #97 human-owned Draft→Ready using a GitHub surface not affected by the connector GraphQL incompatibility; read back draft=false + unchanged head.
-2. Attach WAEP #95 verify evidence to ADCC #122; reconfirm exact HEAD unchanged.
-3. Perform Verification Re-Read and Human Ready GO / HOLD for ADCC #122.
+2. Human Ready GO / HOLD for ADCC #122 exact head 8bded4750841c803315e37d7ef49d99e12c75b63.
+3. If GO, execute only the Ready transition and read back state; Merge remains a separate gate.
 4. Apply WAEP Main Protection Stage 1 using an administration-write capable credential.
 5. Read back branch protection and mark Stage 1 COMPLETE only after PASS.
 6. Only then evaluate separate Human Cross-Repo WRITE GO / HOLD.

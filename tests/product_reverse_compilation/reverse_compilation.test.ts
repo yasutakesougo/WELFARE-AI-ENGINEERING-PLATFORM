@@ -41,9 +41,12 @@ describe("product reverse compilation guardrails", () => {
 
   it("preserves conflict as an explicit verification state", () => {
     const claim = createClaim({
-      ...observedClaim,
+      claimId: "claim-conflict",
+      normalizedClaim: "documentation and observed behavior disagree",
+      source,
+      generatorId: "generator-a",
+      derivationClass: "OBSERVED",
       verificationState: "CONFLICT",
-      validationEvidence: undefined,
     });
     expect(claim.verificationState).toBe("CONFLICT");
   });

@@ -1,0 +1,29 @@
+name: DKC-MSR 68 Independent Re-Review-1 Verifier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  msr68-re-review-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7f72a3f67ec39d196ce040597e045561e2944e2a
+          persist-credentials: false
+      - name: Verify exact DKC-MSR correction head
+        run: test "$(git rev-parse HEAD)" = "7f72a3f67ec39d196ce040597e045561e2944e2a"
+      - name: Run DKC-MSR Slice A tests
+        run: |
+          python --version
+          python -m unittest discover -s tests/dkc_msr_kernel -p 'test_*.py' -v
+      - name: Verify no test mutation
+        run: test -z "$(git status --porcelain)"

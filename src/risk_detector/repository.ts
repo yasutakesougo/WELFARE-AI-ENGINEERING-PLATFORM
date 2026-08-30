@@ -10,6 +10,11 @@ const execFileAsync = promisify(execFile);
 const FULL_SHA = /^[0-9a-f]{40}$/i;
 const MAX_GIT_BUFFER = 1_000_000;
 
+export interface BoundedGitResult {
+  stdout: string;
+  truncated: boolean;
+}
+
 async function git(args: string[]): Promise<string> {
   const { stdout } = await execFileAsync("git", args, {
     encoding: "utf8",
@@ -19,15 +24,21 @@ async function git(args: string[]): Promise<string> {
   return stdout;
 }
 
-async function gitBounded(args: string[]): Promise<{ stdout: string; truncated: boolean }> {
+export function recoverGitBufferOverflow(error: unknown): BoundedGitResult | undefined {
+  const maybe = error as { code?: string; stdout?: string | Buffer; message?: string };
+  const isBufferOverflow = maybe.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" || maybe.message?.includes("maxBuffer") === true;
+  if (!isBufferOverflow) return undefined;
+  const stdout = typeof maybe.stdout === "string" ? maybe.stdout : Buffer.isBuffer(maybe.stdout) ? maybe.stdout.toString("utf8") : "";
+  return { stdout: stdout.slice(0, MAX_DIFF_CHARS), truncated: true };
+}
+
+async function gitBounded(args: string[]): Promise<BoundedGitResult> {
   try {
     return { stdout: await git(args), truncated: false };
   } catch (error) {
-    const maybe = error as { code?: string; stdout?: string | Buffer; message?: string };
-    const isBufferOverflow = maybe.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" || maybe.message?.includes("maxBuffer") === true;
-    if (!isBufferOverflow) throw error;
-    const stdout = typeof maybe.stdout === "string" ? maybe.stdout : Buffer.isBuffer(maybe.stdout) ? maybe.stdout.toString("utf8") : "";
-    return { stdout: stdout.slice(0, MAX_DIFF_CHARS), truncated: true };
+    const recovered = recoverGitBufferOverflow(error);
+    if (recovered) return recovered;
+    throw error;
   }
 }
 

@@ -1,6 +1,6 @@
 # WAEP-CURRENT-STATE-REBASELINE-V1
 
-Record revision: CURRENT-STATE REBASELINE CORRECTION-1
+Record revision: CURRENT-STATE REBASELINE CORRECTION-2
 
 ## Purpose
 
@@ -9,13 +9,21 @@ WAEP / ADCC の live state と authority chain を再固定する。
 この文書は Current Repository State、Current Authority、Current Decision、Current Evidence を分離して記録する。
 この文書自体は Execution Authority を付与しない。
 
-Correction-1 absorbs:
+Correction-1 absorbed:
 
 ```text
 PR #89 MERGE AUTHORITY GAP CONFIRMED
 NO RETROACTIVE MERGE GO
 Open PR inventory refreshed to Correction-1 observation time
 Supersession / blockers / main protection / verification state recalculated
+```
+
+Correction-2 absorbs Independent Current-State Rebaseline Review-1 findings only:
+
+```text
+P1-1: Next Actions gate order aligned to Current Decision
+P2-1: PR #91 / #98 bodies deferred to canonical artifact reference
+Ready transition explicitly NOT required for Rebaseline document completion
 ```
 
 ## Observation Time
@@ -191,19 +199,39 @@ Rebaseline != Authority
 
 ## Current Decision
 
-Critical path after Correction-1:
+Critical path after Correction-2 (must match Next Actions):
 
 ```text
 ADCC #122 post-merge readback PASS
-→ WAEP #91 Current-State Rebaseline Correction-1 APPLIED (this revision)
-→ Independent Current-State Rebaseline Review-1 on exact Correction-1 head
+→ WAEP #91 Current-State Rebaseline Correction-1 APPLIED
+→ Independent Current-State Rebaseline Review-1: CORRECTION REQUIRED
+→ WAEP #91 Current-State Rebaseline Correction-2 APPLIED (this revision)
+→ Independent Current-State Rebaseline Re-Review-1 on exact Correction-2 head
 → Human Ready GO / HOLD for #91 (separate)
+→ If GO, human-owned Ready transition (separate; not Rebaseline completion)
 → WAEP Main Protection Stage 1 mechanical apply
 → Stage 1 independent readback
 → only if Stage 1 COMPLETE, separate Human Cross-Repo WRITE GO / HOLD
 → Controlled Cross-Repo WRITE
 → Independent Verification
 → Draft PR evidence
+```
+
+Rebaseline document completion rule:
+
+```text
+Rebaseline document COMPLETE
+  = Independent Re-Review PASS on exact Correction-2 (or later) head
+
+Human Ready GO / HOLD for #91
+  = separate gate after Independent Re-Review PASS
+  != Rebaseline document completion
+
+Human-owned Ready transition
+  = executes only if Human Ready GO is granted
+  != required for Rebaseline document completion
+  != Merge GO
+  != Main Protection Stage 1 authorization
 ```
 
 Large new Definition families remain deferred until this path converges.
@@ -366,19 +394,24 @@ Authority separation: FIXED
 WAEP main protection: VERIFIED UNPROTECTED
 Main Protection Stage 1: INCOMPLETE
 Cross-Repo WRITE: HOLD pending Stage 1 COMPLETE
-Current-State Correction-1: APPLIED / Independent Review-1 REQUIRED
+Current-State Correction-2: APPLIED / Independent Re-Review-1 REQUIRED
 ```
 
 ## Next Actions
 
+Must remain identical in order to Current Decision.
+
 ```text
-1. Independent Current-State Rebaseline Review-1 on this Correction-1 exact head.
-2. Mechanically apply WAEP Main Protection Stage 1 using an administration-write capable GitHub surface.
-3. Read back protection state independently.
-4. Mark Stage 1 COMPLETE only if protected=true and the recorded Stage 1 policy is observed.
-5. Only after Stage 1 COMPLETE, record a separate Human Cross-Repo WRITE GO / HOLD bound to an exact pilot target repo/ref/SHA and constrained diff policy.
-6. Cross-Repo WRITE GO must not imply Ready, Merge, Deploy, LIVE WRITE, default-branch direct write, branch-protection/settings mutation, or unrestricted credentials.
-7. Retain #89 MERGE AUTHORITY GAP as historical evidence; adopt recurrence-prevention control candidate when authorized.
+1. Independent Current-State Rebaseline Re-Review-1 on this Correction-2 exact head.
+2. Human Ready GO / HOLD for #91 (separate gate; only after Independent Re-Review PASS).
+3. If GO, execute human-owned Ready transition separately.
+   Ready transition is NOT required for Rebaseline document completion.
+4. Mechanically apply WAEP Main Protection Stage 1 using an administration-write capable GitHub surface.
+5. Read back protection state independently.
+6. Mark Stage 1 COMPLETE only if protected=true and the recorded Stage 1 policy is observed.
+7. Only after Stage 1 COMPLETE, record a separate Human Cross-Repo WRITE GO / HOLD bound to an exact pilot target repo/ref/SHA and constrained diff policy.
+8. Cross-Repo WRITE GO must not imply Ready, Merge, Deploy, LIVE WRITE, default-branch direct write, branch-protection/settings mutation, or unrestricted credentials.
+9. Retain #89 MERGE AUTHORITY GAP as historical evidence; adopt recurrence-prevention control candidate when authorized.
 ```
 
 ## Safety Boundary

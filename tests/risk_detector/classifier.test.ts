@@ -26,6 +26,18 @@ describe("Risk Detector Slice A", () => {
     expect(result.riskSignals.some((signal) => signal.boundary === "R2_AUTHORITY")).toBe(true);
   });
 
+  it("classifies action-first authority changes as GOVERNED", () => {
+    const result = classifyRisk({ intent: "update role assignment for deployment worker" });
+    expect(result.lane).toBe("GOVERNED");
+    expect(result.riskSignals.some((signal) => signal.boundary === "R2_AUTHORITY")).toBe(true);
+  });
+
+  it("classifies action-first sensitive logging as GOVERNED", () => {
+    const result = classifyRisk({ intent: "log personal data for debugging" });
+    expect(result.lane).toBe("GOVERNED");
+    expect(result.riskSignals.some((signal) => signal.boundary === "R3_SENSITIVE")).toBe(true);
+  });
+
   it("blocks plaintext secret material", () => {
     const result = classifyRisk({ diff: "+ API_KEY=abcDEF0123456789" });
     expect(result.lane).toBe("BLOCKED");
@@ -33,10 +45,15 @@ describe("Risk Detector Slice A", () => {
     expect(result.humanGateRequired).toBe(false);
   });
 
-  it("classifies destructive changes as GOVERNED", () => {
+  it("classifies destructive data changes as GOVERNED", () => {
     const result = classifyRisk({ intent: "truncate audit table after migration" });
     expect(result.lane).toBe("GOVERNED");
     expect(result.riskSignals.some((signal) => signal.boundary === "R4_DESTRUCTIVE")).toBe(true);
+  });
+
+  it("keeps reversible source deletion FAST", () => {
+    const result = classifyRisk({ intent: "delete obsolete local helper function", changedFiles: ["src/helpers.ts"] });
+    expect(result.lane).toBe("FAST");
   });
 
   it("classifies significant paid API activity as GOVERNED", () => {

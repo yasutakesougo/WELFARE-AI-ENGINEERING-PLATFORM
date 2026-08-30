@@ -4,12 +4,22 @@
 Document ID:        CWR-RESEARCH-REPORT-V1
 Revision:           Research Report Correction-1
 Research Mission:   CWR-RESEARCH-MISSION-V1
-State:              CORRECTED / NOT YET ACCEPTED
+State:              RESEARCH EVIDENCE ACCEPTED
 Source Review:      Independent Research Evidence Review-1 (PR #92)
 Prior Verdict:      CORRECTION REQUIRED (P0:0 / P1:2 / P2:1)
 Prior Content Commit: 5c9468c525c3120b94fdd09b98e1c2774547a410
 Prior Report Blob:    7b5a12d14770cd0d4101d3196c6802643651b615
-Authority:          Research Evidence / Design Input only
+Content Baseline Commit: 985e93235d87964f8ab9495a0a05fd4e8f11fb80
+Content Baseline Blob:   1bf7cbe866f0a3f36bf50d7091a9a67c78a417f5
+Independent Re-Review-1: PASS / RESEARCH EVIDENCE ACCEPTABLE
+Independent Validation:  12 / 12 PASS
+Human Research Evidence Acceptance: GO
+Research Evidence:       ACCEPTED
+Design Input Eligibility: AUTHORIZED
+Research Evidence Re-Review: CLOSED
+Acceptance Archive:      docs/research/reviews/human-research-evidence-acceptance-go.md
+Source Review Archive:   docs/research/reviews/independent-research-evidence-re-review-1.md
+Authority:          Accepted Research Evidence / Design Input only
 WAEP Adoption:      NOT AUTHORIZED BY THIS ARTIFACT
 Definition Lock:    NOT AUTHORIZED BY THIS ARTIFACT
 Implementation Start: NOT AUTHORIZED BY THIS ARTIFACT
@@ -17,16 +27,29 @@ Runtime Activation: NOT AUTHORIZED BY THIS ARTIFACT
 Ready / Merge / Deploy / LIVE WRITE: NOT AUTHORIZED BY THIS ARTIFACT
 Cross-Repository Mutation: NOT AUTHORIZED BY THIS ARTIFACT
 Production WRITE Execution: OUT OF SCOPE
-Human Research Evidence Acceptance: NOT YET
 ```
 
 ## 0. Authority Boundary
 
 ```text
-Research Evidence Candidate
-  != Research Evidence Accepted
 Research Evidence Accepted
   != Technology Adopted
+ADOPTION_CANDIDATE
+  != ADOPTED
+Research Evidence Accepted
+  != Implementation Authority
+Research Evidence Accepted
+  != Execution Authority
+Human Research Evidence Acceptance GO
+  != WAEP Adoption
+Human Research Evidence Acceptance GO
+  != Definition Lock
+Human Research Evidence Acceptance GO
+  != Implementation Start
+Human Research Evidence Acceptance GO
+  != Ready / Merge / Deploy / LIVE WRITE
+Human Research Evidence Acceptance GO
+  != Cross-Repository Mutation
 Knowledge
   != Execution Authority
 Recommended action
@@ -51,6 +74,16 @@ closures only:
 Authority boundary, Mission scope, and Findings outside that closure set remain
 unchanged from Research Report Start unless required for Evidence Registry
 consistency with the closures above.
+
+### 0.2 Provenance note on Human Acceptance status sync
+
+Human Research Evidence Acceptance GO accepts Content Baseline Commit
+`985e93235d87964f8ab9495a0a05fd4e8f11fb80` / blob
+`1bf7cbe866f0a3f36bf50d7091a9a67c78a417f5`.
+
+Status / Next Gate synchronization for Acceptance does not reopen or alter
+Correction-1 Research Findings, Evidence Registry classifications, or Claim
+index substance.
 
 ## 1. Purpose and Scope
 
@@ -769,7 +802,14 @@ Independent Research Evidence Re-Review-1: PASS / RESEARCH EVIDENCE ACCEPTABLE
   Archive: docs/research/reviews/independent-research-evidence-re-review-1.md
 Exact Diff Inspection: PASS
   Archive: docs/research/reviews/cwr-research-report-correction-1-exact-diff-inspection.md
-Next permissible gate: Human Research Evidence Acceptance GO / HOLD
-Design Input eligibility: only after Acceptance GO
+Human Research Evidence Acceptance: GO
+  Archive: docs/research/reviews/human-research-evidence-acceptance-go.md
+Research Evidence: ACCEPTED
+Design Input Eligibility: AUTHORIZED
+Research Evidence Re-Review: CLOSED
+Next permissible gate:
+  Control Center Execution Policy /
+  Cross-Repo WRITE Pilot contract Candidate
+  Definition Start GO / HOLD
 Definition Lock / Implementation Start / WRITE: NOT AUTHORIZED BY THIS ARTIFACT
 ```

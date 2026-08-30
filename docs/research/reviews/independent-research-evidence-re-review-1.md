@@ -13,6 +13,7 @@ Path:               docs/research/controlled-write-readiness-research-report-v1.
 Companion Mission:  docs/research/controlled-write-readiness-research-mission-v1.md
 Prior Review:       Independent Research Evidence Review-1 (CORRECTION REQUIRED)
 Exact Diff Inspection: docs/research/reviews/cwr-research-report-correction-1-exact-diff-inspection.md
+Reviewed Commit:      985e93235d87964f8ab9495a0a05fd4e8f11fb80
 Reviewed Report Blob: 1bf7cbe866f0a3f36bf50d7091a9a67c78a417f5
 Bytes:              33887
 SHA-256:            76cb32839f93a91748dcdbd0e96989380501284912b79e43b91eaf4c002d9725

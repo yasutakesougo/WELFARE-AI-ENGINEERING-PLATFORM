@@ -7,7 +7,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build:risk-detector": "tsc -p tsconfig.risk-detector.json",
-    "risk:classify": "npm run build:risk-detector --silent && node .waep-build/risk-detector/risk_detector/cli.js"
+    "risk:classify": "npm run build:risk-detector --silent && node .waep-build/risk-detector/risk_detector/cli.js",
+    "risk:classify-repo": "npm run build:risk-detector --silent && node .waep-build/risk-detector/risk_detector/repo_cli.js"
   },
   "devDependencies": {
     "@types/node": "22.18.0",

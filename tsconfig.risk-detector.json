@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".waep-build/risk-detector",
+    "rootDir": "src"
+  },
+  "include": ["src/risk_detector/**/*.ts"]
+}

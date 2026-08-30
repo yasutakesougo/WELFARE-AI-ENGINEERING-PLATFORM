@@ -10,15 +10,15 @@ WAEP PR #89 と ADCC PR #121 の merge 後に、4つの主要RepositoryのCurren
 
 ## Observation Time
 
-2026-08-30T10:21Z 以降のGitHub live observation。
+2026-08-30T13:58Z 以降のGitHub live observation。
 
 ## Current Repository State
 
 | Repository | Canonical Role | main exact SHA | Open PR count observed |
 | --- | --- | --- | ---: |
-| WELFARE-AI-ENGINEERING-PLATFORM | Portfolio / Knowledge Authority | `985f2342385296df1333723790778367f0a931c8` | 12 |
-| ai-development-control-center | Agent Control Plane | `7985df87e09075e36af2b3af5f3446e742044004` | 3 |
-| severe-behavior-support-spfx | Engineering Validation | `66219ae16c3f2ca1ebee7bbe5b479c8286ac79e8` | 11 |
+| WELFARE-AI-ENGINEERING-PLATFORM | Portfolio / Knowledge Authority | `985f2342385296df1333723790778367f0a931c8` | 7 |
+| ai-development-control-center | Agent Control Plane | `7985df87e09075e36af2b3af5f3446e742044004` | 4 |
+| severe-behavior-support-spfx | Engineering Validation | `66219ae16c3f2ca1ebee7bbe5b479c8286ac79e8` | UNOBSERVABLE FROM CURRENT TOKEN |
 | audit-management-system-mvp | Production Learning | `acb5ec3f97f7a1d7ee27c3ba0cf0a61f92894ee6` | 24 |
 
 ## WAEP main safety state
@@ -69,73 +69,80 @@ No new Ready, Merge, Deploy, LIVE WRITE, M365, SharePoint, Entra, or customer-pr
 Critical path is fixed as:
 
 ```text
-Current-State Rebaseline
+#97 human-owned Draft→Ready transition
+→ ADCC #122 verification evidence locality closure + Verification Re-Read
 → Main Protection Stage 1 mechanical apply + readback
-→ Open-PR disposition / entropy reduction
-→ MAC Slice C current-scope revalidation
-→ Control Plane completion
 → Cross-Repository WRITE Pilot
+→ Controlled Cross-Repository WRITE
+→ Independent Verification
+→ Draft PR evidence
 → Product / Production Evidence
 ```
 
-Large new Definition families are deferred until the Control Plane critical path has converged.
+Large new Definition families remain deferred until the Control Plane critical path has converged.
 
-## Current Evidence and PR disposition candidates
+## Current Evidence and PR disposition
 
 ### WAEP
 
-Observed open PRs:
+Observed open PRs after entropy reduction:
 
 ```text
-#88 #87 #81 #60 #53 #46 #45 #36 #35 #34 #30 #29
+#60 #87 #91 #92 #93 #95 #97
 ```
 
-Initial disposition candidates:
+Historical/superseded closures executed during reconciliation:
 
-| PR | Candidate disposition | Basis |
-| --- | --- | --- |
-| #88 | SUPERSEDED | Freeze basis predates current WAEP and ADCC main heads. |
-| #87 | ACTIVE_CURRENT | Authorized Slice A implementation remains open. |
-| #81 | HISTORICAL_EVIDENCE_ONLY candidate | Scope-only record; downstream RD work has progressed. Requires final supersession confirmation before close. |
-| #60 | HISTORICAL_EVIDENCE_ONLY after Stage 1 readback | Governance assessment remains useful evidence until protection is mechanically applied and verified. |
-| #53 | SUPERSEDED candidate | Current-state reconciliation predates later merges and this rebaseline. |
-| #46 / #45 / #36 / #35 / #34 / #30 / #29 | DISPOSITION_REVIEW_REQUIRED | Historical stacked chains require explicit supersession/current-work confirmation before close. |
+```text
+#36 CLOSED — superseded by merged Learning Slice A v3 (#57)
+#45 CLOSED — superseded by merged CSOC Slice A v3 (#59)
+#46 CLOSED — superseded by merged Learning Slice A v3 (#57)
+#30 CLOSED — superseded by later merged DKC main-integration chain
+#34 CLOSED — exact locked DKC-MSR architecture integrated by merged #55 chain
+#35 CLOSED — reviewed DKC implementation scope integrated by later merged DKC chain
+#81 CLOSED — downstream RD-IMPL-SLICE-B implementation merged as #84
+#94 CLOSED — temporary MAC Slice C delivery; ADCC #118 live diff now contains published implementation artifacts
+```
+
+Current classifications:
+
+| PR | Current disposition |
+| --- | --- |
+| #97 | READY_FOR_CURRENT_GATE — Human Ready GO recorded; mechanical Draft→Ready still not completed due connector GraphQL incompatibility |
+| #95 | ACTIVE_CURRENT — ADCC #122 exact-head verify PASS evidence; ADCC-side attachment still missing |
+| #93 | STACKED_DEPENDENT / ACTIVE_CURRENT — Cross-Repo WRITE Pilot definition chain |
+| #92 | ACTIVE_CURRENT — accepted Controlled Write Readiness research basis |
+| #91 | ACTIVE_CURRENT — this Current-State rebaseline |
+| #87 | ACTIVE_CURRENT / VERIFY_HOLD |
+| #60 | ACTIVE_CURRENT until Main Protection Stage 1 mechanical apply + readback COMPLETE |
 
 ### ai-development-control-center
 
 Observed open PRs:
 
 ```text
-#118 #90 #77
+#77 #90 #118 #122
 ```
 
-PR #118 is ACTIVE_CURRENT but requires Current Scope Revalidation.
+PR #118 remains DRAFT / OPEN. Its original one-file body is stale relative to the current three-file live delta, which now includes Correction-2 and Independent Scope Re-Review evidence plus the published Slice C implementation content.
 
-Its PR body states a one-file scope, while the live changed-file set is three files:
+PR #122 remains the Cross-Repo WRITE Pilot implementation vehicle.
+
+Exact verification evidence is durably recorded on WAEP #95 for exact head:
 
 ```text
-docs/multi-agent-coordination/multi-agent-coordination-v1-implementation-scope-c.md
-docs/multi-agent-coordination/multi-agent-coordination-v1-implementation-scope-c-correction-2.md
-docs/multi-agent-coordination/reviews/multi-agent-coordination-v1-slice-c-independent-scope-re-review-1.md
+8bded4750841c803315e37d7ef49d99e12c75b63
 ```
 
-Therefore the next gate is not a new scope definition.
+ADCC-side issue comment attachment remains missing under the observed token surface.
 
-The next gate is current-head scope/authority reconciliation against the three-file exact delta.
+Therefore Verification Re-Read / Human Ready GO remains blocked until evidence locality is closed and HEAD unchanged is reconfirmed.
 
 ### severe-behavior-support-spfx
 
-Observed open PRs:
+Current token cannot read the repository, so live PR inventory is UNKNOWN in this observation.
 
-```text
-#528 #527 #526 #525 #516 #506 #505 #504 #491 #489 #481
-```
-
-The search returned 11 open PRs.
-
-Before any merge or release action, each PR must be classified as ACTIVE_CURRENT, READY_FOR_CURRENT_GATE, SUPERSEDED, HISTORICAL_EVIDENCE_ONLY, or ABANDON/CLOSE.
-
-Release readiness remains HOLD.
+The prior observed main identity is retained only as a historical anchor and must not be treated as freshly verified.
 
 Deploy remains NOT AUTHORIZED.
 
@@ -145,51 +152,47 @@ LIVE WRITE remains NOT AUTHORIZED.
 
 Observed open PR count: 24.
 
-PR #2558 remains the current Production Evidence workstream.
-
-Current GitHub SSOT states:
-
-```text
-Phase 3: HOLD
-Human Disposition: BLOCKED
-SharePoint item mutation: NOT AUTHORIZED
-Schema mutation: NOT AUTHORIZED
-Deploy: NOT AUTHORIZED
-```
+Production Evidence work remains READ ONLY / HOLD where business canonical truth is insufficient.
 
 Technical evidence must not be substituted for business canonical truth.
 
 ## Current Blockers
 
-### P0 — Repository safety
+### P0 — #97 Ready transition
+
+```text
+Human Ready GO: AUTHORIZED
+Exact head: aa571edc1a2f937d2b47b5253f5f46f126dffbd5
+Mechanical Draft→Ready: NOT COMPLETED
+Connector attempt: FAILED due GraphQL Repository.fullDatabaseId schema incompatibility
+Observed repository mutation from failed attempt: NONE
+Merge GO: NOT AUTHORIZED
+```
+
+### P1 — Repository safety
 
 ```text
 WAEP main protected=false
+Stage 1 Human Governance GO: RECORDED
 Stage 1 mechanical application: NOT OBSERVED
 Stage 1 readback: FAIL / NOT APPLIED
 ```
 
-### P1 — Portfolio entropy
+### P2 — Cross-Repo WRITE Pilot evidence locality
 
 ```text
-WAEP open PRs: 12
-ADCC open PRs: 3
-SPFx open PRs: 11
-Audit open PRs: 24
-unknown disposition: non-zero
+ADCC #122 exact-head verify evidence: PASS / WAEP #95
+ADCC #122 canonical PR comment attachment: MISSING
+Verification Re-Read: ELIGIBLE only after attachment + HEAD unchanged reconfirm
+Human Ready GO: NOT YET ESTABLISHED ON ADCC #122
+Cross-Repo WRITE: NOT AUTHORIZED
 ```
-
-### P2 — Control Plane current-head alignment
-
-ADCC #118 changed-file reality differs from its original one-file body.
-
-Current-head scope revalidation is required before any new Implementation Start decision.
 
 ### P3 — Product / Production evidence
 
-SPFx Release Readiness remains HOLD.
+Production Evidence may continue READ ONLY.
 
-Audit #2558 remains HOLD pending canonical business evidence and GitHub-SSOT reconciliation.
+No Production WRITE authority is created by this rebaseline.
 
 ## Deploy and LIVE WRITE Authority
 
@@ -200,33 +203,31 @@ ADCC Deploy: NOT GRANTED BY THIS REBASELINE
 ADCC cross-repo WRITE: NOT GRANTED BY THIS REBASELINE
 SPFx Deploy: NOT AUTHORIZED
 SPFx LIVE WRITE: NOT AUTHORIZED
-Audit Production WRITE: NOT AUTHORIZED by current #2558 state
+Audit Production WRITE: NOT AUTHORIZED by current observed state
 ```
 
 ## Phase 0 Exit Assessment
 
 ```text
-Repository exact main heads: FIXED
-Open PR inventory: CAPTURED
+Repository exact main heads: WAEP/ADCC/Audit FIXED
+WAEP open PR inventory: RECONCILED TO 7
+WAEP historical/superseded open mass: REDUCED
 Authority separation: FIXED
 Main protection state: VERIFIED UNPROTECTED
-Critical-path blocker: FIXED
-Unknown active PR ownership: NOT YET 0
-Contradictory Current Gate: #118 metadata/current-delta mismatch identified
-Current-State: REBASELINED / ENTROPY RECONCILIATION REQUIRED
+#97 Ready authority: RECORDED / mechanical transition incomplete
+ADCC #122 verification evidence: PASS / locality gap remains
+Current-State: REBASELINED / CRITICAL-GATE CLOSURE REQUIRED
 ```
-
-Phase 0 evidence capture is complete enough to begin Phase 1 and Phase 2 in parallel only where they do not mutate the same authority state.
 
 ## Next Actions
 
 ```text
-1. Apply WAEP Main Protection Stage 1 using an administration-write capable credential.
-2. Read back branch/ruleset state.
-3. Mark Stage 1 COMPLETE only after readback PASS.
-4. Close/supersede #88 only after this Rebaseline artifact is safely published.
-5. Classify remaining WAEP stale chains without merging them by default.
-6. Revalidate ADCC #118 current exact scope before Implementation Start.
+1. Complete #97 human-owned Draft→Ready using a GitHub surface not affected by the connector GraphQL incompatibility; read back draft=false + unchanged head.
+2. Attach WAEP #95 verify evidence to ADCC #122; reconfirm exact HEAD unchanged.
+3. Perform Verification Re-Read and Human Ready GO / HOLD for ADCC #122.
+4. Apply WAEP Main Protection Stage 1 using an administration-write capable credential.
+5. Read back branch protection and mark Stage 1 COMPLETE only after PASS.
+6. Only then evaluate separate Human Cross-Repo WRITE GO / HOLD.
 ```
 
 ## Safety Boundary

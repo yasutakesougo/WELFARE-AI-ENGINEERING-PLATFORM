@@ -4,7 +4,7 @@
 
 ```text
 Definition: CONTROL-CENTER-CROSS-REPO-WRITE-PILOT-V1
-Revision: Definition Start
+Revision: Definition Correction-1
 Definition State: DRAFT / NOT LOCKED
 Definition Start: GO
 Roadmap Alignment: WAEP-ROADMAP-V1 Phase 3 (Candidate; Phase text != Gate GO)
@@ -28,7 +28,7 @@ Runtime Activation: NOT AUTHORIZED
 Ready / Merge / Deploy / LIVE WRITE: NOT AUTHORIZED
 Cross-Repository Mutation Execution: NOT AUTHORIZED
 Production WRITE Execution: NOT AUTHORIZED
-Next Gate: Independent Definition Review-1
+Next Gate: exact diff inspection → Independent Definition Re-Review-1
 ```
 
 ```text
@@ -99,14 +99,14 @@ Human GO / Governance Record
 Control Center Execution Policy binding (PEP)
         ↓
 Authority class selection
-  RETRY | ROLLBACK | RECONCILE | (no MERGE/READY)
+  DRAFT_PR_WRITE | RETRY | ROLLBACK | RECONCILE | (no MERGE/READY)
         ↓
 Per-task narrowed GitHub App installation token
   (exact repository + minimal permissions + ~1h)
         ↓
 Preflight: bind repository + ref + expected SHA
         ↓
-Optional DARK lease + fence (single-writer section)
+DARK lease + fence for every mutating single-writer critical section
         ↓
 Mutate with expected-OID compare-and-swap
         ↓
@@ -134,10 +134,14 @@ Merge
   != Deploy
 Deploy
   != LIVE WRITE
+DRAFT_PR_WRITE_AUTHORITY
+  != RETRY_AUTHORITY
 EFFECT_APPLIED
   != retry WRITE
 expected OID mismatch
   != force update
+HOLD
+  != residual-risk acceptance
 Knowledge / Research / Definition
   != Execution Authority
 ```
@@ -151,14 +155,16 @@ Knowledge / Research / Definition
 | Area | Requirement |
 | --- | --- |
 | Pilot target | `severe-behavior-support-spfx` only for first WRITE pilot |
-| Mutation class | **Draft PR only** (create draft PR / push to non-protected working branch as required for Draft PR) |
+| Mutation class | **Draft PR only** (create/update allowlisted non-protected working branch content required for a Draft PR, then create Draft PR) |
+| Initial mutation authority | Explicit `DRAFT_PR_WRITE_AUTHORITY`; required for the first mutation attempt and never implied by RETRY/ROLLBACK/RECONCILE |
 | Target binding | `owner/repo` + fully-qualified ref + **exact expected SHA/OID** |
 | TOCTOU | Re-read tip before mutate; mutate with expected-OID CAS; reject on drift |
 | Idempotency | `logical_mutation_id` + `attempt_generation`; at-least-once assumption |
-| Concurrency | DARK lease + fence for single-writer critical sections |
-| Readback | Compare API / equivalent; unexpected paths/churn → HOLD/DENY |
+| Concurrency | DARK lease + fence required for each mutating single-writer critical section |
+| Readback | Compare API / equivalent; policy schema violation → HOLD/DENY |
 | Credentials | Per-task installation token; repo-scoped; permission-narrowed; no admin; no bypass_actor |
-| Authority classes | Separate `RETRY_AUTHORITY`, `ROLLBACK_AUTHORITY`, `RECONCILE_AUTHORITY` |
+| Authority classes | Separate `DRAFT_PR_WRITE_AUTHORITY`, `RETRY_AUTHORITY`, `ROLLBACK_AUTHORITY`, `RECONCILE_AUTHORITY` |
+| Tool policy | Explicit allowlist/denylist; mark-ready, merge, direct default-branch mutation, force-push denied |
 | Negative tests | Unauthorized repo, expired token, OID mismatch, protected-main direct write, mark-ready/merge denied |
 | Evidence | Every attempt emits provenance-bearing Evidence suitable for Authority Claim Resolution |
 
@@ -195,47 +201,128 @@ Prefer Control Center Execution Policy binding
 
 ## 6. Authority Classes
 
-| Class | Permitted effects | Not permitted |
-| --- | --- | --- |
-| `RETRY_AUTHORITY` | Re-attempt same `logical_mutation_id` only after reconcile shows `EFFECT_NOT_APPLIED` and authority is CURRENT | Force push; change target SHA binding silently; mark ready/merge |
-| `ROLLBACK_AUTHORITY` | Compensating Draft PR / reverse patch under separate Human GO | Reuse routine WRITE token; silent overwrite |
-| `RECONCILE_AUTHORITY` | Readback, compare, ledger update, Evidence emission | Any mutating GitHub write |
-| `READY_AUTHORITY` / `MERGE_AUTHORITY` | **Out of pilot agent scope** | Agents must not hold these for V1 |
+| Class | Permitted effects | Preconditions | Not permitted |
+| --- | --- | --- | --- |
+| `DRAFT_PR_WRITE_AUTHORITY` | First allowlisted Draft-PR mutation attempt for one exact target binding and one `logical_mutation_id` | Explicit operation-scoped Human GO; repository safety eligibility PASS; authority CURRENT | Retry by implication; force push; default-branch direct mutation; mark ready/merge |
+| `RETRY_AUTHORITY` | Re-attempt the same `logical_mutation_id` only | Reconcile proves `EFFECT_NOT_APPLIED`; fresh explicit retry authority; target/capability still CURRENT | Initial WRITE; force push; silent target rebinding; mark ready/merge |
+| `ROLLBACK_AUTHORITY` | Compensating Draft PR / reverse patch | Separate Human GO and distinct operation identity | Reuse routine WRITE token; silent overwrite; mark ready/merge |
+| `RECONCILE_AUTHORITY` | Readback, compare, ledger update, Evidence emission | Target/read authority CURRENT | Any mutating GitHub write |
+| `READY_AUTHORITY` / `MERGE_AUTHORITY` | **Out of pilot agent scope** | N/A | Agents must not hold these for V1 |
 
-Human GO is **operation-scoped** and cannot clear BLOCKED.
+Human GO is **operation-scoped** and cannot clear BLOCKED. `RETRY_AUTHORITY` can
+never bootstrap the initial mutation. `ROLLBACK_AUTHORITY` can never be inferred
+from either initial WRITE or retry authority.
 
 ---
 
 ## 7. WRITE Attempt Protocol (normative for Definition)
 
-1. **Authorize** — verify Human GO identity, risk lane, authority class, capability snapshot.
-2. **Mint credential** — installation token narrowed to pilot repo + minimal permissions; record token scope Evidence (not secret material).
-3. **Bind target** — persist `repo`, `ref`, `expected_sha`, `logical_mutation_id`, `attempt_generation`.
-4. **Acquire lease** (if single-writer section) — owner + fence; reject stale fence.
-5. **Preflight re-read** — current tip OID must equal `expected_sha` else HOLD/DENY (stale preflight).
-6. **Mutate** — expected-OID compare-and-swap only; `force=false` / no force.
-7. **Readback** — compare against allowlisted path/churn policy; unexpected diff → HOLD + no auto-accept.
-8. **Ledger** — record EFFECT_APPLIED / NOT_APPLIED / UNKNOWN / CONFLICT with Evidence refs.
-9. **Release lease** — only after ledger durable.
-10. **Stop** — do not mark ready, merge, deploy, or LIVE WRITE.
+1. **Safety eligibility** — require Repository Safety Preconditions in §8 to PASS. If absent, failed, or UNKNOWN, Pilot WRITE is NOT ELIGIBLE.
+2. **Authorize** — verify Human GO identity, risk lane, exact authority class, capability snapshot. First attempt requires `DRAFT_PR_WRITE_AUTHORITY`.
+3. **Mint credential** — installation token narrowed to pilot repo + minimal permissions; record token scope Evidence (not secret material).
+4. **Bind target** — persist `repo`, `ref`, `expected_sha`, `logical_mutation_id`, `attempt_generation`.
+5. **Acquire lease** — owner + fence for mutating critical section; reject missing/expired/stale fence.
+6. **Preflight re-read** — current tip OID must equal `expected_sha` else HOLD/DENY (stale preflight).
+7. **Mutate** — only an operation in §8.2 allowlist; expected-OID compare-and-swap; `force=false` / no force.
+8. **Readback** — evaluate §8.3 unexpected-diff policy; violation → HOLD + no auto-accept.
+9. **Ledger** — record EFFECT_APPLIED / NOT_APPLIED / UNKNOWN / CONFLICT with Evidence refs.
+10. **Release lease** — only after ledger durable.
+11. **Stop** — do not mark ready, merge, deploy, or LIVE WRITE.
 
 Failure modes map to existing decisions: `DENY` / `HOLD` / `ASK_HUMAN` / `REAUTHORIZE_REQUIRED` / `RECONCILIATION_REQUIRED` / `DUPLICATE_MUTATION_PROHIBITED` / `STALE_LEASE_REJECTED`.
 
 ---
 
-## 8. Repository Safety Preconditions (pilot)
+## 8. Repository Safety Preconditions and Tool Policy (pilot)
 
-Pilot WRITE to a target repository SHOULD NOT begin until:
+### 8.1 Mandatory repository-safety eligibility
+
+Pilot WRITE to the target repository **MUST NOT begin** unless all of the following
+are positively observed and recorded as PASS immediately before the authorized
+pilot attempt:
 
 1. Target default branch has mechanical protection at least equivalent to WAEP
-   Stage 1 intent (PR required; conversation resolution; no force-push/delete),
-   or an explicit Human HOLD records accepted residual risk.
-2. Agent credentials are non-admin and not listed as bypass actors.
-3. Draft-PR-only tool policy is enforced at the Control Center PEP
-   (token coarseness may require policy deny even when permission bits are coarse).
+   Stage 1 intent: pull request required, conversation resolution required,
+   force-push disabled, deletion disabled.
+2. Agent credential is non-admin and is not a branch-protection/ruleset bypass actor.
+3. Draft-PR-only PEP policy is active and denies every operation in §8.2 denylist.
+4. Target repository/ref identity and expected default-branch SHA are readable and CURRENT.
 
-WAEP `main` Stage 1 mechanical apply remains a **separate** governance/ops gate
-(Research recorded Stage 1 as INCOMPLETE on coarse `protected=false`).
+If any required observation is `UNKNOWN`, unavailable, failed, or stale:
+
+```text
+Pilot WRITE eligibility = NOT ELIGIBLE
+Decision = HOLD / DENY as appropriate
+Human HOLD = record of unresolved state, NOT permission to accept residual risk
+```
+
+No Human HOLD/GO may waive these V1 mechanical prerequisites. Changing these
+prerequisites requires a separately reviewed Definition revision; it cannot be
+performed as runtime risk acceptance.
+
+WAEP `main` Stage 1 mechanical apply remains a **separate** governance/ops gate.
+This pilot eligibility rule concerns the selected target repository and does not
+itself authorize any branch-protection mutation.
+
+### 8.2 V1 GitHub operation allowlist / denylist
+
+The Control Center PEP MUST default-deny all GitHub mutations and expose only the
+following V1 mutation surface after `DRAFT_PR_WRITE_AUTHORITY` is valid.
+
+**Allowlist**
+
+- create one uniquely named non-default working branch from the bound `expected_sha`
+- create/update/delete files **only on that working branch** and only within the Human-GO-bound path allowlist
+- create one **Draft** PR from that working branch to the bound target default branch
+- read repository/ref/commit/compare/PR state needed for preflight and readback
+- write non-secret effect-ledger / Evidence references required by the pilot contract
+
+**Denylist**
+
+- direct mutation of the default/protected branch
+- force push or forced ref update
+- deletion or rewrite of protected/default refs
+- mark-ready / convert Draft PR to ready
+- merge / auto-merge / rebase-merge / squash-merge
+- branch-protection, ruleset, repository-setting, permission, collaborator, secret, workflow-permission, or installation mutation
+- release, deploy, environment approval, Production/LIVE WRITE
+- target repository/ref/path widening not present in the exact Human GO
+- creation of additional PRs for the same `logical_mutation_id` without reconcile + fresh authority
+
+An API permission being technically available does not make an operation
+allowlisted. PEP authorization is required independently.
+
+### 8.3 Unexpected-diff policy schema
+
+Each Human GO / mutation plan MUST bind a `diff_policy` before credential minting:
+
+```text
+diff_policy:
+  allowed_paths: exact path/prefix allowlist (non-empty)
+  forbidden_paths: explicit denylist; denylist wins
+  max_files_changed: positive integer
+  max_additions: non-negative integer
+  max_deletions: non-negative integer
+  allow_binary: false by default
+  allow_renames: false by default
+  expected_commit_count: exact integer for the attempt plan
+```
+
+Readback compares the bound base/expected SHA to the resulting working-branch
+head. The result is accepted only when **all** bound constraints pass. Any
+unlisted path, forbidden path, numeric threshold exceedance, unexpected binary,
+unexpected rename, unexpected commit count, or inability to evaluate a required
+constraint yields:
+
+```text
+Effect acceptance = NO
+Decision = HOLD
+Auto-retry = PROHIBITED
+Next = RECONCILE or fresh Human authority as dictated by effect state
+```
+
+Numeric values are not global WAEP constants; they are mandatory per-attempt
+Human-GO-bound constraints. Absence of a required value is fail-closed.
 
 ---
 
@@ -243,14 +330,21 @@ WAEP `main` Stage 1 mechanical apply remains a **separate** governance/ops gate
 
 | Case | Expected |
 | --- | --- |
+| No `DRAFT_PR_WRITE_AUTHORITY` on first mutation | PEP DENY |
+| RETRY authority presented for first mutation | PEP DENY |
+| Repository safety observation missing / UNKNOWN | NOT ELIGIBLE / HOLD |
 | Token for repo A used on repo B | Platform DENY |
 | Missing contents/PR write permission | Platform DENY |
 | Expired token | Platform DENY |
-| Direct update to protected default branch | Platform DENY |
+| Direct update to protected default branch | Platform / PEP DENY |
 | `expected_sha` ≠ current tip | Fail-closed HOLD/DENY |
+| Missing/expired/stale lease or fence | STALE_LEASE_REJECTED / DENY |
 | Retry after EFFECT_APPLIED without new authority | DUPLICATE_MUTATION_PROHIBITED |
 | Mark ready / merge tool invocation | PEP DENY |
-| Unexpected readback paths | HOLD |
+| Branch protection / ruleset mutation invocation | PEP DENY |
+| Path outside `diff_policy.allowed_paths` | HOLD |
+| `diff_policy` threshold exceeded | HOLD |
+| Required `diff_policy` field absent/unreadable | HOLD |
 
 ---
 
@@ -259,11 +353,14 @@ WAEP `main` Stage 1 mechanical apply remains a **separate** governance/ops gate
 Each attempt Evidence package MUST include:
 
 - Human GO reference (identity + operation class)
+- exact authority class, including `DRAFT_PR_WRITE_AUTHORITY` for first mutation
+- Repository Safety Preconditions observation + PASS identity
 - `logical_mutation_id`, `attempt_generation`
 - `repo`, `ref`, `expected_sha`, observed tip before/after
-- authority class
 - capability snapshot id / digest
-- lease/fence ids when used
+- credential scope summary (never token material)
+- lease owner/fence ids for every mutating critical section
+- bound `diff_policy` identity/digest
 - compare/readback summary refs (no secrets)
 - effect state + reconciliation refs when UNKNOWN
 
@@ -288,26 +385,40 @@ than duplicating a second authority model.
 
 ---
 
-## 12. Open Items (KNOWN GAP / UNKNOWN at Definition Start)
+## 12. Open Items after Definition Correction-1
 
-| ID | Item | Label |
+| ID | Item | Status |
 | --- | --- | --- |
-| OPEN-CWR-P-001 | Exact Control Center PEP implementation location/API | UNKNOWN (other repo) |
-| OPEN-CWR-P-002 | Fine-grained denial of mark-ready vs PR write permission coarseness | KNOWN GAP (policy PEP required) |
-| OPEN-CWR-P-003 | Unexpected-diff numeric thresholds (max files/churn) | KNOWN GAP (set at Correction/Review) |
-| OPEN-CWR-P-004 | Shared lease store across Control Center workers | UNKNOWN |
-| OPEN-CWR-P-005 | Themes 3–5 deferred research | DEFERRED |
+| OPEN-CWR-P-001 | Exact Control Center PEP implementation location/API | `KNOWN IMPLEMENTATION-SCOPE DEPENDENCY` — must be resolved in Implementation Scope Definition before Implementation Start |
+| OPEN-CWR-P-002 | Fine-grained denial of mark-ready vs PR write permission coarseness | `CLOSED AT DEFINITION` — explicit PEP allowlist/denylist in §8.2; implementation binding remains future scope |
+| OPEN-CWR-P-003 | Unexpected-diff numeric thresholds | `CLOSED AT DEFINITION` — mandatory per-attempt `diff_policy` schema in §8.3; values bound by exact Human GO/plan |
+| OPEN-CWR-P-004 | Shared lease store across Control Center workers | `KNOWN IMPLEMENTATION-SCOPE DEPENDENCY` — semantics fixed to DARK; concrete store must be resolved before Implementation Start |
+| OPEN-CWR-P-005 | Themes 3–5 deferred research | `DEFERRED / NON-BLOCKING FOR DEFINITION LOCK` only where clauses are not required by this V1 contract; any Implementation Scope dependency must be made explicit |
 
-Open items do not authorize Implementation. They must be closed or explicitly
-HOLD’d before Definition Lock.
+Definition Lock may close with implementation-location dependencies unresolved
+only when their **required semantics are fully fixed here** and Implementation
+Start remains blocked until the concrete binding is independently scope-reviewed.
+No UNKNOWN item may silently become implementation authority.
 
 ---
 
-## 13. Next Gate
+## 13. Correction-1 Closure Map
+
+| Review-1 Finding | Correction-1 closure |
+| --- | --- |
+| P1-1 Initial WRITE authority absent | Added `DRAFT_PR_WRITE_AUTHORITY`; first mutation requires explicit Human GO; RETRY cannot bootstrap initial WRITE |
+| P1-2 Repository safety precondition waivable | Changed to MUST/PASS eligibility; UNKNOWN/failed/stale = NOT ELIGIBLE; HOLD is not residual-risk acceptance |
+| P2-1 Draft-PR GitHub operation surface ambiguous | Added explicit default-deny allowlist/denylist in §8.2 |
+| P2-2 Unexpected diff policy incomplete | Added mandatory per-attempt `diff_policy` schema and fail-closed readback behavior in §8.3 |
+
+---
+
+## 14. Next Gate
 
 ```text
-Next Gate: Independent Definition Review-1
-Then: Correction (if required) → Re-Review → Definition Lock GO / HOLD
+Next Gate: exact diff inspection
+Then: Independent Definition Re-Review-1
+Then if PASS: Human Definition Lock GO / HOLD
 Definition Lock
   != Implementation Start
 Implementation Start

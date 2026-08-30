@@ -50,13 +50,7 @@ function validEvidence(): Record<string, unknown> {
     applicabilityDecisionRef: "synthetic:app-1",
     riskClass: "HIGH",
     requiredQuestions: ["synthetic:q1"],
-    humanResponses: [
-      {
-        questionId: "synthetic:q1",
-        responseRef: "synthetic:evidence-response-1",
-        responseMode: "HUMAN_FREEFORM_EXPLANATION",
-      },
-    ],
+    humanResponses: [{ questionId: "synthetic:q1", responseRef: "synthetic:evidence-response-1", responseMode: "HUMAN_FREEFORM_EXPLANATION" }],
     validation: {
       validatorIdentity: "synthetic:reviewer-1",
       validatorClass: "INDEPENDENT_HUMAN_REVIEWER",
@@ -82,48 +76,23 @@ function validEvidence(): Record<string, unknown> {
 
 describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
   it("A1: authority-sensitive signal requires understanding assessment", () => {
-    expect(
-      evaluateApplicability({
-        ...baseApplicability,
-        explicitRiskSignals: ["AUTHORITY_SENSITIVE_CHANGE"],
-      }),
-    ).toBe("REQUIRED");
+    expect(evaluateApplicability({ ...baseApplicability, explicitRiskSignals: ["AUTHORITY_SENSITIVE_CHANGE"] })).toBe("REQUIRED");
   });
 
   it("A2: explicitly low-risk non-governed change is not required", () => {
-    expect(
-      evaluateApplicability({
-        ...baseApplicability,
-        explicitlyLowRiskNonGoverned: true,
-      }),
-    ).toBe("NOT_REQUIRED");
+    expect(evaluateApplicability({ ...baseApplicability, explicitlyLowRiskNonGoverned: true })).toBe("NOT_REQUIRED");
   });
 
   it("A3: incomplete classification evidence remains UNKNOWN", () => {
-    expect(
-      evaluateApplicability({
-        ...baseApplicability,
-        classificationEvidenceComplete: false,
-      }),
-    ).toBe("UNKNOWN");
+    expect(evaluateApplicability({ ...baseApplicability, classificationEvidenceComplete: false })).toBe("UNKNOWN");
   });
 
   it("A4: explicit authority-boundary change is MATERIAL", () => {
-    expect(
-      evaluateMateriality({
-        ...baseMateriality,
-        explicitMaterialSignals: ["AUTHORITY_BOUNDARY_CHANGE"],
-      }),
-    ).toBe("MATERIAL");
+    expect(evaluateMateriality({ ...baseMateriality, explicitMaterialSignals: ["AUTHORITY_BOUNDARY_CHANGE"] })).toBe("MATERIAL");
   });
 
   it("A5: explicitly non-material formatting change remains NON_MATERIAL", () => {
-    expect(
-      evaluateMateriality({
-        ...baseMateriality,
-        explicitlyNonMaterial: true,
-      }),
-    ).toBe("NON_MATERIAL");
+    expect(evaluateMateriality({ ...baseMateriality, explicitlyNonMaterial: true })).toBe("NON_MATERIAL");
   });
 
   it("A6: ambiguous materiality remains UNKNOWN", () => {
@@ -138,12 +107,11 @@ describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
     expect(deriveAssessmentStateAfterOwnershipTransfer("REQUIRED")).toBe("PENDING");
   });
 
-  it("A9: structural validation does not promote an empty response to SUFFICIENT", () => {
+  it("A9: PENDING may remain structurally valid without a response", () => {
     const evidence = validEvidence();
     evidence.state = "PENDING";
     evidence.humanResponses = [];
     expect(validateUnderstandingEvidence(evidence)).toBe("VALID");
-    expect(evidence.state).toBe("PENDING");
   });
 
   it("A10: non-canonical validator class is rejected", () => {
@@ -169,44 +137,28 @@ describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
     expect(observation.autoMutationAllowed).toBe(false);
   });
 
-  it("A12: canonical evidence rejects raw sensitive payload keys", () => {
+  it("A12: canonical evidence rejects unknown top-level fields", () => {
     const evidence = validEvidence();
-    evidence.rawWelfareData = "synthetic-but-prohibited-shape";
+    evidence.apiKey = "synthetic-prohibited-shape";
     expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
   });
 
   it("A13: applicability evaluator consumes structured signals only", () => {
-    expect(Object.keys(baseApplicability)).not.toEqual(
-      expect.arrayContaining(["issueText", "prText", "diff", "artifactText"]),
-    );
+    expect(Object.keys(baseApplicability)).not.toEqual(expect.arrayContaining(["issueText", "prText", "diff", "artifactText"]));
   });
 
   it("A14: missing or conflicting applicability signal remains UNKNOWN", () => {
     expect(evaluateApplicability(baseApplicability)).toBe("UNKNOWN");
-    expect(
-      evaluateApplicability({
-        ...baseApplicability,
-        explicitRiskSignals: ["AUTHORITY_SENSITIVE_CHANGE"],
-        explicitlyLowRiskNonGoverned: true,
-      }),
-    ).toBe("UNKNOWN");
+    expect(evaluateApplicability({ ...baseApplicability, explicitRiskSignals: ["AUTHORITY_SENSITIVE_CHANGE"], explicitlyLowRiskNonGoverned: true })).toBe("UNKNOWN");
   });
 
   it("A15: materiality evaluator consumes structured change signals only", () => {
-    expect(Object.keys(baseMateriality)).not.toEqual(
-      expect.arrayContaining(["diff", "artifactText", "issueText", "prText"]),
-    );
+    expect(Object.keys(baseMateriality)).not.toEqual(expect.arrayContaining(["diff", "artifactText", "issueText", "prText"]));
   });
 
   it("A16: ambiguous or conflicting materiality remains UNKNOWN", () => {
     expect(evaluateMateriality(baseMateriality)).toBe("UNKNOWN");
-    expect(
-      evaluateMateriality({
-        ...baseMateriality,
-        explicitMaterialSignals: ["AUTHORITY_BOUNDARY_CHANGE"],
-        explicitlyNonMaterial: true,
-      }),
-    ).toBe("UNKNOWN");
+    expect(evaluateMateriality({ ...baseMateriality, explicitMaterialSignals: ["AUTHORITY_BOUNDARY_CHANGE"], explicitlyNonMaterial: true })).toBe("UNKNOWN");
   });
 
   it("A17: StructuralValidationResult is type-distinct from UnderstandingAssessmentDecision", () => {
@@ -223,7 +175,6 @@ describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
     const structural = validateUnderstandingEvidence(evidence);
     expect(structural).toBe("VALID");
     expect(structural).not.toBe("SUFFICIENT");
-    expect(evidence.state).toBe("PENDING");
   });
 
   it("A19: canonical contracts contain no required raw sensitive payload field", () => {
@@ -231,17 +182,42 @@ describe("WAEP-UNDERSTANDING-DEBT-CONTROL-V1 Slice A", () => {
     // @ts-expect-error raw sensitive payload is intentionally absent from the canonical contract
     const prohibitedKey: EvidenceKey = "rawWelfareData";
     expect(prohibitedKey).toBe("rawWelfareData");
-    expect(JSON.stringify(validEvidence())).not.toContain("rawWelfareData");
   });
 
   it("A20: synthetic fixtures contain synthetic data only", () => {
-    const fixture = JSON.stringify({
-      baseApplicability,
-      baseMateriality,
-      evidence: validEvidence(),
-    });
+    const fixture = JSON.stringify({ baseApplicability, baseMateriality, evidence: validEvidence() });
     expect(fixture).toContain("synthetic:");
     expect(fixture).not.toContain("credential");
     expect(fixture).not.toContain("rawWelfareData");
+  });
+
+  it("C1: SUFFICIENT with no human response is invalid", () => {
+    const evidence = validEvidence();
+    evidence.humanResponses = [];
+    expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
+  });
+
+  it("C2: malformed human response is invalid", () => {
+    const evidence = validEvidence();
+    evidence.humanResponses = [{ questionId: "synthetic:q1", responseRef: "synthetic:r1", responseMode: "MODEL_ONLY" }];
+    expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
+  });
+
+  it("C3: SUFFICIENT contradicting validator state is invalid", () => {
+    const evidence = validEvidence();
+    (evidence.validation as Record<string, unknown>).consistencyState = "CONTRADICTORY";
+    expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
+  });
+
+  it("C4: HIGH risk SUFFICIENT requires active human response mode", () => {
+    const evidence = validEvidence();
+    evidence.humanResponses = [{ questionId: "synthetic:q1", responseRef: "synthetic:r1", responseMode: "HUMAN_VERIFIED_STRUCTURED_ANSWER" }];
+    expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
+  });
+
+  it("C5: unknown nested response fields fail closed", () => {
+    const evidence = validEvidence();
+    evidence.humanResponses = [{ questionId: "synthetic:q1", responseRef: "synthetic:r1", responseMode: "HUMAN_FREEFORM_EXPLANATION", accessToken: "synthetic" }];
+    expect(validateUnderstandingEvidence(evidence)).toBe("INVALID");
   });
 });

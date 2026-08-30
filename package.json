@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:risk-detector": "tsc -p tsconfig.risk-detector.json",
+    "risk:classify": "npm run build:risk-detector --silent && node .waep-build/risk-detector/risk_detector/cli.js"
   },
   "devDependencies": {
     "@types/node": "22.18.0",

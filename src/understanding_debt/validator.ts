@@ -88,7 +88,7 @@ export function validateUnderstandingEvidence(
     return "INVALID";
   }
 
-  if (!ASSESSMENT_STATES.has(value.state)) {
+  if (typeof value.state !== "string" || !ASSESSMENT_STATES.has(value.state)) {
     return "INVALID";
   }
 
@@ -103,6 +103,7 @@ export function validateUnderstandingEvidence(
   if (!isRecord(value.subject)) {
     return "INVALID";
   }
+  const subject = value.subject;
 
   const subjectStrings = [
     "workstreamId",
@@ -113,26 +114,31 @@ export function validateUnderstandingEvidence(
     "ownershipContextRef",
     "gateContext",
   ];
-  if (subjectStrings.some((key) => !hasNonEmptyString(value.subject, key))) {
+  if (subjectStrings.some((key) => !hasNonEmptyString(subject, key))) {
     return "INVALID";
   }
 
   if (!isRecord(value.validation)) {
     return "INVALID";
   }
-  if (!hasNonEmptyString(value.validation, "validatorIdentity")) {
+  const validation = value.validation;
+
+  if (!hasNonEmptyString(validation, "validatorIdentity")) {
     return "INVALID";
   }
-  if (!VALIDATOR_CLASSES.has(value.validation.validatorClass as ValidatorClass)) {
-    return "INVALID";
-  }
-  if (!CONSISTENCY_STATES.has(value.validation.consistencyState)) {
+  if (!VALIDATOR_CLASSES.has(validation.validatorClass as ValidatorClass)) {
     return "INVALID";
   }
   if (
-    !Array.isArray(value.validation.contradictions) ||
-    !Array.isArray(value.validation.missingConcepts) ||
-    !Array.isArray(value.validation.evidenceRefs)
+    typeof validation.consistencyState !== "string" ||
+    !CONSISTENCY_STATES.has(validation.consistencyState)
+  ) {
+    return "INVALID";
+  }
+  if (
+    !Array.isArray(validation.contradictions) ||
+    !Array.isArray(validation.missingConcepts) ||
+    !Array.isArray(validation.evidenceRefs)
   ) {
     return "INVALID";
   }
@@ -140,10 +146,12 @@ export function validateUnderstandingEvidence(
   if (!isRecord(value.validatedAgainst)) {
     return "INVALID";
   }
-  if (!hasNonEmptyString(value.validatedAgainst, "definitionRef")) {
+  const validatedAgainst = value.validatedAgainst;
+
+  if (!hasNonEmptyString(validatedAgainst, "definitionRef")) {
     return "INVALID";
   }
-  if (!hasNonEmptyString(value.validatedAgainst, "semanticFingerprint")) {
+  if (!hasNonEmptyString(validatedAgainst, "semanticFingerprint")) {
     return "INVALID";
   }
 

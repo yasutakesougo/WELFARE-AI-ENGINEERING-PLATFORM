@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "risk:classify": "node --experimental-strip-types src/risk_detector/cli.ts"
   },
   "devDependencies": {
     "@types/node": "22.18.0",

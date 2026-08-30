@@ -1,0 +1,27 @@
+name: DKC-MSR #55 Main Integration Verifier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-55-synthetic-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ac3c4d26c89accb19a31eeb53858ac591dd258c7
+          persist-credentials: false
+      - name: Verify exact synthetic merge
+        run: test "$(git rev-parse HEAD)" = "ac3c4d26c89accb19a31eeb53858ac591dd258c7"
+      - name: Run DKC-MSR tests on current-main synthetic merge
+        run: python -m unittest discover -s tests/dkc_msr_kernel -p 'test_*.py' -v
+      - name: Verify no test mutation
+        run: test -z "$(git status --porcelain)"

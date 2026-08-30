@@ -1,6 +1,6 @@
 # WAEP-RISK-BASED-EXECUTION-GOVERNANCE-V1
 
-Status: Draft / Correction-1
+Status: Draft / Correction-2
 
 Scope: 個人開発特化
 
@@ -18,25 +18,34 @@ Default Mode: Fast / Autonomous / Reversible
 
 Production、Authority、Sensitive Data、Destructive / Irreversible Action、Significant External Costに関する危険境界だけFail-Closedとする。
 
+本Definitionは既存のCurrent AuthorityをDefinition単体で変更しない。
+
+Fast LaneへのAuthority移行は、別途明示されたAuthority Transitionによってのみ有効化する。
+
 ## 2. 基本原則
 
-- Defaultは`FAST`とする。
-- 通常領域の曖昧さだけを理由に実行を停止しない。
+- Default risk classificationは`FAST`とする。
+- `FAST`はRisk Decisionであり、未取得のExecution Authorityを自動生成しない。
+- 通常領域の曖昧さだけを理由にRisk Decisionを停止しない。
 - 危険境界に該当する可能性があり、必要なEvidenceを取得できない場合は`GOVERNED`へ昇格する。
 - Risk Detector自体の一般的な失敗だけで全変更をHOLDにしない。
 - Human GOで許可できない禁止状態は`BLOCKED`として`GOVERNED`と分離する。
-- Fast Laneに新しいHuman Gateを追加しない。
+- Authority Transition完了後のFast Laneに新しいHuman Gateを追加しない。
 - 可逆な操作を優先する。
 
 ## 3. Risk Decision
 
 Risk Detectorは、各変更を次の3状態のいずれかへ分類する。
 
+Risk DecisionとExecution Authorityは別の判定とする。
+
 ### 3.1 FAST
 
-AgentはHuman GOなしで継続できる。
+危険境界による追加Human Gateを必要としないRisk Decisionである。
 
-標準CIと自動検証を通過した場合はReady化およびAuto Mergeの対象にできる。
+Authority Transitionによって対象操作がFast Laneへ委任済みの場合、Agentは追加Human GOなしで継続できる。
+
+標準CIと自動検証を通過し、かつ対象Repositoryの有効なMerge Authority条件を満たす場合はReady化およびAuto Mergeの対象にできる。
 
 ### 3.2 GOVERNED
 
@@ -87,9 +96,9 @@ Permission、Role、Identity、Authentication、Authorizationの実効権限を�
 
 ## 5. Fast Lane
 
-R1からR5に該当しない変更は`FAST`とする。
+R1からR5に該当しない変更はRisk Decisionとして`FAST`とする。
 
-Agentが原則自律で実行できる操作には次を含む。
+Authority Transition完了後、Agentへ委任できる操作には次を含む。
 
 - 調査、設計、ドキュメント修正
 - synthetic fixtureの作成と修正
@@ -104,13 +113,17 @@ Agentが原則自律で実行できる操作には次を含む。
 - 破壊的でない軽微な依存関係更新
 - コメント、命名、内部構造の整理
 
+未移行の既存Authorityが対象操作に明示的なGateを要求する場合、そのGateはAuthority Transition完了まで有効とする。
+
 ## 6. UNKNOWNの扱い
 
-通常領域で判定に迷った場合は`FAST`とする。
+通常領域でRisk分類に迷った場合は`FAST`とする。
 
 R1からR5の危険境界に該当する可能性があり、必要なEvidenceを取得できない場合は`GOVERNED`とする。
 
 危険境界が存在するEvidenceがなく、Risk Detectorが単に追加情報を得られないという理由だけでは`GOVERNED`にしない。
+
+ただし、Execution AuthorityがUNKNOWNまたはSTALEである場合は、Risk Decisionが`FAST`でも実行可能状態へ昇格させない。
 
 ## 7. Risk Classification Timing
 
@@ -130,7 +143,7 @@ Auto Merge eligibilityはActual-Diff Classificationを使用する。
 
 ## 8. Fast Lane Execution Flow
 
-標準経路は次のとおりとする。
+Authority Transition完了後の標準経路は次のとおりとする。
 
 ```text
 Issue
@@ -153,6 +166,8 @@ PR時のFull Regressionは既定でblockingにしない。
 
 mainへのmerge後と定期実行でFull Regressionを行う。
 
+このフローは、Authority Transition未完了の既存Repository GateをDefinition単体で無効化しない。
+
 ## 9. Governed Lane Execution Flow
 
 ```text
@@ -165,13 +180,13 @@ Risk Detected
 → Execution / Merge
 ```
 
-Human GOは高リスク操作の実行Authorityだけを付与する。
+Human GOは対象として明示された高リスク操作のAuthorityだけを付与する。
 
 Human GOはテスト失敗、secret混入、禁止状態を上書きしない。
 
 ## 10. Auto Merge Eligibility
 
-Fast LaneのAuto Merge条件は次とする。
+Fast LaneのAuto Merge候補条件は次とする。
 
 ```text
 lane == FAST
@@ -179,11 +194,14 @@ AND requiredChecks == PASS
 AND blockingFinding == NONE
 AND mergeConflict == NONE
 AND repositoryMergeRequirementsSatisfied == TRUE
+AND mergeAuthority == VALID
 ```
 
 Agent Self Reviewは補助Evidenceとする。
 
 Agent Self ReviewだけをMerge Authorityとしてはならない。
+
+本DefinitionのLockまたはRisk Detectorの`FAST`判定だけでAuto Merge Authorityは成立しない。
 
 ## 11. Evidence
 
@@ -193,19 +211,25 @@ Governed LaneではRisk Signal、Human GO、追加検証結果、実行結果を
 
 BLOCKEDでは原因と修正後の再判定結果を保持する。
 
-## 12. 既存Gateとの関係
+## 12. 既存GateとAuthority Transition
 
-`Definition → Review → Correction → Re-Review → Lock`は日常のFast Laneから除外する。
+`Definition → Review → Correction → Re-Review → Lock`を、Authority Transition完了後の日常Fast Laneから除外することを目標とする。
 
-この完全なDefinition Gateは、Authority Contract、Security Boundary、Production Write Contractなどの基盤レベル変更に限定する。
+完全なDefinition Gateは、Authority Contract、Security Boundary、Production Write Contractなどの基盤レベル変更に限定する。
 
-Fast Laneに分類された変更について、既存Governance Artifactが追加のHuman Gateを要求している場合でも、そのGateが本DefinitionのR1からR5に直接対応しない限り、標準開発経路へ自動的に持ち込んではならない。
+ただし、本Definition自身は既存のCurrent Authority、Repository-local Authority、Ready Authority、Merge Authority、Deploy Authority、LIVE WRITE Authorityを上書きしない。
 
-既存Gateの存在だけを理由にFast LaneをGoverned Laneへ変更してはならない。
+既存GateをFast Laneから除外するには、対象Gateと対象操作を明示した別のAuthority Transitionを必要とする。
+
+Authority Transitionが存在しない、UNKNOWN、STALE、または対象範囲外の場合、既存Authorityを維持する。
+
+Authority Transition完了後は、R1からR5に直接対応しない旧Human Gateを標準Fast Laneへ再導入してはならない。
+
+この移行規則により、現行Authorityを守りながら、段階的に個人開発向けFast Laneへ移行する。
 
 ## 13. 運用目標
 
-次をV1の運用目標とする。
+Authority Transition完了後のV1運用目標を次とする。
 
 ```text
 Fast Lane Rate:                 >= 90%
@@ -231,7 +255,11 @@ Fast Laneで不要なガバナンスオーバーヘッドが増えていない�
 
 本Definitionは、新しい細粒度Gateの追加を目的としない。
 
-## 15. Correction-1 Closure
+本Definition単体で既存Execution Authorityを変更しない。
+
+## 15. Correction Closure
+
+### Correction-1
 
 - P1-1: dangerous-boundary UNKNOWNを`GOVERNED`へ昇格するルールを追加した。
 - P1-2: `FAST` / `GOVERNED` / `BLOCKED`を分離した。
@@ -239,10 +267,22 @@ Fast Laneで不要なガバナンスオーバーヘッドが増えていない�
 - P2-2: Fast Auto Merge eligibilityを明文化した。
 - P2-3: 既存GateのFast Laneへの自動再流入を禁止した。
 
+### Correction-2
+
+- P1-3: Risk DecisionとExecution Authorityを分離した。
+- P1-4: 本Definition単体による既存Authority上書きを禁止した。
+- P1-5: Fast Lane導入を明示的なAuthority Transitionに分離した。
+- P1-6: UNKNOWN / STALE Execution Authorityは`FAST`でも実行可能へ昇格させない。
+- P1-7: Auto Mergeに有効なMerge Authorityを必須化した。
+
 ## 16. Current Gate
 
-Definition State: DRAFT / CORRECTION-1
+Definition State: DRAFT / CORRECTION-2
 
 Implementation Start: NOT AUTHORIZED BY THIS DOCUMENT ALONE
 
-Next Gate: Independent Definition Re-Review-1
+Authority Transition: NOT AUTHORIZED BY THIS DOCUMENT ALONE
+
+Auto Merge Activation: NOT AUTHORIZED BY THIS DOCUMENT ALONE
+
+Next Gate: Independent Definition Re-Review-2

@@ -2,9 +2,13 @@
 
 ```text
 Document ID:        CWR-RESEARCH-REPORT-V1
-Revision:           Research Report Start
+Revision:           Research Report Correction-1
 Research Mission:   CWR-RESEARCH-MISSION-V1
-State:              RESEARCH EVIDENCE CANDIDATE
+State:              CORRECTED / NOT YET ACCEPTED
+Source Review:      Independent Research Evidence Review-1 (PR #92)
+Prior Verdict:      CORRECTION REQUIRED (P0:0 / P1:2 / P2:1)
+Prior Content Commit: 5c9468c525c3120b94fdd09b98e1c2774547a410
+Prior Report Blob:    7b5a12d14770cd0d4101d3196c6802643651b615
 Authority:          Research Evidence / Design Input only
 WAEP Adoption:      NOT AUTHORIZED BY THIS ARTIFACT
 Definition Lock:    NOT AUTHORIZED BY THIS ARTIFACT
@@ -34,6 +38,19 @@ Existing Control mapping
 This report collects primary Evidence for Controlled Write Readiness.
 It does not authorize repository mutation, branch-protection apply, token
 issuance, Control Plane activation, or Production WRITE.
+
+### 0.1 Provenance note on Correction-1
+
+Correction-1 is constrained to Independent Research Evidence Review-1 required
+closures only:
+
+1. P1-1 — FINDING-CWR-A04 ruleset plan / availability statement
+2. P1-2 — FINDING-CWR-A01 coarse live `protected=false` observation
+3. P2-1 — FINDING-CWR-B04 evidence-class labeling for exactly-once inference
+
+Authority boundary, Mission scope, and Findings outside that closure set remain
+unchanged from Research Report Start unless required for Evidence Registry
+consistency with the closures above.
 
 ## 1. Purpose and Scope
 
@@ -69,13 +86,15 @@ permitted).
 | Evidence ID | Class | Source |
 | --- | --- | --- |
 | EV-GH-BP-001 | Primary | [About protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) |
-| EV-GH-RS-001 | Primary | [About rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets) |
+| EV-GH-RS-001 | Primary | [About rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets) (capabilities; org-level Team/Enterprise wording) |
 | EV-GH-RS-002 | Primary | [REST API endpoints for rules](https://docs.github.com/en/rest/repos/rules) |
+| EV-GH-RS-003 | Primary | GitHub Docs reusable `data/reusables/gated-features/repo-rules.md` (plan gate: public Free; public+private Pro/Team/GHEC; push rulesets separately gated) — source: [github/docs](https://raw.githubusercontent.com/github/docs/main/data/reusables/gated-features/repo-rules.md) |
+| EV-GH-RS-004 | Primary | [Creating rulesets for a repository](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository) (org rulesets for Team/Enterprise; push rulesets for private/internal) |
 | EV-GH-APP-001 | Primary | [Generating an installation access token for a GitHub App](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app) |
 | EV-GH-REF-001 | Primary | [REST API endpoints for Git references](https://docs.github.com/en/rest/git/refs) |
 | EV-GH-GQL-001 | Primary | [GitHub GraphQL Git reference](https://docs.github.com/en/graphql/reference/git) (`RefUpdate.beforeOid`, `updateRef`, compare) |
 | EV-GH-CMP-001 | Primary | [Compare two commits](https://docs.github.com/en/rest/commits/commits#compare-two-commits) |
-| EV-WAEP-OBS-001 | Observation | Live API: `GET .../branches/main/protection` → 403; `GET .../rulesets` → 403 plan message; `risk-detector-ci.yml` present path-scoped |
+| EV-WAEP-OBS-001 | Observation | Live API (2026-08-30): `GET .../branches/main` → `protected=false`, `protection.enabled=false`; `GET .../branches/main/protection` → 403; `GET .../rulesets` → 403 “Upgrade to GitHub Pro or make this repository public…”; `risk-detector-ci.yml` path-scoped |
 | EV-WAEP-BP-GO-001 | Internal Governance | Stage 1 Human Governance GO on branch `docs/main-branch-protection-governance-v1` (mechanical apply pending) |
 | EV-WAEP-SB-001 | Internal Control | `src/security_boundary/` generation / write_target / fail-closed decisions |
 | EV-WAEP-DARK-001 | Internal Control | `src/durable_run_kernel/` lease / fence / effect reconciliation |
@@ -112,19 +131,23 @@ EV-WAEP-BP-GO-001 Stage 1 GO; EV-WAEP-RISK-001 Human Merge Authority remains
 separate from GitHub approval count.
 
 **Gap**  
-`KNOWN GAP` — Human GO recorded; live mechanical protection not confirmed under
-current integration (EV-WAEP-OBS-001: protection API 403). Observation cannot
-assert `protected: true`.
+`KNOWN GAP` — Human Governance GO for Stage 1 is recorded, but mechanical Stage 1
+apply is **INCOMPLETE**. Coarse live branch metadata observes protection OFF
+(`protected=false` / `protection.enabled=false`). Detailed protection endpoint
+readback remains capability-blocked (403) and must not be confused with an
+unknown/unconfirmed protected state.
 
 **Recommended action**  
 Treat Stage 1 apply as a Human Governance execution task with admin-capable
-actor; do not invent a new Definition. Re-verify protection state by exact SHA
-observation after apply. Keep `required approving reviews = 0` until a second
-human reviewer model exists (per Stage 1 rationale).
+actor; do not invent a new Definition. After apply, re-verify both coarse
+(`protected=true`) and detailed protection readback where capability permits.
+Keep `required approving reviews = 0` until a second human reviewer model exists
+(per Stage 1 rationale).
 
 **Confidence**  
-`HIGH` for GitHub capability; `HIGH` for WAEP Stage 1 mapping; `MEDIUM` for
-current live protected state (API denied).
+`HIGH` for GitHub capability; `HIGH` for WAEP Stage 1 mapping; `HIGH` for
+current coarse live state OFF (`protected=false`); detailed settings readback
+remains capability-blocked (403).
 
 ---
 
@@ -205,44 +228,65 @@ Do not treat check PASS as Human Merge GO.
 
 ---
 
-### FINDING-CWR-A04 — Rulesets are preferable long-term, but unavailable on current private Free plan path
+### FINDING-CWR-A04 — Rulesets are preferable long-term; current private path lacks repository rulesets until Pro or public
 
 **Finding**  
 Rulesets provide named rules, evaluate/active/disabled enforcement, layered
 aggregation (most restrictive wins), readable active rules for auditors, and
 explicit `bypass_actors` with modes (`always`, `pull_request`, `exempt`).
-Official docs state rulesets for repositories/organizations are available on
-GitHub Team and GitHub Enterprise plans (up to 75 rulesets). Classic branch
-protection remains available and layers with rulesets when both exist.
+
+Plan / product availability must be split by ruleset class:
+
+1. **Repository branch/tag rulesets** — available in **public** repositories on
+   GitHub Free / Free for organizations, and in **public and private**
+   repositories on GitHub Pro, GitHub Team, and GitHub Enterprise Cloud
+   (EV-GH-RS-003 gated-features reusable).
+2. **Organization-level rulesets** (multi-repo) — documented for customers on
+   GitHub Team and GitHub Enterprise plans (EV-GH-RS-001 / EV-GH-RS-004).
+3. **Push rulesets** — separately gated (private/internal; Team / GHEC wording in
+   EV-GH-RS-003 / EV-GH-RS-004). Do not conflate with branch/tag repository
+   rulesets.
+
+The opening sentence of About rulesets that mentions Team/Enterprise refers to
+org-scoped multi-repo application and must not be read as the sole repository
+branch/tag availability matrix.
+
+Classic branch protection remains available and layers with rulesets when both
+exist. Live WAEP observation: private repository rulesets API returns 403 with
+“Upgrade to GitHub Pro or make this repository public…”, which is consistent
+with EV-GH-RS-003.
 
 **Primary Evidence**  
-EV-GH-RS-001; EV-GH-RS-002 (`bypass_actors`, `required_status_checks`,
-`strict_required_status_checks_policy`); EV-WAEP-OBS-001 (`Upgrade to GitHub Pro
-or make this repository public to enable this feature` on rulesets API).
+EV-GH-RS-003 (plan gate); EV-GH-RS-001 / EV-GH-RS-004 (org-level and push
+distinctions; capabilities); EV-GH-RS-002 (`bypass_actors`,
+`required_status_checks`, `strict_required_status_checks_policy`);
+EV-WAEP-OBS-001 (live 403 plan message).
 
 **WAEP relevance**  
 Rulesets better match “Human GO + mechanical enforcement + audited bypass”
 because bypass is named and modes can preserve PR audit trail
-(`bypass_mode: pull_request`). Current WAEP private repository cannot rely on
-rulesets without plan/public change.
+(`bypass_mode: pull_request`). Current WAEP **private** repository cannot use
+repository rulesets without upgrading to Pro or making the repository public.
 
 **Existing WAEP control**  
 Existing assessment already chose classic branch protection as practical
 candidate when rulesets unavailable.
 
 **Gap**  
-`KNOWN GAP` — ruleset-based enforcement unavailable under observed plan.
-`UNKNOWN` — whether org-level Enterprise rulesets will later apply (no org
+`KNOWN GAP` — repository ruleset enforcement unavailable under the **observed
+current private/non-Pro plan path** (bound to EV-WAEP-OBS-001).  
+`UNKNOWN` — whether org-level Enterprise/Team rulesets will later apply (no org
 Enterprise Evidence collected in this report).
 
 **Recommended action**  
-Continue Stage 1/2 on classic protection; record rulesets as ADOPTION_CANDIDATE
-for future plan upgrade. Do not create a new WAEP subsystem for ruleset
+Continue Stage 1/2 on classic protection; record repository rulesets as
+ADOPTION_CANDIDATE contingent on Pro upgrade or public visibility — not as
+“Team/Enterprise only.” Do not create a new WAEP subsystem for ruleset
 management beyond governance documentation.
 
 **Confidence**  
-`HIGH` for official capability and current unavailability; `UNKNOWN` for future
-org Enterprise applicability.
+`HIGH` for repository ruleset plan gate (EV-GH-RS-003 + live 403); `HIGH` for
+current private unavailability; `UNKNOWN` for future org Enterprise applicability.
 
 ---
 
@@ -446,10 +490,10 @@ tamper expectation and assert HOLD.
 
 ---
 
-### FINDING-CWR-B04 — At-least-once delivery requires idempotency keys; exactly-once is not available
+### FINDING-CWR-B04 — At-least-once delivery requires idempotency keys; do not assume exactly-once WRITE
 
 **Finding**  
-Platform APIs and agents retry. Safe design assumes at-least-once invocation.
+Platform APIs and agents retry. Safe design **assumes at-least-once invocation**.
 DARK already distinguishes:
 
 - `EFFECT_APPLIED` → `DUPLICATE_MUTATION_PROHIBITED`
@@ -459,10 +503,22 @@ DARK already distinguishes:
 Logical mutation identity + attempt generation is the WAEP-native idempotency
 approach.
 
+**Evidence class (explicit)**  
+- **Primary:** GitHub concurrency primitives — expected OID / `beforeOid`,
+  fast-forward-only ref update (`force: false`) (EV-GH-GQL-001, EV-GH-REF-001).
+- **Primary (internal Control):** DARK effect ledger / lease / fence
+  (EV-WAEP-DARK-001).
+- **Design inference / absence-of-guarantee:** “no universal exactly-once WRITE
+  semantic across GitHub mutation APIs” is **not** a direct quotation from the
+  cited refs/GraphQL pages. Those pages document concurrency controls, not
+  delivery/retry semantics. The inference is architectural: because retries and
+  partial failures exist in distributed clients, WAEP must not rely on
+  exactly-once unless a primary source asserts it.
+
 **Primary Evidence**  
 EV-WAEP-DARK-001 (`effect_decision`, `logical_mutation_id`,
-`attempt_generation`); GitHub APIs provide concurrency controls but not a
-universal exactly-once WRITE semantic (EV-GH-REF-001 / EV-GH-GQL-001).
+`attempt_generation`); EV-GH-REF-001; EV-GH-GQL-001 (concurrency primitives
+only).
 
 **WAEP relevance**  
 Multi-agent duplicate Draft-PR / duplicate commit prevention for PHASE 3.
@@ -481,7 +537,9 @@ WRITE pilot evidence; on retry, reconcile before second mutate. Prefer lease
 ownership + fence token for single-writer critical sections.
 
 **Confidence**  
-`HIGH`
+`HIGH` for at-least-once design posture and DARK mapping; `HIGH` that cited
+GitHub docs provide concurrency primitives rather than an exactly-once delivery
+guarantee.
 
 ---
 
@@ -672,7 +730,8 @@ Implementation / WRITE execution: NOT AUTHORIZED
 1. **Execute Stage 1 classic protection** under existing Human Governance GO with
    admin-capable human/ops path; re-observe protection state (A01–A02).
 2. **Do not enable required checks** until stable always-on check names exist (A03).
-3. **Treat rulesets as future ADOPTION_CANDIDATE** given plan gate (A04).
+3. **Treat repository rulesets as ADOPTION_CANDIDATE** contingent on Pro or public
+   visibility; do not treat them as Team/Enterprise-only (A04).
 4. **Agents: no admin, no bypass_actor, narrowed installation tokens** (A05–A06, B06).
 5. **WRITE pilot contract Candidate** (map to Control Center Execution Policy, not
    new WAEP kernel):
@@ -698,7 +757,7 @@ Implementation / WRITE execution: NOT AUTHORIZED
 | CLAIM-CWR-A-RULESET-PLAN-GATE | A04 | Primary docs + live 403 observation |
 | CLAIM-CWR-A-TOKEN-NARROWING | A06 | Primary App docs |
 | CLAIM-CWR-B-SHA-BIND | B01, B02, B03 | Primary ref/compare/GraphQL + WAEP kernels |
-| CLAIM-CWR-B-IDEMPOTENCY | B04, B05 | WAEP DARK primary-in-repo + GitHub non-exactly-once |
+| CLAIM-CWR-B-IDEMPOTENCY | B04, B05 | WAEP DARK primary-in-repo + GitHub concurrency primitives; exactly-once absence = design inference |
 | CLAIM-CWR-B-AUTHZ-SEPARATION | B06, B07, B08 | Primary App docs + WAEP risk/DARK |
 
 ---
@@ -706,8 +765,11 @@ Implementation / WRITE execution: NOT AUTHORIZED
 ## 8. Next Gate
 
 ```text
-Next permissible gate: Independent Research Evidence Review
-Then: Human Research Evidence Acceptance GO / HOLD
+Independent Research Evidence Re-Review-1: PASS / RESEARCH EVIDENCE ACCEPTABLE
+  Archive: docs/research/reviews/independent-research-evidence-re-review-1.md
+Exact Diff Inspection: PASS
+  Archive: docs/research/reviews/cwr-research-report-correction-1-exact-diff-inspection.md
+Next permissible gate: Human Research Evidence Acceptance GO / HOLD
 Design Input eligibility: only after Acceptance GO
 Definition Lock / Implementation Start / WRITE: NOT AUTHORIZED BY THIS ARTIFACT
 ```

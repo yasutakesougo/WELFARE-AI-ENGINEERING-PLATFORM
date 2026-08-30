@@ -1,0 +1,8 @@
+base: f146e6544ba16f19be7237691a7d43efa955c36c
+implementation_commit: 24a3937680a25c8e0a5ce5e136dd1c98395d1f51
+src/domain/multiAgentCoordination.ts:
+  bytes: 57534
+  git_blob: 2e08f8d2eab7087441fac8dc358510f4e97c5b02
+test/multiAgentCoordination.test.ts:
+  bytes: 63545
+  git_blob: f2442daedc527afd53df4a609a9e1bedbd4b68d5

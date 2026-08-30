@@ -14,12 +14,20 @@ Merged By: yasutakesougo
 
 Governance State:
   MERGED WITHOUT RECORDED READY / MERGE AUTHORITY
+  (historical fact retained; not retroactively authorized)
 
-Classification:
-  AUTHORITY_DRIFT
-  + VERIFICATION_DEBT (technical evidence acquired post-merge; gate-order debt remains)
+AUTHORITY_DRIFT Human Disposition (2026-08-30 JST):
+  VERIFIED
+  → ACCEPTED AS GOVERNANCE FAILURE
+  → REMEDIATION RECORDED
+  → CLOSED
 
-This record does NOT retroactively authorize the merge.
+Technical correction (ADCC PR #120):
+  Exact-head npm run verify: PASS
+  Independent Implementation Re-Review: PASS / IMPLEMENTATION VERIFIED
+  Ready / Merge: NOT AUTHORIZED
+
+This record does NOT retroactively authorize the PR #119 merge.
 Revert / Deploy / LIVE WRITE: NOT AUTHORIZED
 ```
 
@@ -161,18 +169,17 @@ Decision basis:
   on the last recorded Independent Implementation Review-1.
 ```
 
-Candidate classification:
+Candidate classification / disposition:
 
 ```text
 class: AUTHORITY_DRIFT
 verificationState: VERIFIED (event trail + merge identity)
-dispositionState: OPEN
+dispositionState: CLOSED
+  (Human Disposition GO: ACCEPTED AS GOVERNANCE FAILURE / REMEDIATION RECORDED)
 autoMutationAllowed: false
-authorityRequired: MAINTENANCE_MUTATION / UNKNOWN pending disposition GO
-proposedAction:
-  Record Current-State reconciliation for the unauthorized merge event.
-  Do not revert automatically.
-  Do not Deploy / LIVE WRITE.
+historicalUnauthorizedMergeEvidence: RETAIN
+retroactiveAuthorization: NOT PERMITTED
+revert: NOT REQUIRED
 ```
 
 ## 4. Independent Post-Merge Review summary
@@ -181,23 +188,37 @@ See companion record:
 
 `docs/governance/reviews/portfolio-maintenance-manager-slice-a-independent-post-merge-review-1.md`
 
+Later technical correction superseded the earlier "Code Post-Merge Correction: NOT REQUIRED" statement. Correction is ADCC PR #120.
+
 ```text
-Content / tree integrity: PASS
-Executable verify on merge commit: PASS
-Authority-chain compliance: FAIL / AUTHORITY_DRIFT OPEN
-Code Post-Merge Correction: NOT REQUIRED on current evidence
-Current-State reconciliation: REQUIRED
-Revert: NOT AUTHORIZED
+PR #119 content / tree integrity at merge: PASS
+Executable verify on merge commit 1a3c3a1: PASS
+Authority-chain compliance at merge time: FAIL (now disposition CLOSED)
+PR #120 Correction exact-head verify: PASS
+PR #120 Independent Implementation Re-Review: PASS
+Revert: NOT AUTHORIZED / NOT REQUIRED by disposition
 Deploy / LIVE WRITE: NOT AUTHORIZED
+```
+
+Companion technical records:
+
+```text
+docs/governance/reviews/portfolio-maintenance-manager-slice-a-pr120-exact-head-verification-pass.md
+docs/governance/reviews/portfolio-maintenance-manager-slice-a-pr120-independent-implementation-re-review-pass.md
 ```
 
 ## 5. Current gate
 
 ```text
-Post-Merge Governance Reconciliation evidence pack: COMPLETE (this PR)
-Independent Post-Merge Review-1: COMPLETE
-Next: Current-State reconciliation for AUTHORITY_DRIFT
-      (separate human disposition / GO; no automatic revert)
+AUTHORITY_DRIFT disposition: CLOSED
+Historical unauthorized-merge evidence: RETAINED
+PR #120 exact-head verify: PASS
+PR #120 Independent Implementation Re-Review: PASS / IMPLEMENTATION VERIFIED
+Technical correction closure eligibility: YES
+
+Next:
+  separate Human Ready GO / HOLD for PR #120
+  (PR #89 and PR #120 Ready/Merge remain NOT AUTHORIZED here)
 ```
 
 ## Authority boundary

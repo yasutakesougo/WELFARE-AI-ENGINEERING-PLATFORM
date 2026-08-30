@@ -30,6 +30,7 @@ Base artifact head before Correction-1:
 
 ```text
 PR #91 prior head: 08f82fadd6137c85c0f354bc3297a3723420f816
+Correction-1 content commit: 95bbcd845be117d6b50e9de98234cbb5027d4ada
 ```
 
 ## Current Repository State
@@ -223,7 +224,7 @@ Exact open inventory:
 | #95 | yes | main `985f234…` | `41fdcb78d32e5ca5b8b3a03a48ff6daa4966da26` | HISTORICAL / DURABLE EVIDENCE for merged ADCC #122 exact-head verify PASS |
 | #93 | yes | `cursor/controlled-write-readiness-research-f8d5` | `1f4e83af04edaca4452c3b4b5373bcbf44e7af20` | STACKED_DEPENDENT / ACTIVE_CURRENT — Cross-Repo WRITE Pilot definition/authority lineage |
 | #92 | yes | main `985f234…` | `7575ea1f1d2198eda7715504481cf2804bb60e50` | ACTIVE_CURRENT — accepted Controlled Write Readiness research basis |
-| #91 | yes | main `985f234…` | (this Correction-1 head after commit) | ACTIVE_CURRENT — Current-State rebaseline Correction-1 |
+| #91 | yes | main `985f234…` | content `95bbcd845be117d6b50e9de98234cbb5027d4ada` + identity fixation HEAD | ACTIVE_CURRENT — Current-State rebaseline Correction-1 |
 | #87 | yes | main (behind live) | `5df0d7abfe901c533d44a980e632a237455fe06b` | ACTIVE_CURRENT / VERIFY_HOLD |
 | #60 | yes | main (behind live) | `a33c70832a905b1169ea39f660049494f368bbb6` | ACTIVE_CURRENT until Main Protection Stage 1 mechanical apply + readback COMPLETE |
 
@@ -324,8 +325,10 @@ WAEP main HEAD 985f234…:
   mechanical Ready: NOT COMPLETE (still DRAFT)
 
 #91 Correction-1:
+  content commit: 95bbcd845be117d6b50e9de98234cbb5027d4ada
   Independent Current-State Rebaseline Review-1: NOT YET STARTED
   Ready / Merge: NOT AUTHORIZED
+  Review target: exact PR #91 HEAD after identity fixation push
 ```
 
 ## Deploy and LIVE WRITE Authority

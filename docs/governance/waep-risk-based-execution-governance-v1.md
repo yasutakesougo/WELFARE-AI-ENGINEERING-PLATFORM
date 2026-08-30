@@ -1,6 +1,6 @@
 # WAEP-RISK-BASED-EXECUTION-GOVERNANCE-V1
 
-Status: PASS / LOCKABLE
+Status: LOCKED
 
 Scope: 個人開発特化
 
@@ -311,16 +311,26 @@ Auto Mergeは有効なMerge Authorityを別途要求する。
 
 本Re-ReviewはDefinition Lock、Implementation Start、Authority Transition、Ready、Merge、Deploy、LIVE WRITEを認可しない。
 
-## 17. Current Gate
+## 17. Human Definition Lock Decision
 
-Definition State: PASS / LOCKABLE
+Decision: GO
 
-Definition Lock: NOT AUTHORIZED
+Definition State: LOCKED
+
+Locked From Review State: Independent Definition Re-Review-2 PASS / LOCKABLE
 
 Implementation Start: NOT AUTHORIZED
 
 Authority Transition: NOT AUTHORIZED
 
+Ready: NOT AUTHORIZED
+
+Merge: NOT AUTHORIZED
+
 Auto Merge Activation: NOT AUTHORIZED
 
-Next Gate: Human Definition Lock GO / HOLD
+Deploy: NOT AUTHORIZED
+
+LIVE WRITE: NOT AUTHORIZED
+
+Next Gate: Implementation Start GO / HOLD

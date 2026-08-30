@@ -1,6 +1,6 @@
 # WAEP-RISK-BASED-EXECUTION-GOVERNANCE-V1
 
-Status: Draft / Correction-2
+Status: PASS / LOCKABLE
 
 Scope: 個人開発特化
 
@@ -275,14 +275,36 @@ Fast Laneで不要なガバナンスオーバーヘッドが増えていない�
 - P1-6: UNKNOWN / STALE Execution Authorityは`FAST`でも実行可能へ昇格させない。
 - P1-7: Auto Mergeに有効なMerge Authorityを必須化した。
 
-## 16. Current Gate
+## 16. Independent Definition Re-Review-2
 
-Definition State: DRAFT / CORRECTION-2
+Verdict: PASS / LOCKABLE
 
-Implementation Start: NOT AUTHORIZED BY THIS DOCUMENT ALONE
+P0: 0
 
-Authority Transition: NOT AUTHORIZED BY THIS DOCUMENT ALONE
+P1: 0
 
-Auto Merge Activation: NOT AUTHORIZED BY THIS DOCUMENT ALONE
+P2: 0
 
-Next Gate: Independent Definition Re-Review-2
+Correction-2は、Risk DecisionとExecution Authorityを分離し、Current Authorityの独立GateをDefinition単体で上書きしない。
+
+UNKNOWN / STALE Execution Authorityは実行可能へ昇格しない。
+
+Auto Mergeは有効なMerge Authorityを別途要求する。
+
+個人開発向けFast Laneは、明示的なAuthority Transition後にのみ既存Gateを置換する。
+
+本Re-ReviewはDefinition Lock、Implementation Start、Authority Transition、Ready、Merge、Deploy、LIVE WRITEを認可しない。
+
+## 17. Current Gate
+
+Definition State: PASS / LOCKABLE
+
+Definition Lock: NOT AUTHORIZED
+
+Implementation Start: NOT AUTHORIZED
+
+Authority Transition: NOT AUTHORIZED
+
+Auto Merge Activation: NOT AUTHORIZED
+
+Next Gate: Human Definition Lock GO / HOLD

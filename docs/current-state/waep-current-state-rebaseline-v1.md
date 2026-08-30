@@ -18,7 +18,7 @@ WAEP PR #89 と ADCC PR #121 の merge 後に、4つの主要RepositoryのCurren
 | --- | --- | --- | ---: |
 | WELFARE-AI-ENGINEERING-PLATFORM | Portfolio / Knowledge Authority | `985f2342385296df1333723790778367f0a931c8` | 12 |
 | ai-development-control-center | Agent Control Plane | `7985df87e09075e36af2b3af5f3446e742044004` | 3 |
-| severe-behavior-support-spfx | Engineering Validation | `66219ae16c3f2ca1ebee7bbe5b479c8286ac79e8` | 10 |
+| severe-behavior-support-spfx | Engineering Validation | `66219ae16c3f2ca1ebee7bbe5b479c8286ac79e8` | 11 |
 | audit-management-system-mvp | Production Learning | `acb5ec3f97f7a1d7ee27c3ba0cf0a61f92894ee6` | 24 |
 
 ## WAEP main safety state
@@ -131,7 +131,7 @@ Observed open PRs:
 #528 #527 #526 #525 #516 #506 #505 #504 #491 #489 #481
 ```
 
-The search returned 10 current entries while the listed working set contains overlapping historical/governance chains.
+The search returned 11 open PRs.
 
 Before any merge or release action, each PR must be classified as ACTIVE_CURRENT, READY_FOR_CURRENT_GATE, SUPERSEDED, HISTORICAL_EVIDENCE_ONLY, or ABANDON/CLOSE.
 
@@ -174,7 +174,7 @@ Stage 1 readback: FAIL / NOT APPLIED
 ```text
 WAEP open PRs: 12
 ADCC open PRs: 3
-SPFx open PRs: at least 10 observed in current search set
+SPFx open PRs: 11
 Audit open PRs: 24
 unknown disposition: non-zero
 ```

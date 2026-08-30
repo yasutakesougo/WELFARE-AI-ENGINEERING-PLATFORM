@@ -31,6 +31,7 @@ export type LifecycleState =
   | "UNKNOWN";
 export type ReconciliationState = "CONSISTENT" | "DRIFT_DETECTED" | "CONFLICT" | "INCOMPLETE" | "UNKNOWN";
 export type SensitivityCurrentness = "CURRENT" | "STALE" | "SUPERSEDED" | "UNKNOWN";
+export type FreshnessRuleResult = "CURRENT" | "STALE" | "UNKNOWN";
 
 export interface BindingSnapshot {
   snapshotRef: string;
@@ -130,6 +131,8 @@ export interface CanonicalityInput {
   bindings: readonly SourceBinding[];
   authorityByClaimRef: Readonly<Record<string, AuthorityResolution>>;
   referenceTime: string;
+  targetScopeRef: string;
+  targetFieldOrDomainRef: string | "WHOLE_ASSET";
 }
 
 function parseTime(value: string | "UNKNOWN"): number | null {
@@ -141,26 +144,34 @@ function parseTime(value: string | "UNKNOWN"): number | null {
 function bindingIsEffective(binding: SourceBinding, referenceTime: number): boolean | null {
   const from = parseTime(binding.effectiveFrom);
   const to = parseTime(binding.effectiveTo);
-  if (binding.effectiveFrom !== "UNKNOWN" && from === null) return null;
-  if (binding.effectiveTo !== "UNKNOWN" && to === null) return null;
-  if (from !== null && referenceTime < from) return false;
-  if (to !== null && referenceTime >= to) return false;
+  if (from === null || to === null) return null;
+  if (referenceTime < from) return false;
+  if (referenceTime >= to) return false;
   return true;
+}
+
+function bindingMatchesTarget(binding: SourceBinding, input: CanonicalityInput): boolean {
+  return binding.scopeRef === input.targetScopeRef && binding.fieldOrDomainRef === input.targetFieldOrDomainRef;
 }
 
 export function evaluateCanonicality(input: CanonicalityInput): CanonicalityState {
   const referenceTime = parseTime(input.referenceTime);
   if (referenceTime === null) return "UNKNOWN";
 
-  const current = input.bindings.filter((binding) => {
-    const effective = bindingIsEffective(binding, referenceTime);
-    return binding.state === "CURRENT" && effective === true;
-  });
+  const competing = input.bindings.filter((binding) => bindingMatchesTarget(binding, input));
+  if (competing.length === 0) return "UNVERIFIED";
+  if (competing.some((binding) => binding.state === "CONFLICT")) return "CONFLICT";
 
-  if (input.bindings.some((binding) => binding.state === "CONFLICT")) return "CONFLICT";
-  if (current.length === 0) {
-    return input.bindings.some((binding) => binding.state === "SUPERSEDED") ? "SUPERSEDED" : "UNVERIFIED";
+  const currentCandidates = competing.filter((binding) => binding.state === "CURRENT");
+  if (currentCandidates.length === 0) {
+    return competing.some((binding) => binding.state === "SUPERSEDED") ? "SUPERSEDED" : "UNVERIFIED";
   }
+
+  const effectiveResults = currentCandidates.map((binding) => ({ binding, effective: bindingIsEffective(binding, referenceTime) }));
+  if (effectiveResults.some(({ effective }) => effective === null)) return "UNKNOWN";
+
+  const current = effectiveResults.filter(({ effective }) => effective === true).map(({ binding }) => binding);
+  if (current.length === 0) return "UNVERIFIED";
 
   const unresolvedAuthority = current.some(
     (binding) =>
@@ -176,10 +187,9 @@ export function evaluateCanonicality(input: CanonicalityInput): CanonicalityStat
   if (valid.length === 0) return "UNVERIFIED";
   if (valid.length === 1) return "CURRENT";
 
-  const numericPrecedence = valid.filter((binding) => typeof binding.precedence === "number");
-  if (numericPrecedence.length !== valid.length) return "CONFLICT";
-  const best = Math.min(...numericPrecedence.map((binding) => binding.precedence as number));
-  return numericPrecedence.filter((binding) => binding.precedence === best).length === 1 ? "CURRENT" : "CONFLICT";
+  if (valid.some((binding) => typeof binding.precedence !== "number")) return "CONFLICT";
+  const best = Math.min(...valid.map((binding) => binding.precedence as number));
+  return valid.filter((binding) => binding.precedence === best).length === 1 ? "CURRENT" : "CONFLICT";
 }
 
 export interface DecisionValidityInput {
@@ -213,9 +223,7 @@ export function evaluateUseEligibility(input: UseEligibilityInput): UseEligibili
     input.authorityResolution === "UNKNOWN" ||
     input.sensitivityCurrentness !== "CURRENT" ||
     input.bindingCurrentness !== "CURRENT"
-  ) {
-    return "UNKNOWN";
-  }
+  ) return "UNKNOWN";
   return "USE_ELIGIBLE";
 }
 
@@ -276,6 +284,7 @@ export interface SensitivityCurrentnessInput {
   policyVersionChanged: boolean | "UNKNOWN";
   bindingMateriallyChanged: boolean | "UNKNOWN";
   decisionSuperseded: boolean | "UNKNOWN";
+  freshnessRuleResult: FreshnessRuleResult;
 }
 
 export function evaluateSensitivityCurrentness(input: SensitivityCurrentnessInput): SensitivityCurrentness {
@@ -288,11 +297,15 @@ export function evaluateSensitivityCurrentness(input: SensitivityCurrentnessInpu
     input.classification.reviewedAt === "UNKNOWN" ||
     input.policyVersionChanged === "UNKNOWN" ||
     input.bindingMateriallyChanged === "UNKNOWN" ||
-    input.decisionSuperseded === "UNKNOWN"
-  ) {
-    return "UNKNOWN";
-  }
-  if (input.policyVersionChanged || input.bindingMateriallyChanged || input.classification.freshnessState === "STALE") return "STALE";
+    input.decisionSuperseded === "UNKNOWN" ||
+    input.freshnessRuleResult === "UNKNOWN"
+  ) return "UNKNOWN";
+  if (
+    input.policyVersionChanged ||
+    input.bindingMateriallyChanged ||
+    input.classification.freshnessState === "STALE" ||
+    input.freshnessRuleResult === "STALE"
+  ) return "STALE";
   if (input.classification.freshnessState !== "CURRENT") return "UNKNOWN";
   return "CURRENT";
 }

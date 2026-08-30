@@ -267,6 +267,22 @@ Fast Laneで不要なガバナンスオーバーヘッドが増えていない�
 - P2-2: Fast Auto Merge eligibilityを明文化した。
 - P2-3: 既存GateのFast Laneへの自動再流入を禁止した。
 
+### Independent Definition Re-Review-1
+
+Verdict: CORRECTION REQUIRED
+
+P0: 0
+
+P1: 1
+
+P2: 0
+
+Finding:
+Correction-1は、既存GateをFast Laneから除外する規則とCurrent Authorityの独立Gate維持規則との優先関係を十分に固定していなかった。
+
+Required Correction:
+Risk DecisionとExecution Authorityを分離し、本Definition単体による既存Authority上書きを禁止する。
+
 ### Correction-2
 
 - P1-3: Risk DecisionとExecution Authorityを分離した。

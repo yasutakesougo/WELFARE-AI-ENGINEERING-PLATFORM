@@ -10,7 +10,7 @@ async function main(): Promise<void> {
     const decision = classifyRisk(materialized.input);
     const evidence = buildRiskEvidence(decision, {
       evidenceComplete: materialized.evidenceComplete,
-      sourceIdentity: materialized.sourceIdentity
+      ...(materialized.sourceIdentity ? { sourceIdentity: materialized.sourceIdentity } : {})
     });
     process.stdout.write(`${JSON.stringify({ evidence, limitations: materialized.limitations }, null, 2)}\n`);
   } catch (error) {

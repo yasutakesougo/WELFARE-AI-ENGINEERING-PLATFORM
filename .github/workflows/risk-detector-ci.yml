@@ -47,6 +47,9 @@ jobs:
       - name: Run Risk Detector tests
         run: npm test -- tests/risk_detector/classifier.test.ts
 
+      - name: Remove expected ephemeral outputs
+        run: rm -rf node_modules .waep-build
+
       - name: Verify repository remains clean
         run: |
           git status --porcelain

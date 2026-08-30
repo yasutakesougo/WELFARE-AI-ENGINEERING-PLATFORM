@@ -33,8 +33,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies without lockfile mutation
+        run: npm install --package-lock=false
 
       - name: Typecheck
         run: npm run typecheck

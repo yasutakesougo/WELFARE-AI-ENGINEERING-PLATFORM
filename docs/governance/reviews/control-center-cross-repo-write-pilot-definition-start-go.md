@@ -36,6 +36,7 @@ LIVE WRITE:               NOT AUTHORIZED
 Cross-Repository Mutation Execution: NOT AUTHORIZED
 Production WRITE Execution: NOT AUTHORIZED
 Branch Protection Mutation: NOT AUTHORIZED BY THIS GO
+Definition Start Commit:  9c5962f6e3bed21a550f1a96c51391c5e8d9bcbf
 Definition Start Blob:    38f371e40fb0bf18fa5710369083d484acf3300d
 Definition Start Bytes:   11970
 Definition Start SHA-256: b51b584b4ad3cb1957c61280e3e03a467af436ff34889347e16fc064d67cf285

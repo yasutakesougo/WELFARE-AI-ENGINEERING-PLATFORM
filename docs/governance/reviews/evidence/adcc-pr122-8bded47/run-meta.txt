@@ -1,0 +1,13 @@
+start_utc=2026-08-30T11:40:56Z
+node=v22.14.0
+npm=10.9.7
+runner=cursor-cloud bc-01a05277-e68b-7867-b0e2-cbcdccf783f3
+target_head=8bded4750841c803315e37d7ef49d99e12c75b63
+revparse=8bded4750841c803315e37d7ef49d99e12c75b63
+npm_ci_exit=0
+verify_exit=0
+post_revparse=8bded4750841c803315e37d7ef49d99e12c75b63
+end_utc=2026-08-30T11:41:10Z
+tests=43 files / 937 tests
+typecheck=PASS
+build=PASS

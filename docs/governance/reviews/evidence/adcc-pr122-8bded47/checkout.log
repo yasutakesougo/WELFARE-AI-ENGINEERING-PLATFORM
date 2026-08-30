@@ -1,0 +1,6 @@
+ * branch            8bded4750841c803315e37d7ef49d99e12c75b63 -> FETCH_HEAD
+Note: switching to '8bded4750841c803315e37d7ef49d99e12c75b63'.
+state without impacting any branches by switching back to a branch.
+If you want to create a new branch to retain commits you create, you may
+  git switch -c <new-branch-name>
+HEAD is now at 8bded47 test: add atomic lease race and effect store coverage

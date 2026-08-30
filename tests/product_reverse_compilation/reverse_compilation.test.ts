@@ -39,6 +39,15 @@ describe("product reverse compilation guardrails", () => {
     expect(claim.source.freshness).toBe("CURRENT");
   });
 
+  it("preserves conflict as an explicit verification state", () => {
+    const claim = createClaim({
+      ...observedClaim,
+      verificationState: "CONFLICT",
+      validationEvidence: undefined,
+    });
+    expect(claim.verificationState).toBe("CONFLICT");
+  });
+
   it("fails closed for unknown or sensitive artifact authority", () => {
     expect(canPersistSource("AUTHORITY_UNKNOWN")).toBe(false);
     expect(canPersistSource("SENSITIVE_DATA_PRESENT")).toBe(false);
@@ -101,6 +110,24 @@ describe("product reverse compilation guardrails", () => {
     expect(() => capPatternMaturity("PROMOTED_KNOWLEDGE")).toThrow(
       /outside reverse-compilation authority/,
     );
+  });
+
+  it("rejects candidate provenance that does not resolve to a claim", () => {
+    expect(() =>
+      buildReverseEngineeringPack({
+        sourceIdentity: source,
+        claims: [observedClaim],
+        designDecisionCandidates: [
+          {
+            candidateId: "decision-1",
+            sourceClaimIds: ["missing-claim"],
+            candidateDecision: "use controlled transition",
+            derivationClass: "SUPPORTED_INFERENCE",
+            verificationState: "UNVERIFIED",
+          },
+        ],
+      }),
+    ).toThrow(/existing claim ids/);
   });
 
   it("assembles behavioral abstraction without copied expression", () => {

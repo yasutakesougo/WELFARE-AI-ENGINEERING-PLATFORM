@@ -70,6 +70,37 @@ export function capPatternMaturity(requested: PatternMaturity): PatternMaturity 
   return requested;
 }
 
+function assertClaimRefsExist(sourceClaimIds: string[], claimIds: ReadonlySet<string>): void {
+  if (sourceClaimIds.length === 0 || sourceClaimIds.some((claimId) => !claimIds.has(claimId))) {
+    throw new Error("candidate provenance must reference existing claim ids");
+  }
+}
+
+function validateDesignDecision(
+  candidate: DesignDecisionCandidate,
+  claimIds: ReadonlySet<string>,
+): DesignDecisionCandidate {
+  assertClaimRefsExist(candidate.sourceClaimIds, claimIds);
+  if (
+    candidate.verificationState === "VERIFIED" &&
+    candidate.derivationClass === "SPECULATIVE_INFERENCE"
+  ) {
+    throw new Error("speculative design decision cannot be VERIFIED");
+  }
+  return candidate;
+}
+
+function validatePatternCandidate(
+  candidate: PatternCandidate,
+  claimIds: ReadonlySet<string>,
+): PatternCandidate {
+  assertClaimRefsExist(candidate.sourceClaimIds, claimIds);
+  return {
+    ...candidate,
+    maturity: capPatternMaturity(candidate.maturity),
+  };
+}
+
 export function buildReverseEngineeringPack(input: {
   sourceIdentity: SourceSnapshot;
   claims: EvidenceClaim[];
@@ -83,15 +114,18 @@ export function buildReverseEngineeringPack(input: {
   }
 
   const claims = input.claims.map(createClaim);
-  const patternCandidates = (input.patternCandidates ?? []).map((pattern) => ({
-    ...pattern,
-    maturity: capPatternMaturity(pattern.maturity),
-  }));
+  const claimIds = new Set(claims.map((claim) => claim.claimId));
+  const designDecisionCandidates = (input.designDecisionCandidates ?? []).map((candidate) =>
+    validateDesignDecision(candidate, claimIds),
+  );
+  const patternCandidates = (input.patternCandidates ?? []).map((candidate) =>
+    validatePatternCandidate(candidate, claimIds),
+  );
 
   return {
     sourceIdentity: input.sourceIdentity,
     claims,
-    designDecisionCandidates: input.designDecisionCandidates ?? [],
+    designDecisionCandidates,
     patternCandidates,
     unknowns: input.unknowns ?? [],
     minimumReproductionModel: {

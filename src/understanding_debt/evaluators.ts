@@ -13,11 +13,18 @@ export function evaluateApplicability(
     return "UNKNOWN";
   }
 
-  if (input.explicitRiskSignals.length > 0) {
+  const hasRequiredSignal = input.explicitRiskSignals.length > 0;
+  const hasNotRequiredSignal = input.explicitlyLowRiskNonGoverned === true;
+
+  if (hasRequiredSignal && hasNotRequiredSignal) {
+    return "UNKNOWN";
+  }
+
+  if (hasRequiredSignal) {
     return "REQUIRED";
   }
 
-  if (input.explicitlyLowRiskNonGoverned === true) {
+  if (hasNotRequiredSignal) {
     return "NOT_REQUIRED";
   }
 
@@ -31,11 +38,18 @@ export function evaluateMateriality(
     return "UNKNOWN";
   }
 
-  if (input.explicitMaterialSignals.length > 0) {
+  const hasMaterialSignal = input.explicitMaterialSignals.length > 0;
+  const hasNonMaterialSignal = input.explicitlyNonMaterial;
+
+  if (hasMaterialSignal && hasNonMaterialSignal) {
+    return "UNKNOWN";
+  }
+
+  if (hasMaterialSignal) {
     return "MATERIAL";
   }
 
-  if (input.explicitlyNonMaterial) {
+  if (hasNonMaterialSignal) {
     return "NON_MATERIAL";
   }
 

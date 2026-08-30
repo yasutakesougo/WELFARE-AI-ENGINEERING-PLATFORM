@@ -15,11 +15,11 @@ jobs:
       - name: Checkout exact implementation head
         uses: actions/checkout@v4
         with:
-          ref: 336826cd236ba8a8cb10cd0be518bc533e712496
+          ref: 3c1d214ac759ffce61e4d4f8163d2c2b276c4afe
           persist-credentials: false
           fetch-depth: 1
       - name: Verify exact head
-        run: test "$(git rev-parse HEAD)" = "336826cd236ba8a8cb10cd0be518bc533e712496"
+        run: test "$(git rev-parse HEAD)" = "3c1d214ac759ffce61e4d4f8163d2c2b276c4afe"
       - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
@@ -31,7 +31,7 @@ jobs:
       - name: Build Risk Detector
         run: npm run build:risk-detector
       - name: Run complete Risk Detector tests
-        run: npm test -- tests/risk_detector/classifier.test.ts tests/risk_detector/materialize.test.ts tests/risk_detector/evidence.test.ts
+        run: npm test -- tests/risk_detector/classifier.test.ts tests/risk_detector/materialize.test.ts tests/risk_detector/evidence.test.ts tests/risk_detector/repository.test.ts
       - name: Remove expected ephemeral outputs
         run: rm -rf node_modules .waep-build
       - name: Verify repository remains clean

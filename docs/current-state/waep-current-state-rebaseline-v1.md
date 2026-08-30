@@ -32,6 +32,9 @@ Base artifact head before Correction-1:
 ```text
 PR #91 prior head: 08f82fadd6137c85c0f354bc3297a3723420f816
 Correction-1 content commit: 95bbcd845be117d6b50e9de98234cbb5027d4ada
+Correction-1 identity commit: 839458bc02e037b2106a3100200f27e1007c0746
+Correction-1 inventory-amend commit: e04d0df0628502838db7677e92f85ab41ff26cfc
+Independent Review-1 target: live PR #91 headRefOid after these commits (fail-closed to exact SHA at review start)
 ```
 
 ## Current Repository State
@@ -221,12 +224,12 @@ Exact open inventory:
 
 | PR | Draft | Base | Head SHA | Disposition |
 | --- | --- | --- | --- | --- |
-| #98 | yes | main `985f234…` | `839458bc02e037b2106a3100200f27e1007c0746` | DUPLICATE_TRACKING — same Correction-1 commits as #91; not a second merge vehicle |
+| #98 | yes | main `985f234…` | same as #91 live head | DUPLICATE_TRACKING — same Correction-1 commits as #91; not a second merge vehicle |
 | #97 | yes | main `985f234…` | `aa571edc1a2f937d2b47b5253f5f46f126dffbd5` | READY_FOR_CURRENT_GATE — Human Ready GO recorded; mechanical Draft→Ready NOT COMPLETE; Merge GO NOT AUTHORIZED |
 | #95 | yes | main `985f234…` | `41fdcb78d32e5ca5b8b3a03a48ff6daa4966da26` | HISTORICAL / DURABLE EVIDENCE for merged ADCC #122 exact-head verify PASS |
 | #93 | yes | `cursor/controlled-write-readiness-research-f8d5` | `1f4e83af04edaca4452c3b4b5373bcbf44e7af20` | STACKED_DEPENDENT / ACTIVE_CURRENT — Cross-Repo WRITE Pilot definition/authority lineage |
 | #92 | yes | main `985f234…` | `7575ea1f1d2198eda7715504481cf2804bb60e50` | ACTIVE_CURRENT — accepted Controlled Write Readiness research basis |
-| #91 | yes | main `985f234…` | content `95bbcd845be117d6b50e9de98234cbb5027d4ada` + identity HEAD `839458bc02e037b2106a3100200f27e1007c0746` | ACTIVE_CURRENT — Current-State rebaseline Correction-1 (canonical review surface) |
+| #91 | yes | main `985f234…` | live head after Correction-1 commits (content `95bbcd8…`) | ACTIVE_CURRENT — Current-State rebaseline Correction-1 (canonical review surface) |
 | #87 | yes | main (behind live) | `5df0d7abfe901c533d44a980e632a237455fe06b` | ACTIVE_CURRENT / VERIFY_HOLD |
 | #60 | yes | main (behind live) | `a33c70832a905b1169ea39f660049494f368bbb6` | ACTIVE_CURRENT until Main Protection Stage 1 mechanical apply + readback COMPLETE |
 
@@ -331,9 +334,11 @@ WAEP main HEAD 985f234…:
 
 #91 Correction-1:
   content commit: 95bbcd845be117d6b50e9de98234cbb5027d4ada
+  identity commit: 839458bc02e037b2106a3100200f27e1007c0746
+  inventory-amend commit: e04d0df0628502838db7677e92f85ab41ff26cfc
   Independent Current-State Rebaseline Review-1: NOT YET STARTED
   Ready / Merge: NOT AUTHORIZED
-  Review target: exact PR #91 HEAD after identity fixation push
+  Review target: exact live PR #91 headRefOid at review start (must include the Correction-1 commits above)
 ```
 
 ## Deploy and LIVE WRITE Authority

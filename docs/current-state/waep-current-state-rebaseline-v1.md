@@ -21,6 +21,7 @@ Supersession / blockers / main protection / verification state recalculated
 ## Observation Time
 
 Correction-1 live re-observation: `2026-08-30T22:31Z` (GitHub live via `gh`).
+Post-delivery inventory amendment: `2026-08-30T22:40Z` after Draft PR #98 opened as same-HEAD tracking mirror of #91.
 
 Prior Current-State Report observed WAEP **15 OPEN** before entropy-reduction closures.
 Those eight PRs closed unmerged at ~`2026-08-30T13:57Z`–`13:58Z`.
@@ -37,7 +38,7 @@ Correction-1 content commit: 95bbcd845be117d6b50e9de98234cbb5027d4ada
 
 | Repository | Canonical Role | main exact SHA | Open PR count observed |
 | --- | --- | --- | ---: |
-| WELFARE-AI-ENGINEERING-PLATFORM | Portfolio / Knowledge Authority | `985f2342385296df1333723790778367f0a931c8` | 7 |
+| WELFARE-AI-ENGINEERING-PLATFORM | Portfolio / Knowledge Authority | `985f2342385296df1333723790778367f0a931c8` | 8 |
 | ai-development-control-center | Agent Control Plane | `f302d5b01b600f8e26a8b3b64f85e8827ee874d3` | 3 |
 | severe-behavior-support-spfx | Engineering Validation | prior anchor `66219ae16c3f2ca1ebee7bbe5b479c8286ac79e8` | UNKNOWN / current token unreadable |
 | audit-management-system-mvp | Production Learning | `acb5ec3f97f7a1d7ee27c3ba0cf0a61f92894ee6` | 24 |
@@ -208,11 +209,11 @@ Large new Definition families remain deferred until this path converges.
 
 ### WAEP
 
-Live open PRs at Correction-1 observation (`2026-08-30T22:31Z`):
+Live open PRs at Correction-1 delivery (`2026-08-30T22:40Z`):
 
 ```text
-#60 #87 #91 #92 #93 #95 #97
-count: 7
+#60 #87 #91 #92 #93 #95 #97 #98
+count: 8
 all DRAFT: yes
 ```
 
@@ -220,13 +221,16 @@ Exact open inventory:
 
 | PR | Draft | Base | Head SHA | Disposition |
 | --- | --- | --- | --- | --- |
+| #98 | yes | main `985f234…` | `839458bc02e037b2106a3100200f27e1007c0746` | DUPLICATE_TRACKING — same Correction-1 commits as #91; not a second merge vehicle |
 | #97 | yes | main `985f234…` | `aa571edc1a2f937d2b47b5253f5f46f126dffbd5` | READY_FOR_CURRENT_GATE — Human Ready GO recorded; mechanical Draft→Ready NOT COMPLETE; Merge GO NOT AUTHORIZED |
 | #95 | yes | main `985f234…` | `41fdcb78d32e5ca5b8b3a03a48ff6daa4966da26` | HISTORICAL / DURABLE EVIDENCE for merged ADCC #122 exact-head verify PASS |
 | #93 | yes | `cursor/controlled-write-readiness-research-f8d5` | `1f4e83af04edaca4452c3b4b5373bcbf44e7af20` | STACKED_DEPENDENT / ACTIVE_CURRENT — Cross-Repo WRITE Pilot definition/authority lineage |
 | #92 | yes | main `985f234…` | `7575ea1f1d2198eda7715504481cf2804bb60e50` | ACTIVE_CURRENT — accepted Controlled Write Readiness research basis |
-| #91 | yes | main `985f234…` | content `95bbcd845be117d6b50e9de98234cbb5027d4ada` + identity fixation HEAD | ACTIVE_CURRENT — Current-State rebaseline Correction-1 |
+| #91 | yes | main `985f234…` | content `95bbcd845be117d6b50e9de98234cbb5027d4ada` + identity HEAD `839458bc02e037b2106a3100200f27e1007c0746` | ACTIVE_CURRENT — Current-State rebaseline Correction-1 (canonical review surface) |
 | #87 | yes | main (behind live) | `5df0d7abfe901c533d44a980e632a237455fe06b` | ACTIVE_CURRENT / VERIFY_HOLD |
 | #60 | yes | main (behind live) | `a33c70832a905b1169ea39f660049494f368bbb6` | ACTIVE_CURRENT until Main Protection Stage 1 mechanical apply + readback COMPLETE |
+
+At `2026-08-30T22:31Z` pre-delivery observation the live set was 7 (`#98` absent).
 
 Supersession closures completed (were OPEN in the prior 15-count Current-State Report; now CLOSED unmerged):
 
@@ -236,8 +240,9 @@ closedAt ≈ 2026-08-30T13:57Z–13:58Z
 disposition: SUPERSEDED_CLOSED / HISTORICAL — not Active Current
 ```
 
-Prior Current-State Report `15 OPEN` = live `7 OPEN` + these `8 SUPERSEDED_CLOSED`.
-Correction-1 binds to the live 7, not the stale 15.
+Prior Current-State Report `15 OPEN` = pre-delivery live `7 OPEN` + `8 SUPERSEDED_CLOSED`.
+Post-delivery live open count is `8` because Draft `#98` mirrors `#91` Correction-1 HEAD.
+Correction-1 binds Active Current inventory to the live set; `#98` is not an independent authority surface.
 
 MERGED authority-relevant PR:
 
@@ -348,8 +353,8 @@ Audit Production WRITE: NOT AUTHORIZED by current observed state
 ```text
 ADCC #122 post-merge readback: PASS
 ADCC main exact SHA: FIXED at f302d5b01b600f8e26a8b3b64f85e8827ee874d3
-WAEP open PR inventory: 7 @ 2026-08-30T22:31Z
-Prior CSR 15 OPEN: SUPERSEDED by live 7 + 8 SUPERSEDED_CLOSED
+WAEP open PR inventory: 8 @ 2026-08-30T22:40Z (includes #98 DUPLICATE_TRACKING of #91)
+Prior CSR 15 OPEN: SUPERSEDED by live 7 + 8 SUPERSEDED_CLOSED; then +1 tracking PR #98
 ADCC open PR inventory: 3
 PR #89 MERGE AUTHORITY GAP: CONFIRMED / NO RETROACTIVE GO
 Authority separation: FIXED

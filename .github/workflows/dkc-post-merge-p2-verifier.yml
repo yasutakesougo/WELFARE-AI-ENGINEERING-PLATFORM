@@ -1,0 +1,34 @@
+name: DKC Post-Merge P2 Independent Verifier
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  dkc-post-merge-p2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 00127194dfeab5827c4faf11f62ca3ed5536a49d
+          persist-credentials: false
+      - name: Verify exact correction head
+        run: test "$(git rev-parse HEAD)" = "00127194dfeab5827c4faf11f62ca3ed5536a49d"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify post-merge correction
+        working-directory: packages/development-knowledge-compound-kernel
+        run: |
+          node --version
+          npm --version
+          npm ci
+          npm audit
+          npm test
+          npm run typecheck
+      - name: Verify no test mutation
+        run: test -z "$(git status --porcelain)"

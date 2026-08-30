@@ -21,7 +21,11 @@ export function buildRiskEvidence(
     schemaVersion: "RD-EVIDENCE-V1",
     lane: decision.lane,
     classificationBasis: decision.classificationBasis,
-    riskSignals: decision.riskSignals.map((signal) => ({ ...signal, evidence: signal.evidence.slice(0, 240) })),
+    riskSignals: decision.riskSignals.map((signal) => ({
+      boundary: signal.boundary,
+      ruleId: signal.ruleId,
+      evidence: `matched:${signal.ruleId}`
+    })),
     humanGateRequired: decision.humanGateRequired,
     blocked: decision.blocked,
     evidenceComplete: options.evidenceComplete,

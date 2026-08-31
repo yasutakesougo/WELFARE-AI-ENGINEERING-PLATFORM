@@ -170,6 +170,10 @@ export function validateUnderstandingEvidence(
     }
   }
 
+  if (value.state === "CONTRADICTORY" && validation.consistencyState === "SUFFICIENT") {
+    return "INVALID";
+  }
+
   return "VALID";
 }
 

@@ -15,32 +15,9 @@ Authority Effect: NONE
 
 Roadmap上のPhase進行は、Execution Authority、Merge、Deploy、LIVE WRITE、Production Mutationを自動的に許可しない。
 
-## PHASE 1 — LOW Pilot Collection
+## PHASE 1 — Current-State / Evidence Consolidation
 
-通常開発で自然に発生した変更だけを対象とする。
-
-```text
-Normal work
-→ ACTUAL diff inspection
-→ Risk Decision
-→ LOW classification
-→ required verification
-→ Human Land
-→ pilot evidence
-```
-
-Target:
-
-```text
-3-5 genuine LOW work units
-No synthetic/no-op pilot work created only to satisfy count
-```
-
-LOW-1..LOW-4 Human Land pathは、別途Human Authority Transition GOが記録された後にのみ有効になる。
-
-MEDIUM/HIGHをLOWへ落としてpilot数を作らない。
-
-## PHASE 2 — Current-State / Evidence Consolidation
+このPhaseは一度だけ実行する。
 
 新しいEvidence genreを作らない。
 
@@ -67,6 +44,37 @@ SUPERSEDED
 を明確にし、古いReview、Reconciliation、Checkpoint、GO RecordをCurrent-Stateとして継続参照しない。
 
 同じ状態を複数Current文書へ複製しない。
+
+このConsolidationが完了するまで、通常のPRODUCT / COMMERCIAL開発再開やLOW pilot収集を先行Workstreamとして扱わない。
+
+## PHASE 2 — Product / Commercial Development + LOW Pilot Collection
+
+PHASE 1完了後、通常のPRODUCT / COMMERCIAL開発へ戻る。
+
+LOW pilotは、その通常開発で自然に発生した変更だけを対象とする。
+
+```text
+Normal PRODUCT / COMMERCIAL work
+→ ACTUAL diff inspection
+→ Risk Decision
+→ LOW classification
+→ required verification
+→ Human Land
+→ pilot evidence
+```
+
+Target:
+
+```text
+3-5 genuine LOW work units
+No synthetic/no-op pilot work created only to satisfy count
+```
+
+LOW-1..LOW-4 Human Land pathは、別途Human Authority Transition GOが記録された後にのみ有効になる。
+
+Human Authority Transition GOがない場合でも、通常のPRODUCT / COMMERCIAL開発そのものをLOW pilot成立のために歪めない。
+
+MEDIUM/HIGHをLOWへ落としてpilot数を作らない。
 
 ## PHASE 3 — ADCC Scope Reduction
 
@@ -190,10 +198,10 @@ Priority 1
 CURRENT / Evidence Consolidationを一度だけ完了する
 
 Priority 2
-別途Human GOが成立した場合のみLOW-1..LOW-4 Authority Transitionを有効化する
+通常のPRODUCT / COMMERCIAL開発へ戻る
 
 Priority 3
-通常のPRODUCT / COMMERCIAL開発へ戻る
+別途Human GOが成立した場合のみLOW-1..LOW-4 Authority Transitionを有効化する
 
 Priority 4
 通常開発からgenuine LOW pilotを自然収集する

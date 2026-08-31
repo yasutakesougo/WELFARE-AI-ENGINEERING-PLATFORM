@@ -1,0 +1,91 @@
+
+> ai-development-control-center@0.1.0 verify
+> npm run typecheck && npm test && npm run build
+
+
+> ai-development-control-center@0.1.0 typecheck
+> tsc --noEmit
+
+
+> ai-development-control-center@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /tmp/pr121-verify-surface/repo
+
+ ✓ test/independentVerify.test.ts (59 tests) 28ms
+ ✓ test/draftPublish.test.ts (74 tests) 31ms
+ ✓ test/publicationHandoff.test.ts (25 tests) 29ms
+ ✓ test/actionGatewayCommentContract.test.ts (28 tests) 27ms
+ ✓ test/multiAgentCoordination.test.ts (67 tests) 19ms
+ ✓ test/agentTaskContract.test.ts (62 tests) 19ms
+ ✓ test/agentRunner.test.ts (43 tests) 25ms
+ ✓ test/roadmapContract.test.ts (37 tests) 30ms
+ ✓ test/issueProposalContract.test.ts (36 tests) 25ms
+ ✓ test/projectContract.test.ts (38 tests) 26ms
+ ✓ test/minOrchestrator.test.ts (26 tests) 12ms
+ ✓ test/noPromptPilot.test.ts (35 tests) 21ms
+ ✓ test/agentTaskBuilder.test.ts (30 tests) 12ms
+(node:13516) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/statusOverlayGithubObserver.test.ts (15 tests) 12ms
+ ✓ test/aiWorkerRegistry.test.ts (18 tests) 29ms
+ ✓ test/handoffEvaluator.test.ts (14 tests) 7ms
+ ✓ test/statusOverlayGenerator.test.ts (18 tests) 10ms
+ ✓ test/noPromptPilotV2.test.ts (20 tests) 21ms
+ ✓ test/statusOverlayContract.test.ts (18 tests) 6ms
+ ✓ test/workerRouting.test.ts (13 tests) 23ms
+ ✓ test/persistentAutoRefreshDisabledMode.test.ts (16 tests) 16ms
+ ✓ test/portfolioMaintenanceManager.test.ts (13 tests) 16ms
+ ✓ test/statusOverlayViewModel.test.ts (15 tests) 8ms
+ ✓ test/statusOverlayRuntime.test.ts (13 tests) 10ms
+ ✓ test/autoRefreshContract.test.ts (15 tests) 5ms
+ ✓ test/historyContract.test.ts (11 tests) 5ms
+ ✓ test/ledgerRecordsApi.test.ts (14 tests) 2002ms
+   ✓ POST /api/ledger/records > 409 STALE_DECISION when the expected fingerprint no longer matches; nothing recorded  313ms
+(node:13907) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/ledgerStore.test.ts (9 tests) 17ms
+ ✓ test/persistentAutoRefreshContract.test.ts (14 tests) 6ms
+ ✓ test/statusOverlayApiAuth.test.ts (6 tests) 17ms
+ ✓ test/decisionFingerprint.test.ts (14 tests) 16ms
+ ✓ test/ledgerAuthorizer.test.ts (12 tests) 1257ms
+ ✓ test/autoRefreshPilot.test.ts (10 tests) 9ms
+ ✓ test/ledgerSubmission.test.ts (14 tests) 6ms
+ ✓ test/architectureSnapshot.test.ts (7 tests) 8ms
+ ✓ test/humanActionResolver.test.ts (11 tests) 3ms
+ ✓ test/approvalIntent.test.ts (11 tests) 4ms
+ ✓ test/accessJwtVerifier.test.ts (17 tests) 2287ms
+   ✓ verifyAccessHumanJwt > denies an invalid signature  551ms
+ ✓ test/selectAuthoritativePullBody.test.ts (4 tests) 3ms
+ ✓ test/pilot/cross-repo-control-center-v1/kernel.test.ts (6 tests) 3ms
+ ✓ test/normalizeCi.test.ts (8 tests) 5ms
+ ✓ test/humanDecisionEvidence.test.ts (5 tests) 3ms
+
+ Test Files  42 passed (42)
+      Tests  921 passed (921)
+   Start at  09:54:46
+   Duration  4.73s (transform 880ms, setup 0ms, collect 1.90s, tests 6.12s, environment 5ms, prepare 2.24s)
+
+
+> ai-development-control-center@0.1.0 build
+> vite build
+
+vite v7.3.6 building ai_development_control_center environment for production...
+transforming...
+✓ 79 modules transformed.
+rendering chunks...
+dist/ai_development_control_center/.vite/manifest.json   0.16 kB
+dist/ai_development_control_center/wrangler.json         1.34 kB
+dist/ai_development_control_center/index.js             97.27 kB
+✓ built in 234ms
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 38 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/.assetsignore                0.02 kB
+dist/client/index.html                   0.46 kB │ gzip:  0.30 kB
+dist/client/assets/index-B_OiJpPm.css    6.86 kB │ gzip:  1.73 kB
+dist/client/assets/index-BpbrbWum.js   218.37 kB │ gzip: 67.58 kB
+✓ built in 531ms

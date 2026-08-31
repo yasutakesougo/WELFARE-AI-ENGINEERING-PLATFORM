@@ -92,7 +92,7 @@ export interface RegistrySnapshot {
 }
 
 export interface ResolutionRequest {
-  registrySnapshotId: string;
+  registrySnapshot: RegistrySnapshot;
   targetContextRef: string;
   requestedUseMode: UseMode;
   targetSensitive: boolean;
@@ -113,9 +113,24 @@ export interface KnowledgeInputEnvelope {
   resolvedAt: string;
 }
 
+const resolutionRank: Record<Resolution, number> = {
+  ELIGIBLE: 0,
+  UNKNOWN: 1,
+  HOLD: 2,
+  INELIGIBLE: 3,
+};
+
+function strongestResolution(current: Resolution, candidate: Resolution): Resolution {
+  return resolutionRank[candidate] > resolutionRank[current] ? candidate : current;
+}
+
 function canonicalize(value: unknown): string {
   if (value === null || typeof value !== "object") {
-    return JSON.stringify(value);
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) {
+      throw new TypeError("Canonical JSON cannot encode undefined, functions, or symbols");
+    }
+    return encoded;
   }
   if (Array.isArray(value)) {
     return `[${value.map(canonicalize).join(",")}]`;
@@ -147,10 +162,7 @@ export function validateRegistryEntry(entry: RegistryEntry): string[] {
   return reasons;
 }
 
-export function buildRegistrySnapshot(
-  entries: RegistryEntry[],
-  capturedAt: string,
-): RegistrySnapshot {
+export function buildRegistrySnapshot(entries: RegistryEntry[], capturedAt: string): RegistrySnapshot {
   const members = entries
     .map((entry) => ({
       registryEntryId: entry.registryEntryId,
@@ -173,36 +185,70 @@ export function buildRegistrySnapshot(
   };
 }
 
+export function validateRegistrySnapshot(snapshot: RegistrySnapshot): string[] {
+  const reasons: string[] = [];
+  const expectedDigest = sha256Canonical({
+    registrySchemaVersion: snapshot.registrySchemaVersion,
+    members: [...snapshot.members].sort((a, b) => {
+      const ak = `${a.knowledgeId}\u0000${a.knowledgeVersion}\u0000${a.registryEntryId}\u0000${a.entryDigest}`;
+      const bk = `${b.knowledgeId}\u0000${b.knowledgeVersion}\u0000${b.registryEntryId}\u0000${b.entryDigest}`;
+      return ak.localeCompare(bk);
+    }),
+  });
+  if (snapshot.snapshotDigest !== expectedDigest) reasons.push("SNAPSHOT_DIGEST_MISMATCH");
+  if (snapshot.registrySnapshotId !== `registry-v1-${expectedDigest}`) reasons.push("SNAPSHOT_ID_MISMATCH");
+  return reasons;
+}
+
 export function resolveRegistryEntry(
   entry: RegistryEntry,
   request: ResolutionRequest,
   resolvedAt: string,
 ): KnowledgeInputEnvelope {
   const reasons = validateRegistryEntry(entry);
-  let resolution: Resolution = "ELIGIBLE";
+  let resolution: Resolution = reasons.length > 0 ? "HOLD" : "ELIGIBLE";
 
-  if (reasons.length > 0) resolution = "HOLD";
+  const snapshotReasons = validateRegistrySnapshot(request.registrySnapshot);
+  if (snapshotReasons.length > 0) {
+    resolution = strongestResolution(resolution, "HOLD");
+    reasons.push(...snapshotReasons);
+  }
+
+  const member = request.registrySnapshot.members.find(
+    (candidate) =>
+      candidate.registryEntryId === entry.registryEntryId &&
+      candidate.knowledgeId === entry.knowledgeId &&
+      candidate.knowledgeVersion === entry.knowledgeVersion,
+  );
+  if (!member) {
+    resolution = strongestResolution(resolution, "HOLD");
+    reasons.push("ENTRY_NOT_BOUND_TO_SNAPSHOT");
+  } else if (member.entryDigest !== entry.entryDigest) {
+    resolution = strongestResolution(resolution, "HOLD");
+    reasons.push("SNAPSHOT_ENTRY_DIGEST_MISMATCH");
+  }
+
   if (entry.lifecycle.knowledgeLifecycle === "SUPERSEDED" || entry.lifecycle.knowledgeLifecycle === "WITHDRAWN") {
-    resolution = "INELIGIBLE";
+    resolution = strongestResolution(resolution, "INELIGIBLE");
     reasons.push("KNOWLEDGE_NOT_ACTIVE");
   }
   if (entry.lifecycle.registryState === "RETIRED") {
-    resolution = "INELIGIBLE";
+    resolution = strongestResolution(resolution, "INELIGIBLE");
     reasons.push("REGISTRY_RETIRED");
   } else if (entry.lifecycle.registryState !== "ACTIVE") {
-    resolution = "HOLD";
+    resolution = strongestResolution(resolution, "HOLD");
     reasons.push("REGISTRY_NOT_ACTIVE");
   }
   if (entry.promotion.promotionEvidenceState !== "CURRENT") {
-    resolution = "HOLD";
+    resolution = strongestResolution(resolution, "HOLD");
     reasons.push("PROMOTION_EVIDENCE_NOT_CURRENT");
   }
   if (entry.evidence.verificationState !== "PASS") {
-    resolution = "HOLD";
+    resolution = strongestResolution(resolution, "HOLD");
     reasons.push("VERIFICATION_NOT_PASS");
   }
   if (!entry.consumption.candidateUseModes.includes(request.requestedUseMode)) {
-    resolution = "INELIGIBLE";
+    resolution = strongestResolution(resolution, "INELIGIBLE");
     reasons.push("USE_MODE_NOT_ALLOWED");
   }
 
@@ -213,28 +259,33 @@ export function resolveRegistryEntry(
       candidate.knowledgeVersion === entry.knowledgeVersion,
   );
 
-  if (request.targetSensitive) {
+  const requiresTargetAssessment =
+    request.targetSensitive ||
+    request.requestedUseMode === "POLICY_INPUT_CANDIDATE" ||
+    request.requestedUseMode === "APPLICABILITY_ASSESSMENT_INPUT";
+
+  if (requiresTargetAssessment) {
     if (!targetAssessment) {
-      resolution = "HOLD";
+      resolution = strongestResolution(resolution, "HOLD");
       reasons.push("TARGET_ASSESSMENT_REQUIRED");
     } else if (
       targetAssessment.verificationState !== "PASS" ||
       targetAssessment.applicabilityDecision !== "APPLICABLE_CANDIDATE"
     ) {
-      resolution = "HOLD";
+      resolution = strongestResolution(resolution, "HOLD");
       reasons.push("TARGET_ASSESSMENT_NOT_APPLICABLE_PASS");
     }
   }
 
   return {
     knowledgeResolutionId: sha256Canonical({
-      registrySnapshotId: request.registrySnapshotId,
+      registrySnapshotId: request.registrySnapshot.registrySnapshotId,
       entryDigest: entry.entryDigest,
       targetContextRef: request.targetContextRef,
       requestedUseMode: request.requestedUseMode,
       resolvedAt,
     }),
-    registrySnapshotId: request.registrySnapshotId,
+    registrySnapshotId: request.registrySnapshot.registrySnapshotId,
     knowledgeId: entry.knowledgeId,
     knowledgeVersion: entry.knowledgeVersion,
     entryDigest: entry.entryDigest,

@@ -103,9 +103,41 @@ Allowed values:
 - Web
 - Manual
 
-Known agent-oriented access paths should be preferred when they improve reproducibility, but the availability of MCP or Skill access does not increase the authority of a reference.
+The following table records the preferred access path known at the observation date.
 
-## 7. Standard Research Sequence
+| Resource | Preferred access | Fallback |
+| --- | --- | --- |
+| Mobbin | MCP when confirmed available | Web / Manual |
+| Refero | MCP when confirmed available | Web / Manual |
+| shadcn/ui | Registry / Web | Manual |
+| beUI | MCP, Skill, or Registry when confirmed available | Web / Manual |
+| Beautiful UI | Registry or Web when confirmed available | Manual |
+| Transitions.dev | Skill when confirmed available | Web / Manual |
+| 60fps.design | MCP when confirmed available | Web / Manual |
+| Extended Registry resources | Web unless another path is confirmed | Manual |
+| Canvas UI | Web | Manual |
+
+An agent must not infer that an MCP, Skill, or Registry endpoint exists merely because the resource appears in this registry.
+
+Before using an agent-oriented access path, the agent must confirm that the path is available in the current execution environment.
+
+If the preferred access path is unavailable, the agent may use the documented fallback without changing the authority of the evidence.
+
+Availability of MCP, Skill, or Registry access does not increase the authority of a reference.
+
+## 7. External Reference Freshness
+
+External resources are volatile and may change independently of this repository.
+
+Before relying on an external resource for a new UI Definition, record the observation date and confirm that the referenced resource or access path still exists.
+
+Do not treat a previously recorded capability as current merely because it appears in this registry.
+
+If the current capability cannot be confirmed, record it as `UNCONFIRMED` and use another available source or stop the affected research step.
+
+A stale or unavailable reference does not invalidate historical adoption evidence, but it cannot be used as fresh evidence without revalidation.
+
+## 8. Standard Research Sequence
 
 Use this sequence for UI-improvement work.
 
@@ -143,7 +175,7 @@ HUMAN FRICTION RE-EVALUATION
 
 A later stage must not be used to bypass an unresolved earlier-stage problem.
 
-## 8. Selection Priority
+## 9. Selection Priority
 
 Evaluate candidates in this order.
 
@@ -159,7 +191,7 @@ Evaluate candidates in this order.
 
 A candidate should normally be rejected when it improves a lower-priority property by degrading a higher-priority property.
 
-## 9. Mandatory Adoption Record
+## 10. Mandatory Adoption Record
 
 For every adopted external UI pattern, record:
 
@@ -167,7 +199,9 @@ For every adopted external UI pattern, record:
 Problem:
 Research Query:
 Source:
+Observation Date:
 Access Method:
+Access Availability: CONFIRMED | UNCONFIRMED
 Reference Evidence:
 Observed Pattern:
 Candidate:
@@ -179,12 +213,17 @@ Dependency Impact: NONE | EXISTING | NEW
 Motion Justification:
 Expected Friction Reduction:
 Rendered Acceptance:
+Human Evidence Type: HUMAN | SIMULATION | NONE
 Human Acceptance:
 ```
 
 The adoption record must identify the user problem before the reference source.
 
-## 10. Anti-patterns
+`SIMULATION` evidence must not be represented as direct human acceptance.
+
+A final Human Acceptance claim requires actual human review evidence.
+
+## 11. Anti-patterns
 
 Reject the following unless a separate explicit justification is approved:
 
@@ -201,8 +240,10 @@ Reject the following unless a separate explicit justification is approved:
 - animation that blocks task completion
 - animation that ignores reduced-motion requirements
 - visually impressive effects that increase cognitive load
+- inferring an unavailable MCP or Skill endpoint
+- presenting simulated acceptance as human acceptance
 
-## 11. Verification Requirements
+## 12. Verification Requirements
 
 Source inspection alone cannot produce a UI PASS.
 
@@ -222,7 +263,9 @@ Verification must cover, where applicable:
 
 CI success is not a substitute for rendered browser acceptance.
 
-## 12. Governance Boundaries
+Rendered browser acceptance is technical evidence and must not be relabeled as human acceptance.
+
+## 13. Governance Boundaries
 
 This registry provides research guidance only.
 
@@ -239,7 +282,7 @@ It does not authorize:
 
 Each mutation remains subject to the governing workflow and its separate Human authority gates.
 
-## 13. Definition Acceptance Criteria
+## 14. Definition Acceptance Criteria
 
 The definition is review-cleared only when an independent review confirms all of the following:
 
@@ -248,18 +291,21 @@ The definition is review-cleared only when an independent review confirms all of
 - Existing components are checked before new dependencies.
 - Real-product research precedes visual refinement.
 - Motion research occurs after interaction structure is stable.
-- Access Method is recorded for reproducibility.
+- Access Method and current availability are recorded for reproducibility.
+- Agents do not infer unsupported MCP, Skill, or Registry endpoints.
+- External resource freshness is revalidated for new Definitions.
 - Adoption records begin with the user problem.
 - Rendered browser acceptance remains mandatory.
+- Simulation evidence cannot be represented as human acceptance.
 - Human friction is re-evaluated after implementation.
 - No implementation or merge authority is implied by this document.
 
-## 14. Current Gate
+## 15. Current Gate
 
 ```text
 UI-REFERENCE-REGISTRY-V1.1
-Definition: CREATED
-Independent Definition Review: REQUIRED
+Definition: CORRECTION-1 APPLIED
+Independent Definition Re-Review: REQUIRED
 Human Definition Lock: NOT GRANTED
 Implementation Start: NOT AUTHORIZED
 Ready: NOT AUTHORIZED

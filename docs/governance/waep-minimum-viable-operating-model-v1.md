@@ -4,8 +4,9 @@
 
 ```text
 Definition: WAEP-MINIMUM-VIABLE-OPERATING-MODEL-V1
-Revision: Definition Draft-1
-Definition State: DRAFT / NOT LOCKED
+Revision: Definition Correction-1
+Supersedes: Definition Draft-1
+Definition State: DRAFT / CORRECTED / NOT LOCKED
 Parent Inputs (accepted review evidence; not reopened):
   - docs/reviews/waep-personal-development-rightsizing-review-v1.md
   - docs/reviews/waep-personal-development-rightsizing-review-v1-correction-1.md
@@ -17,8 +18,8 @@ Parent Operating Assumption:
   GitHub Pro: NOT PLANNED
   Cross-Repository WRITE: FROZEN / INTENTIONAL HOLD
   Public Repositoryization: NOT AUTHORIZED
-Independent Definition Review: REQUIRED
-Human Definition Lock: NOT AUTHORIZED
+Independent Definition Review-1: CORRECTION REQUIRED (see archive)
+Human Definition Lock: NOT ELIGIBLE YET
 Authority Transition: NOT AUTHORIZED
 Implementation Start: NOT AUTHORIZED
 Complexity Freeze Activation: NOT AUTHORIZED BY THIS DRAFT ALONE
@@ -28,7 +29,8 @@ Knowledge Registry Full Materialization: DEFER
 Control Plane WRITE Expansion: DEFER / NO NEW SLICES
 Repository Mass Merge: NOT AUTHORIZED
 Safety Boundary Reduction: NOT AUTHORIZED
-Next Gate: Independent Definition Review-1
+Independent Definition Review-1: CORRECTION REQUIRED
+Next Gate: Independent Definition Re-Review-1
 ```
 
 ```text
@@ -110,12 +112,50 @@ Mapping rule:
 | `BLOCKED` | No Human GO may proceed. Fix cause and reclassify. Tier is irrelevant until unblocked. |
 | `GOVERNED` | Operating Tier is at least `HIGH` for the governed action. |
 | `FAST` | Operating Tier may be `LOW` or `MEDIUM` per §5–§6. Never auto-demotes a §5 HIGH signal. |
+| `UNKNOWN` | If Risk Decision is **REQUIRED** (§3.1), landing is **HOLD**. No Operating Tier assignment. `UNKNOWN != PASS`. |
+| `NOT_RUN` | If Risk Decision is **REQUIRED** (§3.1), landing is **HOLD**. No Operating Tier assignment. Re-run classifier on ACTUAL diff. |
 
 ```text
 Risk Decision
   = whether a dangerous boundary is present
 Operating Tier
   = how much Human Gate depth is required for this change class
+Risk Decision UNKNOWN / NOT_RUN (when REQUIRED)
+  != LOW
+  != PASS
+```
+
+### 3.1 Risk Decision requirement
+
+Every change MUST declare whether Risk Decision is required before landing:
+
+```text
+REQUIRED
+  = repository-landed change (PR / merge path) or any action that could
+    affect R1–R5 boundaries per LOCKED Risk governance
+
+NOT_APPLICABLE
+  = read-only inventory / observation with zero repository landing and
+    zero execution side effect (e.g. duplication mapping only)
+```
+
+| `riskDecisionRequirement` | `riskDecision` | Landing disposition |
+| --- | --- | --- |
+| `REQUIRED` | `FAST` | Proceed to §6 Operating Tier classification |
+| `REQUIRED` | `GOVERNED` | `HIGH`; governed action gates apply |
+| `REQUIRED` | `BLOCKED` | Stop; no landing |
+| `REQUIRED` | `UNKNOWN` | **HOLD**; no Operating Tier; no Human Land |
+| `REQUIRED` | `NOT_RUN` | **HOLD**; run Actual-Diff Risk Decision first |
+| `NOT_APPLICABLE` | `NOT_APPLICABLE` | §6 may proceed without Risk Decision field |
+| `NOT_APPLICABLE` | any other value | **HOLD**; inconsistent record |
+
+```text
+NOT_APPLICABLE
+  != UNKNOWN treated as PASS
+REQUIRED + UNKNOWN
+  != FAST
+REQUIRED + NOT_RUN
+  != proceed to LOW by signal absence alone
 ```
 
 Authority Transition of Fast Lane execution remains a separate act under the
@@ -196,7 +236,8 @@ Classification MUST use all available of:
 2. changed paths
 3. actual diff / action description
 4. runtime / deploy / permission / data impact
-5. Risk Decision (FAST / GOVERNED / BLOCKED), when available
+5. Risk Decision requirement (`REQUIRED` / `NOT_APPLICABLE`) and result
+   (`FAST` / `GOVERNED` / `BLOCKED` / `UNKNOWN` / `NOT_RUN`), when applicable
 ```
 
 Classification basis:
@@ -230,13 +271,33 @@ intended action:
 | H8 | M365 / SharePoint / Entra mutation | tenant or production Microsoft-cloud mutation |
 | H9 | Cross-Repo WRITE execution | Control Center or Agent mutates another repository |
 | H10 | Safety/Authority expansion | change that expands Execution Authority, weakens fail-closed behavior, or alters gate inequalities in a permissive direction |
-| H11 | Significant external cost | clearly above normal solo-dev paid API / billable resource creation |
+| H11 | Billable external cost expansion | **Any** mechanical trigger in §6.2.1 |
 
 `GOVERNED` Risk Decision implies at least one H-signal or equivalent and
 forces Operating Tier `HIGH` for the governed action.
 
 Plaintext secret introduction remains `BLOCKED` under Risk governance and is
 not cleared by any Operating Tier.
+
+#### 6.2.1 H11 mechanical triggers
+
+Classify H11 when **any** of the following is true in the actual change or
+intended action (evaluator discretion on “normal solo dev cost” is prohibited):
+
+| Trigger ID | Condition |
+| --- | --- |
+| H11-T1 | Creates a **new recurring billable resource** not listed in the approved baseline inventory for the target scope (e.g. new always-on compute, new paid storage/database tier, new subscription SKU, new billable Cloudflare/AWS/GCP resource attachment) |
+| H11-T2 | Enables or raises a **metered API spend path** without an existing per-work-unit cap recorded in an approved baseline (e.g. removes rate/cost guardrail, adds uncapped batch job against paid API) |
+| H11-T3 | **Exceeds an approved budget baseline** recorded with `baselineRef`, `approvedAmount`, `currency`, `scopeRef`, and `expiresAt`; projected or committed spend above `approvedAmount` before expiry |
+| H11-T4 | Adds infrastructure-as-code or workflow that **provisions billable resources on merge/deploy** where no such provisioning existed in the target environment scope |
+
+```text
+H11 requires at least one H11-T* trigger
+“feels expensive” or “above normal solo dev” alone
+  → NOT sufficient for H11
+Missing approved baseline when H11-T3 is claimed
+  → HOLD (do not infer PASS)
+```
 
 ### 6.3 MEDIUM signals
 
@@ -265,6 +326,9 @@ Classify `LOW` only if **all** of the following hold:
    - pure offline/CI evaluators that cannot grant Execution Authority
 4. The change does not claim or record a new Execution Authority GO
 5. ACTUAL classification basis is available before Human Land
+6. Risk Decision: either `riskDecisionRequirement == NOT_APPLICABLE`, or
+   `riskDecisionRequirement == REQUIRED` and `riskDecision == FAST`
+   (`UNKNOWN`, `NOT_RUN`, and `GOVERNED` disqualify LOW)
 ```
 
 ### 6.5 Ambiguity and anti-patterns
@@ -294,14 +358,24 @@ Human may escalate; Human may not demote below ACTUAL signals
 ### 6.6 Classification algorithm
 
 ```text
-IF RiskDecision == BLOCKED
+IF riskDecisionRequirement == REQUIRED
+   AND riskDecision IN (UNKNOWN, NOT_RUN)
+  → HOLD (no operatingTier assignment; no Human Land / Ready)
+
+IF riskDecision == BLOCKED
   → stop; no tier landing
-ELSE IF any §6.2 H-signal OR RiskDecision == GOVERNED
+
+IF any §6.2 H-signal OR riskDecision == GOVERNED
   → HIGH
-ELSE IF any §6.3 M-signal
+
+IF any §6.3 M-signal
   → MEDIUM
-ELSE IF §6.4 LOW eligibility satisfied on ACTUAL basis
+
+IF §6.4 LOW eligibility satisfied on ACTUAL basis
+   AND (riskDecisionRequirement == NOT_APPLICABLE
+        OR riskDecision == FAST)
   → LOW
+
 ELSE
   → MEDIUM (fail upward; do not invent LOW)
 ```
@@ -309,10 +383,11 @@ ELSE
 Record for every landed change:
 
 ```yaml
-operatingTier: LOW|MEDIUM|HIGH
+operatingTier: LOW|MEDIUM|HIGH|HOLD
 classificationBasis: PRELIMINARY|ACTUAL
-riskDecision: FAST|GOVERNED|BLOCKED|UNKNOWN|NOT_RUN
-signals: []      # H* / M* ids observed
+riskDecisionRequirement: REQUIRED|NOT_APPLICABLE
+riskDecision: FAST|GOVERNED|BLOCKED|UNKNOWN|NOT_RUN|NOT_APPLICABLE
+signals: []      # H* / M* / H11-T* ids observed
 evidenceRefs: [] # PR URL, SHA, CI, GO refs as applicable
 ```
 
@@ -427,12 +502,52 @@ the exception is stated in the PR/intent:
 | E6 | Risk Detector correctness fix that does not expand Authority |
 | E7 | This Operating Model’s Independent Review / Correction / Lock cycle |
 | E8 | One manual Knowledge Note pilot (single failure → rule → evidence → status) |
-| E9 | Explicit Human-recorded Freeze Exception GO for a named scope/SHA |
+| E9 | Explicit Human-recorded **Freeze Exception GO** per §8.3.1 only |
 
 ```text
 Exception claim without matching ID and evidence
   → treat as Freeze violation / HOLD
+
+E9 Freeze Exception GO
+  != Cross-Repo WRITE un-HOLD
+  != Control Plane WRITE
+  != Registry population
+  != Deploy / LIVE WRITE / Production Mutation
+  != Authority Transition
+  != Safety boundary reduction
 ```
+
+#### 8.3.1 E9 Freeze Exception GO (narrow)
+
+E9 is a **Freeze-only** waiver. It permits starting work that would otherwise
+violate an active F-class freeze. It does **not** grant Execution Authority.
+
+A valid E9 record MUST include all of:
+
+```yaml
+freezeExceptionGoRef: ""       # immutable Human GO record id / PR comment ref
+reason: ""                     # why Freeze alone must yield
+targetFrozenClasses: []        # one or more F1–F10 ids
+scopeRef: ""                   # repository + bounded purpose
+exactShaOrPrRef: ""            # SHA-bound or open PR ref at GO time
+endCondition: ""               # merge complete | date | explicit closeout ref
+expiresAt: ""                  # ISO timestamp; past expiry => HOLD
+```
+
+E9 explicitly does **not** authorize:
+
+```text
+Cross-Repo WRITE un-HOLD
+Control Plane WRITE / lease / fence / routing activation
+Knowledge Registry population or full materialization
+Deploy / LIVE WRITE / Production Mutation
+Repository merge / archive / deletion
+Auto Merge
+Any new standing Human GO type beyond this named exception
+```
+
+If work under E9 also needs Execution Authority, a **separate** gate chain
+remains required and is not implied by E9.
 
 ### 8.4 Freeze does not delete
 
@@ -621,34 +736,45 @@ Commercial product may consume sanitized engineering notes without joining the c
 
 ---
 
-## 15. Correction Closure (Draft-1)
+## 15. Correction Closure
 
-Draft-1 addresses Independent Re-Review-1 follow-on definition requirements:
+### 15.1 Draft-1 (retained)
 
-| Follow-on requirement | Section |
-| --- | --- |
-| Deterministic LOW/MEDIUM/HIGH using actual change/impact | §5, §6 |
-| Exact Complexity Freeze boundary and exceptions | §8 |
-| Evidence for successful right-sizing pilot | §12 |
-| Existing HIGH/production gates remain until Transition | §4, §7, §11 |
+Draft-1 addressed Independent Re-Review-1 follow-on definition requirements
+from PR #104 (§5–§6 tier model, §8 Freeze, §12 pilot, §4/§7/§11 safety).
 
-Draft-1 does not claim Independent Definition Review PASS or Human Definition
-Lock.
+### 15.2 Correction-1 (this revision)
+
+Correction-1 addresses Independent Definition Review-1 findings:
+
+| Priority | ID | Topic | Section |
+| --- | --- | --- | --- |
+| P1 | MVOM-RISK-UNKNOWN-001 | `UNKNOWN` / `NOT_RUN` fail-closed when Risk Decision REQUIRED | §3.1, §6.4, §6.6 |
+| P1 | MVOM-FREEZE-E9-001 | E9 narrowed to Freeze-only; required fields; no Authority grant | §8.3, §8.3.1 |
+| P2 | MVOM-H11-DETERMINISM-001 | H11 mechanical triggers H11-T1–T4 | §6.2, §6.2.1 |
+
+Correction-1 does not claim Independent Definition Re-Review-1 PASS or Human
+Definition Lock.
+
+Archive: `docs/governance/reviews/waep-minimum-viable-operating-model-v1-independent-definition-review-1.md`
 
 ---
 
-## 16. Final Draft Disposition
+## 16. Final Disposition
 
 ```text
-Definition State: DRAFT / NOT LOCKED
-Independent Definition Review-1: REQUIRED
-Human Definition Lock: NOT AUTHORIZED
+Definition State: DRAFT / CORRECTED / NOT LOCKED
+Revision: Definition Correction-1
+Independent Definition Review-1: CORRECTION REQUIRED
+Independent Definition Re-Review-1: REQUIRED
+Human Definition Lock: NOT ELIGIBLE YET
 Complexity Freeze: DEFINED / NOT ACTIVATED
 Authority Transition: NOT AUTHORIZED
+Existing Current Authority: UNCHANGED
 Safety Boundary Reduction: NOT AUTHORIZED
 Cross-Repo WRITE: FROZEN / INTENTIONAL HOLD
 Knowledge Registry Full Materialization: DEFER
 Control Plane WRITE Expansion: DEFER / NO NEW SLICES
 Repository Mass Merge: NOT AUTHORIZED
-Next Gate: Independent Definition Review-1 on exact Draft-1 artifact SHA
+Next Gate: exact diff inspection → Independent Definition Re-Review-1
 ```

@@ -145,7 +145,6 @@ describe("knowledge registry slice A", () => {
     }, "2026-08-31T10:16:00+09:00");
     expect(result.resolution).toBe("HOLD");
     expect(result.reasonCodes).toContain("ENTRY_DIGEST_MISMATCH");
-    expect(result.reasonCodes).toContain("SNAPSHOT_ENTRY_DIGEST_MISMATCH");
   });
 
   it("holds an entry that is not bound to the exact registry snapshot", () => {

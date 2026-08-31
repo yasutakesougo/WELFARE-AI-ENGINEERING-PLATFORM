@@ -1,6 +1,6 @@
 # UI Reference Registry V1.1
 
-Status: DEFINITION IN REVIEW
+Status: DEFINITION REVIEW-CLEARED
 
 Observation date: 2026-08-31
 
@@ -304,9 +304,9 @@ The definition is review-cleared only when an independent review confirms all of
 
 ```text
 UI-REFERENCE-REGISTRY-V1.1
-Definition: CORRECTION-1 APPLIED
-Independent Definition Re-Review: REQUIRED
-Human Definition Lock: NOT GRANTED
+Definition: REVIEW-CLEARED
+Independent Definition Re-Review-1: PASS
+Human Definition Lock: REQUIRED
 Implementation Start: NOT AUTHORIZED
 Ready: NOT AUTHORIZED
 Merge: NOT AUTHORIZED

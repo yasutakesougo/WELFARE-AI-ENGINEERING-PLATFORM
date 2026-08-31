@@ -4,114 +4,242 @@
 
 ```text
 Artifact: WAEP-ROADMAP-V1
-State: PROPOSED / PORTFOLIO ROADMAP CANDIDATE
-Source: PR #9
-Current-Main Reconciliation: V2 STATUS CLARIFICATION
-Roadmap Lock: NOT AUTHORIZED
-Implementation Start: NOT AUTHORIZED
+Revision: Minimal Operating Rebaseline / 2026-08-31
+State: CURRENT ROADMAP
+Operating Model: WAEP-MINIMUM-VIABLE-OPERATING-MODEL-V1 / LOCKED
+Complexity Freeze: ACTIVE
+Authority Effect: NONE
 ```
 
-このRoadmapは順序と目標を示すCandidateである。
+このRoadmapは、WAEPを新しいガバナンス機能の拡張から、簡素化した運用モデルの実案件検証へ切り替える。
 
-Roadmap上のPhase記載は、各GateのGOを意味しない。
+Roadmap上のPhase進行は、Execution Authority、Merge、Deploy、LIVE WRITE、Production Mutationを自動的に許可しない。
 
-## 12-Month Program
+## PHASE 1 — LOW Pilot Collection
 
-### Phase 0 — Portfolio Foundation (0-2 weeks)
-
-- lock repository roles;
-- define knowledge classes;
-- define promotion gate;
-- establish baseline metrics.
-
-`lock repository roles`は将来のRoadmap目標であり、Current StateでLOCKEDであることを意味しない。
-
-### Phase 1 — Knowledge Extraction (Month 1-2)
-
-Primary sources:
-
-- `audit-management-system-mvp`;
-- `severe-behavior-support-spfx`.
-
-Targets:
-
-- 20+ evidence-backed candidates;
-- 10+ PORTABLE candidates;
-- 5+ policy candidates;
-- 3+ deterministic enforcement candidates.
-
-### Phase 2 — Control Center Knowledge Integration (Month 2-4)
-
-- `AGENT-KNOWLEDGE-REGISTRY-V1`;
-- `CONTROL-CENTER-EXECUTION-POLICY-V1`;
-- connect AgentTask, Worker Authority, routing, knowledge policy and Human Gate without widening execution authority.
-
-### Phase 3 — Cross-Repo Control Center Pilot (Month 3-6)
-
-Target: `severe-behavior-support-spfx`.
-
-Stages:
-
-1. READ ONLY observation;
-2. PLAN / next-action proposal;
-3. worker routing;
-4. WRITE gated by explicit Human GO;
-5. independent verification;
-6. Draft PR only.
-
-Ready, Merge, Deploy and LIVE WRITE remain separate gates.
-
-### Phase 4 — Commercial Validation (Month 3-6)
-
-Target: `yasutakesougo-welfare-m365-dx-diagnostic`.
-
-Complete the path:
-
-`Front Door -> Mapping -> Conflict Detection -> Structured Input -> Diagnostic Engine -> Human Review -> Proposal -> Estimate -> Mini/Standard -> Continuous Support`.
-
-Use synthetic acceptance and human-operated timing evidence before formal price lock or customer production use.
-
-### Phase 5 — Lab Knowledge Intake (Month 5-8)
-
-- `zatsuzen-homepage`: responsive UI, visual review, SEO/publication safety;
-- `hinata`: accessibility, reduced motion, low-pressure UX, safe AI output validation.
-
-Lab success alone does not authorize CORE adoption.
-
-### Phase 6 — Promotion Pipeline (Month 6-9)
-
-Operate `KNOWLEDGE-PROMOTION-GATE-V1` and mature selected rules toward `PROVEN_CROSS_REPO`.
-
-Portfolio maturity is a Derived Projection and does not become immutable Knowledge Record authority.
-
-### Phase 7 — Greenfield Transfer Test (Month 9-12)
-
-Start one new repository with the mature portfolio baseline and compare against historical baselines.
-
-## Program Metrics
-
-Track at minimum:
-
-- repeated failure rate;
-- P0/P1 finding rate;
-- correction-loop count;
-- CI regression rate;
-- Issue-to-Draft-PR time;
-- human prompt/intervention count;
-- reusable knowledge adoption count;
-- test/policy/gate enforcement rate;
-- cross-repository reuse success rate.
-
-## Immediate Priority
+通常開発で自然に発生した変更だけを対象とする。
 
 ```text
-1. CROSS-REPO-AGENT-KNOWLEDGE-EXTRACTION-V1
-2. CONTROL-CENTER-EXECUTION-POLICY-V1
-3. CROSS-REPO-CONTROL-CENTER-PILOT-V1
+Normal work
+→ ACTUAL diff inspection
+→ Risk Decision
+→ LOW classification
+→ required verification
+→ Human Land
+→ pilot evidence
 ```
 
-The first 30 days should prioritize definition and lock of the portfolio/knowledge governance layer rather than broad implementation.
+Target:
 
-## Authority Boundary
+```text
+3-5 genuine LOW work units
+No synthetic/no-op pilot work created only to satisfy count
+```
 
-Roadmap progression does not authorize Definition Lock, Implementation Start, Ready, Merge, Deploy, Runtime Activation, LIVE WRITE, or external mutation.
+LOW-1..LOW-4 Human Land pathは、別途Human Authority Transition GOが記録された後にのみ有効になる。
+
+MEDIUM/HIGHをLOWへ落としてpilot数を作らない。
+
+## PHASE 2 — Current-State / Evidence Consolidation
+
+新しいEvidence genreを作らない。
+
+Current-Stateの読解面を次まで縮小する。
+
+```text
+CURRENT AUTHORITY
++
+CURRENT STATE
++
+CURRENT ROADMAP
++
+必要なDecision / Review evidenceへのreference
+```
+
+Historical evidenceは削除しない。
+
+```text
+CURRENT
+HISTORICAL
+SUPERSEDED
+```
+
+を明確にし、古いReview、Reconciliation、Checkpoint、GO RecordをCurrent-Stateとして継続参照しない。
+
+同じ状態を複数Current文書へ複製しない。
+
+## PHASE 3 — ADCC Scope Reduction
+
+`ai-development-control-center`のACTIVE scopeは当面次に限定する。
+
+```text
+Repository Observation
+PR / Issue Observation
+Authority / HOLD / DENY visibility
+Human Attention Surface
+READ ONLY
+```
+
+新規開発停止:
+
+```text
+Cross-Repo WRITE
+Worker autonomous dispatch
+Multi-Agent WRITE orchestration
+Lease / Fence expansion
+Approval Ledger expansion
+Control Plane WRITE expansion
+```
+
+既存資産は削除不要であり、INACTIVE / HOLDとして保持できる。
+
+## PHASE 4 — Knowledge Minimalization
+
+Full Knowledge Registry expansionはDEFERする。
+
+FailureやObservationを自動的にRegistryへ登録しない。
+
+```text
+Failure / Observation
+→ Generalized Lesson
+→ actual reuse demand / concrete consumer
+→ Minimal Knowledge Index candidate
+```
+
+Materialization候補条件:
+
+```text
+- 実際に2回以上再利用された
+OR
+- 具体的なconsumerが存在する
+```
+
+必要になった場合のMinimal Knowledge Indexは次程度に留める。
+
+```text
+ID
+Rule / Lesson
+Source Evidence
+Applicable Repository
+Status
+```
+
+KnowledgeはExecution Authorityを付与しない。
+
+## PHASE 5 — Repository / LAB Boundary Cleanup
+
+Repository mass mergeはしない。
+
+Operational Class:
+
+| Repository | Class |
+| --- | --- |
+| WELFARE-AI-ENGINEERING-PLATFORM | PLATFORM |
+| severe-behavior-support-spfx | PRODUCT |
+| audit-management-system-mvp | PRODUCT / PRODUCTION EVIDENCE SOURCE |
+| welfare-m365-dx-diagnostic | COMMERCIAL |
+| ai-development-control-center | PLATFORM / READ-ONLY SUBSYSTEM |
+| zatsuzen-homepage | LAB |
+| hinata | LAB |
+
+LABにWAEP本体と同じstanding governance ceremonyを既定適用しない。
+
+Repository ClassはAuthorityではない。
+
+## PHASE 6 — 30-Day Minimal WAEP Validation
+
+新機能開発ではなく観測期間とする。
+
+主要指標:
+
+```text
+1. Genuine LOW pilot: 3-5
+2. Governance work time: reduced
+3. Delivery speed: not degraded
+4. Authority / Safety incident: 0
+5. HIGH-boundary violation by LOW misclassification: 0
+```
+
+固定安全条件:
+
+```text
+Cross-Repo WRITE: HOLD
+Knowledge != Execution Authority
+Production / Sensitive / Destructive: explicit Human Gate retained
+UNKNOWN / HOLD / DENY != PASS
+```
+
+## PHASE 7 — Final Adoption / Partial Rollback
+
+30日後に次の3択で判断する。
+
+```text
+A. ADOPT
+B. ADOPT WITH CORRECTION
+C. PARTIAL ROLLBACK
+```
+
+問題が特定operation classに限定される場合は、そのclassだけを旧Gateへ戻す。
+
+全面rollbackを既定としない。
+
+## Current Priority Order
+
+```text
+Priority 1
+CURRENT / Evidence Consolidationを一度だけ完了する
+
+Priority 2
+別途Human GOが成立した場合のみLOW-1..LOW-4 Authority Transitionを有効化する
+
+Priority 3
+通常のPRODUCT / COMMERCIAL開発へ戻る
+
+Priority 4
+通常開発からgenuine LOW pilotを自然収集する
+
+Priority 5
+30-day Minimal WAEP evaluationを行う
+```
+
+## Frozen / Deferred During Validation
+
+```text
+Cross-Repo WRITE restart
+Full Knowledge Registry expansion
+Multi-Agent WRITE expansion
+Control Plane WRITE expansion
+Repository mass merge
+New Gate family
+New Evidence genre
+GitHub Pro migration
+Public repositoryization
+```
+
+## Development-Time Allocation Direction
+
+WAEP自体を開発する比率を下げる。
+
+通常の開発時間はPRODUCT / COMMERCIALへ戻す。
+
+優先候補:
+
+```text
+severe-behavior-support-spfx
+welfare-m365-dx-diagnostic
+```
+
+WAEP側の変更は、Current-State hygiene、安全修正、Minimal Operating Model検証に必要な範囲へ限定する。
+
+## Preserved Authority Boundary
+
+```text
+Knowledge Available != Execution Authority
+Risk Decision FAST != Execution Authority
+Verification PASS != Human Land / Merge Authority
+Human Land != Deploy
+Human Land != LIVE WRITE
+Human Land != Production Mutation
+Human Land != Cross-Repo WRITE
+UNKNOWN / HOLD / DENY != PASS
+```

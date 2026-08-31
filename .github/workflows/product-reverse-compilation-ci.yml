@@ -1,0 +1,49 @@
+name: Product Reverse Compilation CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/product-reverse-compilation-ci.yml'
+      - 'src/product_reverse_compilation/**'
+      - 'tests/product_reverse_compilation/**'
+      - 'tsconfig.json'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  product-reverse-compilation-ci:
+    name: product-reverse-compilation-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact implementation HEAD
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Assert exact implementation HEAD
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies without lockfile mutation
+        run: npm install --package-lock=false
+
+      - name: Repository typecheck
+        run: npm run typecheck
+
+      - name: Focused tests
+        run: npm test -- tests/product_reverse_compilation/reverse_compilation.test.ts
+
+      - name: Remove expected ephemeral outputs
+        run: rm -rf node_modules
+
+      - name: Verify repository remains clean
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"

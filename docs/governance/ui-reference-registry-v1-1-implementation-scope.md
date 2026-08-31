@@ -7,13 +7,13 @@ Scope ID: UI-REFERENCE-REGISTRY-V1.1-IMPLEMENTATION-SCOPE
 Parent Definition: UI-REFERENCE-REGISTRY-V1.1
 Parent Definition State: LOCKED
 Parent Locked HEAD: e484eaf89d81f7ce0d6c94dedef1ef7e47ac3961
-Scope State: CORRECTION-1 APPLIED / RE-REVIEW REQUIRED
+Scope State: REVIEW-CLEARED
 Implementation Start: NOT AUTHORIZED
 Dependency Addition: NOT AUTHORIZED
 External MCP/Skill Installation: NOT AUTHORIZED
 Cross-Repository Mutation: NOT AUTHORIZED
 Ready / Merge / Deploy / LIVE WRITE: NOT AUTHORIZED
-Next Gate: Independent Scope Re-Review-1
+Next Gate: Human Implementation Start GO / HOLD
 ```
 
 This scope defines the smallest executable layer beneath the locked UI Reference Registry Definition.
@@ -124,6 +124,14 @@ Validation semantics:
 AccessAvailability=CONFIRMED with AccessMethod=MCP|SKILL|REGISTRY
   -> non-empty accessAvailabilityEvidence is required.
 
+DependencyImpact=NONE
+  -> dependencyJustification MUST be empty.
+  -> no dependency change is proposed.
+
+DependencyImpact=EXISTING
+  -> dependencyJustification MAY be empty or may identify the already-present repository capability being reused.
+  -> it MUST NOT claim or imply authority to add or upgrade a dependency.
+
 DependencyImpact=NEW
   -> non-empty dependencyJustification is required.
   -> this records rationale only; it does not grant dependency-addition authority.
@@ -154,6 +162,7 @@ unsupported enum value
 MCP/Skill/Registry use marked CONFIRMED without accessAvailabilityEvidence
 SIMULATION represented as final human acceptance
 NEW dependency impact without dependencyJustification
+NONE dependency impact with non-empty dependencyJustification
 MotionUsed=YES without motionJustification
 ```
 
@@ -311,6 +320,9 @@ UIR-A15 CONFIRMED MCP with explicit accessAvailabilityEvidence and separate refe
 UIR-A16 referenceEvidence present but accessAvailabilityEvidence missing for CONFIRMED MCP -> FAIL
 UIR-A17 MotionUsed=NO with empty motionJustification -> PASS
 UIR-A18 agent-facing usage template contains Independent Definition Review and applicable implementation authority step -> PASS
+UIR-A19 DependencyImpact=NEW with non-empty dependencyJustification -> contract PASS; dependency-addition authority remains NOT AUTHORIZED
+UIR-A20 DependencyImpact=NONE with non-empty dependencyJustification -> FAIL
+UIR-A21 DependencyImpact=EXISTING with existing-component explanation -> PASS; no new-dependency authority implied
 ```
 
 Test PASS does not authorize external integrations or product UI mutation.
@@ -360,23 +372,25 @@ INV-UIR-013 Agent-facing guidance preserves applicable parent/governing authorit
 
 ## 11. Independent Scope Review Checklist
 
-Independent Scope Re-Review-1 must verify:
+Independent Scope Re-Review-1 result: PASS / REVIEW-CLEARED.
+
+The re-review verified:
 
 ```text
-[ ] Parent locked HEAD is exact.
-[ ] Scope is narrower than the locked Definition.
-[ ] Allowed repository paths are closed-world.
-[ ] Parent Definition remains read-only.
-[ ] External MCP/Skill installation and invocation are excluded.
-[ ] Product UI mutation is excluded.
-[ ] New dependencies are not silently authorized.
-[ ] dependencyJustification exists and is evidence-only.
-[ ] accessAvailabilityEvidence is distinct from referenceEvidence.
-[ ] MotionUsed structurally controls motionJustification validation.
-[ ] Agent-facing sequence preserves Independent Definition Review and applicable implementation authority.
-[ ] Validator can enforce freshness/access/human-evidence invariants.
-[ ] Synthetic acceptance covers PASS and FAIL paths.
-[ ] Implementation evidence is exact-HEAD bound.
+[x] Parent locked HEAD is exact.
+[x] Scope is narrower than the locked Definition.
+[x] Allowed repository paths are closed-world.
+[x] Parent Definition remains read-only.
+[x] External MCP/Skill installation and invocation are excluded.
+[x] Product UI mutation is excluded.
+[x] New dependencies are not silently authorized.
+[x] dependencyJustification exists and is evidence-only.
+[x] accessAvailabilityEvidence is distinct from referenceEvidence.
+[x] MotionUsed structurally controls motionJustification validation.
+[x] Agent-facing sequence preserves Independent Definition Review and applicable implementation authority.
+[x] Validator can enforce freshness/access/human-evidence invariants.
+[x] Synthetic acceptance covers PASS and FAIL paths.
+[x] Implementation evidence is exact-HEAD bound.
 ```
 
 ## 12. Gate Chain
@@ -386,7 +400,7 @@ Implementation Scope Definition
 -> Independent Scope Review-1
 -> Scope Correction-1
 -> exact Scope diff re-read
--> Independent Scope Re-Review-1
+-> Independent Scope Re-Review-1 PASS
 -> Human Implementation Start GO / HOLD
 -> Implementation
 -> Focused Verification
@@ -402,14 +416,15 @@ Every downstream authority remains separate.
 ## 13. Exit State
 
 ```text
-UI-REFERENCE-REGISTRY-V1.1 Implementation Scope: CORRECTION-1 APPLIED
+UI-REFERENCE-REGISTRY-V1.1 Implementation Scope: REVIEW-CLEARED
 Parent Definition: LOCKED / UNCHANGED
-Independent Scope Review-1: CORRECTION REQUIRED
-Independent Scope Re-Review-1: REQUIRED
+Independent Scope Review-1: CORRECTION REQUIRED / CLOSED BY CORRECTION-1
+Independent Scope Re-Review-1: PASS / REVIEW-CLEARED
 Implementation Start: NOT AUTHORIZED
 Dependency Addition: NOT AUTHORIZED
 External MCP/Skill Installation: NOT AUTHORIZED
 Product UI Mutation: NOT AUTHORIZED
 Cross-Repository Mutation: NOT AUTHORIZED
 Ready / Merge / Deploy / LIVE WRITE: NOT AUTHORIZED
+Next Gate: Human Implementation Start GO / HOLD
 ```

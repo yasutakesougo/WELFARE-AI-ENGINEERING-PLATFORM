@@ -96,6 +96,7 @@ export interface NewProjectDefaults {
 export interface BootstrapPlanningInput {
   request: NewProjectRequest;
   defaults: NewProjectDefaults;
+  availableCapabilities: readonly string[];
   availableAdapterRefs: readonly string[];
   workers: readonly WorkerCandidate[];
   authorityPolicies: readonly AuthorityPolicyExplanation[];
@@ -221,7 +222,10 @@ export function planNewProjectBootstrap(input: BootstrapPlanningInput): Bootstra
 
   const recommendedCapabilities = defaults.capabilityPackRefsByProjectType[request.projectType];
   const requiredCapabilities = unique([...recommendedCapabilities, ...request.requiredCapabilities]);
-  if (requiredCapabilities.some((capability) => capability.trim() === "")) {
+  const unresolvedCapability = requiredCapabilities.some(
+    (capability) => capability.trim() === "" || !input.availableCapabilities.includes(capability),
+  );
+  if (unresolvedCapability) {
     return { status: "HOLD", reason: "UNRESOLVED_CAPABILITY" };
   }
 
@@ -232,7 +236,7 @@ export function planNewProjectBootstrap(input: BootstrapPlanningInput): Bootstra
 
   const worker = input.workers.find(
     (candidate) =>
-      candidate.acceptedRiskClasses.includes(request.riskClass as RiskClass) &&
+      candidate.acceptedRiskClasses.includes(request.riskClass) &&
       requiredCapabilities.every((capability) => candidate.capabilities.includes(capability)),
   );
   if (worker === undefined) {

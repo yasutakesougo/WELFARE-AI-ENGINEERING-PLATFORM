@@ -36,12 +36,17 @@ export interface WorkerCandidate {
   acceptedRiskClasses: readonly RiskClass[];
 }
 
+export interface AuthorityPolicyExplanation {
+  authorityPolicyRef: string;
+  humanGateRequired: boolean;
+}
+
 export interface ProjectFactoryInput {
   project: ProjectProfile;
   task: TaskRequest;
   adapters: readonly ProjectAdapter[];
   workers: readonly WorkerCandidate[];
-  knownAuthorityPolicyRefs: readonly string[];
+  authorityPolicies: readonly AuthorityPolicyExplanation[];
 }
 
 export interface ProjectFactoryExplanation {
@@ -60,6 +65,7 @@ export interface ProjectFactoryHold {
   status: "HOLD";
   reason:
     | "UNKNOWN_PROJECT_IDENTITY"
+    | "UNKNOWN_TASK_IDENTITY"
     | "UNKNOWN_REPOSITORY"
     | "UNRESOLVED_CAPABILITY"
     | "UNRESOLVED_ADAPTER"
@@ -74,8 +80,12 @@ const unique = (values: readonly string[]): readonly string[] => [...new Set(val
 export function explainExistingProjectRoute(input: ProjectFactoryInput): ProjectFactoryResult {
   const { project, task } = input;
 
-  if (project.projectId.trim() === "" || task.taskId.trim() === "") {
+  if (project.projectId.trim() === "") {
     return { status: "HOLD", reason: "UNKNOWN_PROJECT_IDENTITY" };
+  }
+
+  if (task.taskId.trim() === "") {
+    return { status: "HOLD", reason: "UNKNOWN_TASK_IDENTITY" };
   }
 
   if (project.repositoryRef.trim() === "") {
@@ -109,7 +119,10 @@ export function explainExistingProjectRoute(input: ProjectFactoryInput): Project
     return { status: "HOLD", reason: "UNRESOLVED_WORKER" };
   }
 
-  if (!input.knownAuthorityPolicyRefs.includes(project.bindings.authorityPolicyRef)) {
+  const authorityPolicy = input.authorityPolicies.find(
+    (candidate) => candidate.authorityPolicyRef === project.bindings.authorityPolicyRef,
+  );
+  if (authorityPolicy === undefined) {
     return { status: "HOLD", reason: "UNRESOLVED_AUTHORITY_POLICY" };
   }
 
@@ -120,8 +133,8 @@ export function explainExistingProjectRoute(input: ProjectFactoryInput): Project
     capabilityRefs: requiredCapabilities,
     adapterRef: adapter.adapterRef,
     workerId: worker.workerId,
-    authorityPolicyRef: project.bindings.authorityPolicyRef,
-    humanGateRequired: project.riskClass !== "LOW",
+    authorityPolicyRef: authorityPolicy.authorityPolicyRef,
+    humanGateRequired: authorityPolicy.humanGateRequired,
     executionAuthorized: false,
   };
 }

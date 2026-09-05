@@ -44,6 +44,12 @@ const baseInput = (): ProjectFactoryInput => ({
   knownAuthorityPolicyRefs: ["WAEP_MEDIUM_V1"],
 });
 
+type HoldReason = Extract<ReturnType<typeof explainExistingProjectRoute>, { status: "HOLD" }>["reason"];
+type FailClosedCase = readonly [
+  mutate: (input: ProjectFactoryInput) => void,
+  reason: HoldReason,
+];
+
 describe("explainExistingProjectRoute", () => {
   it("deterministically explains a bounded existing-project route without granting execution authority", () => {
     const first = explainExistingProjectRoute(baseInput());
@@ -63,17 +69,20 @@ describe("explainExistingProjectRoute", () => {
     });
   });
 
-  it.each([
-    ["unknown project identity", (input: ProjectFactoryInput) => { input.project.projectId = ""; }, "UNKNOWN_PROJECT_IDENTITY"],
-    ["unknown repository", (input: ProjectFactoryInput) => { input.project.repositoryRef = ""; }, "UNKNOWN_REPOSITORY"],
-    ["unresolved capability", (input: ProjectFactoryInput) => { input.task.requiredCapabilities = ["SECURITY_REVIEW"]; }, "UNRESOLVED_CAPABILITY"],
-    ["unresolved adapter", (input: ProjectFactoryInput) => { input.adapters = []; }, "UNRESOLVED_ADAPTER"],
-    ["unresolved worker", (input: ProjectFactoryInput) => { input.workers = []; }, "UNRESOLVED_WORKER"],
-    ["unresolved authority policy", (input: ProjectFactoryInput) => { input.knownAuthorityPolicyRefs = []; }, "UNRESOLVED_AUTHORITY_POLICY"],
-  ] as const)("fails closed for %s", (_label, mutate, reason) => {
-    const input = baseInput();
-    mutate(input);
+  it("fails closed for unresolved required state", () => {
+    const cases: readonly FailClosedCase[] = [
+      [(input) => { input.project.projectId = ""; }, "UNKNOWN_PROJECT_IDENTITY"],
+      [(input) => { input.project.repositoryRef = ""; }, "UNKNOWN_REPOSITORY"],
+      [(input) => { input.task.requiredCapabilities = ["SECURITY_REVIEW"]; }, "UNRESOLVED_CAPABILITY"],
+      [(input) => { input.adapters = []; }, "UNRESOLVED_ADAPTER"],
+      [(input) => { input.workers = []; }, "UNRESOLVED_WORKER"],
+      [(input) => { input.knownAuthorityPolicyRefs = []; }, "UNRESOLVED_AUTHORITY_POLICY"],
+    ];
 
-    expect(explainExistingProjectRoute(input)).toEqual({ status: "HOLD", reason });
+    for (const [mutate, reason] of cases) {
+      const input = baseInput();
+      mutate(input);
+      expect(explainExistingProjectRoute(input)).toEqual({ status: "HOLD", reason });
+    }
   });
 });

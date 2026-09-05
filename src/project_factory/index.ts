@@ -75,6 +75,63 @@ export interface ProjectFactoryHold {
 
 export type ProjectFactoryResult = ProjectFactoryExplanation | ProjectFactoryHold;
 
+export interface NewProjectRequest {
+  requestId: string;
+  proposedProjectId: string;
+  proposedRepositoryRef: string;
+  projectType: ProjectType | null;
+  riskClass: RiskClass | null;
+  requiredCapabilities: readonly string[];
+  portfolioRole: string;
+}
+
+export interface NewProjectDefaults {
+  capabilityPackRefsByProjectType: Readonly<Record<ProjectType, readonly string[]>>;
+  adapterRefByProjectType: Readonly<Record<ProjectType, string>>;
+  workerPolicyRef: string;
+  authorityPolicyRefByRisk: Readonly<Record<RiskClass, string>>;
+  knowledgeApplicabilityPolicyRef: string;
+}
+
+export interface BootstrapPlanningInput {
+  request: NewProjectRequest;
+  defaults: NewProjectDefaults;
+  availableAdapterRefs: readonly string[];
+  workers: readonly WorkerCandidate[];
+  authorityPolicies: readonly AuthorityPolicyExplanation[];
+}
+
+export interface BootstrapPlan {
+  status: "PLANNED";
+  requestId: string;
+  projectProfileProposal: ProjectProfile;
+  requiredCapabilities: readonly string[];
+  adapterRef: string;
+  workerId: string;
+  authorityPolicyRef: string;
+  humanGateRequired: boolean;
+  repositoryCreationAuthorized: false;
+  packageInstallationAuthorized: false;
+  implementationAuthorized: false;
+  executionAuthorized: false;
+}
+
+export interface BootstrapPlanHold {
+  status: "HOLD";
+  reason:
+    | "UNKNOWN_REQUEST_IDENTITY"
+    | "UNKNOWN_PROJECT_IDENTITY"
+    | "UNKNOWN_REPOSITORY"
+    | "UNRESOLVED_PROJECT_TYPE"
+    | "UNRESOLVED_RISK_CLASS"
+    | "UNRESOLVED_CAPABILITY"
+    | "UNRESOLVED_ADAPTER"
+    | "UNRESOLVED_WORKER"
+    | "UNRESOLVED_AUTHORITY_POLICY";
+}
+
+export type BootstrapPlanningResult = BootstrapPlan | BootstrapPlanHold;
+
 const unique = (values: readonly string[]): readonly string[] => [...new Set(values)];
 
 export function explainExistingProjectRoute(input: ProjectFactoryInput): ProjectFactoryResult {
@@ -135,6 +192,89 @@ export function explainExistingProjectRoute(input: ProjectFactoryInput): Project
     workerId: worker.workerId,
     authorityPolicyRef: authorityPolicy.authorityPolicyRef,
     humanGateRequired: authorityPolicy.humanGateRequired,
+    executionAuthorized: false,
+  };
+}
+
+export function planNewProjectBootstrap(input: BootstrapPlanningInput): BootstrapPlanningResult {
+  const { request, defaults } = input;
+
+  if (request.requestId.trim() === "") {
+    return { status: "HOLD", reason: "UNKNOWN_REQUEST_IDENTITY" };
+  }
+
+  if (request.proposedProjectId.trim() === "") {
+    return { status: "HOLD", reason: "UNKNOWN_PROJECT_IDENTITY" };
+  }
+
+  if (request.proposedRepositoryRef.trim() === "") {
+    return { status: "HOLD", reason: "UNKNOWN_REPOSITORY" };
+  }
+
+  if (request.projectType === null) {
+    return { status: "HOLD", reason: "UNRESOLVED_PROJECT_TYPE" };
+  }
+
+  if (request.riskClass === null) {
+    return { status: "HOLD", reason: "UNRESOLVED_RISK_CLASS" };
+  }
+
+  const recommendedCapabilities = defaults.capabilityPackRefsByProjectType[request.projectType];
+  const requiredCapabilities = unique([...recommendedCapabilities, ...request.requiredCapabilities]);
+  if (requiredCapabilities.some((capability) => capability.trim() === "")) {
+    return { status: "HOLD", reason: "UNRESOLVED_CAPABILITY" };
+  }
+
+  const adapterRef = defaults.adapterRefByProjectType[request.projectType];
+  if (adapterRef.trim() === "" || !input.availableAdapterRefs.includes(adapterRef)) {
+    return { status: "HOLD", reason: "UNRESOLVED_ADAPTER" };
+  }
+
+  const worker = input.workers.find(
+    (candidate) =>
+      candidate.acceptedRiskClasses.includes(request.riskClass as RiskClass) &&
+      requiredCapabilities.every((capability) => candidate.capabilities.includes(capability)),
+  );
+  if (worker === undefined) {
+    return { status: "HOLD", reason: "UNRESOLVED_WORKER" };
+  }
+
+  const authorityPolicyRef = defaults.authorityPolicyRefByRisk[request.riskClass];
+  const authorityPolicy = input.authorityPolicies.find(
+    (candidate) => candidate.authorityPolicyRef === authorityPolicyRef,
+  );
+  if (authorityPolicy === undefined) {
+    return { status: "HOLD", reason: "UNRESOLVED_AUTHORITY_POLICY" };
+  }
+
+  const projectProfileProposal: ProjectProfile = {
+    projectId: request.proposedProjectId,
+    repositoryRef: request.proposedRepositoryRef,
+    lifecycleState: "PROPOSED",
+    portfolioRole: request.portfolioRole,
+    projectTypes: [request.projectType],
+    riskClass: request.riskClass,
+    bindings: {
+      capabilityPackRefs: requiredCapabilities,
+      adapterRefs: [adapterRef],
+      workerPolicyRef: defaults.workerPolicyRef,
+      authorityPolicyRef,
+      knowledgeApplicabilityPolicyRef: defaults.knowledgeApplicabilityPolicyRef,
+    },
+  };
+
+  return {
+    status: "PLANNED",
+    requestId: request.requestId,
+    projectProfileProposal,
+    requiredCapabilities,
+    adapterRef,
+    workerId: worker.workerId,
+    authorityPolicyRef,
+    humanGateRequired: authorityPolicy.humanGateRequired,
+    repositoryCreationAuthorized: false,
+    packageInstallationAuthorized: false,
+    implementationAuthorized: false,
     executionAuthorized: false,
   };
 }

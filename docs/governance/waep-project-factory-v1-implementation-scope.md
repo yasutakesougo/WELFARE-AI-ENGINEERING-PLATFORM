@@ -43,12 +43,12 @@ No package, workflow, tsconfig, existing runtime, registry, learning, security, 
 
 The function:
 
-- validates project and repository identity
+- validates project, task, and repository identity
 - checks required capabilities against project bindings
 - resolves one declarative repository adapter
-- selects one compatible worker candidate
-- checks that the referenced authority policy is known
-- explains whether a Human Gate is required from the bounded risk class
+- selects one compatible worker candidate from capability + risk compatibility
+- resolves the referenced authority-policy explanation
+- reads Human Gate requirement from that resolved policy explanation rather than inferring it from risk class alone
 - always returns `executionAuthorized: false` on success
 - returns `HOLD` for unresolved required state
 
@@ -84,7 +84,9 @@ Required behavior:
 ```text
 valid synthetic project → deterministic EXPLAINED result
 executionAuthorized → false
+Human Gate explanation → authority-policy bound
 unknown project identity → HOLD
+unknown task identity → HOLD
 unknown repository → HOLD
 unresolved capability → HOLD
 unresolved adapter → HOLD

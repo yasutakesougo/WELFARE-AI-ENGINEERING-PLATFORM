@@ -41,7 +41,12 @@ const baseInput = (): ProjectFactoryInput => ({
       acceptedRiskClasses: ["LOW", "MEDIUM"],
     },
   ],
-  knownAuthorityPolicyRefs: ["WAEP_MEDIUM_V1"],
+  authorityPolicies: [
+    {
+      authorityPolicyRef: "WAEP_MEDIUM_V1",
+      humanGateRequired: true,
+    },
+  ],
 });
 
 type HoldReason = Extract<ReturnType<typeof explainExistingProjectRoute>, { status: "HOLD" }>["reason"];
@@ -69,14 +74,31 @@ describe("explainExistingProjectRoute", () => {
     });
   });
 
+  it("keeps Human Gate explanation policy-bound instead of inferring it from risk alone", () => {
+    const input = baseInput();
+    input.authorityPolicies = [
+      {
+        authorityPolicyRef: "WAEP_MEDIUM_V1",
+        humanGateRequired: false,
+      },
+    ];
+
+    const result = explainExistingProjectRoute(input);
+    expect(result.status).toBe("EXPLAINED");
+    if (result.status === "EXPLAINED") {
+      expect(result.humanGateRequired).toBe(false);
+    }
+  });
+
   it("fails closed for unresolved required state", () => {
     const cases: readonly FailClosedCase[] = [
       [(input) => { input.project.projectId = ""; }, "UNKNOWN_PROJECT_IDENTITY"],
+      [(input) => { input.task.taskId = ""; }, "UNKNOWN_TASK_IDENTITY"],
       [(input) => { input.project.repositoryRef = ""; }, "UNKNOWN_REPOSITORY"],
       [(input) => { input.task.requiredCapabilities = ["SECURITY_REVIEW"]; }, "UNRESOLVED_CAPABILITY"],
       [(input) => { input.adapters = []; }, "UNRESOLVED_ADAPTER"],
       [(input) => { input.workers = []; }, "UNRESOLVED_WORKER"],
-      [(input) => { input.knownAuthorityPolicyRefs = []; }, "UNRESOLVED_AUTHORITY_POLICY"],
+      [(input) => { input.authorityPolicies = []; }, "UNRESOLVED_AUTHORITY_POLICY"],
     ];
 
     for (const [mutate, reason] of cases) {

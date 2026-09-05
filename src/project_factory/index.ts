@@ -220,7 +220,9 @@ export function planNewProjectBootstrap(input: BootstrapPlanningInput): Bootstra
     return { status: "HOLD", reason: "UNRESOLVED_RISK_CLASS" };
   }
 
-  const recommendedCapabilities = defaults.capabilityPackRefsByProjectType[request.projectType];
+  const projectType = request.projectType;
+  const riskClass = request.riskClass;
+  const recommendedCapabilities = defaults.capabilityPackRefsByProjectType[projectType];
   const requiredCapabilities = unique([...recommendedCapabilities, ...request.requiredCapabilities]);
   const unresolvedCapability = requiredCapabilities.some(
     (capability) => capability.trim() === "" || !input.availableCapabilities.includes(capability),
@@ -229,21 +231,21 @@ export function planNewProjectBootstrap(input: BootstrapPlanningInput): Bootstra
     return { status: "HOLD", reason: "UNRESOLVED_CAPABILITY" };
   }
 
-  const adapterRef = defaults.adapterRefByProjectType[request.projectType];
+  const adapterRef = defaults.adapterRefByProjectType[projectType];
   if (adapterRef.trim() === "" || !input.availableAdapterRefs.includes(adapterRef)) {
     return { status: "HOLD", reason: "UNRESOLVED_ADAPTER" };
   }
 
   const worker = input.workers.find(
     (candidate) =>
-      candidate.acceptedRiskClasses.includes(request.riskClass) &&
+      candidate.acceptedRiskClasses.includes(riskClass) &&
       requiredCapabilities.every((capability) => candidate.capabilities.includes(capability)),
   );
   if (worker === undefined) {
     return { status: "HOLD", reason: "UNRESOLVED_WORKER" };
   }
 
-  const authorityPolicyRef = defaults.authorityPolicyRefByRisk[request.riskClass];
+  const authorityPolicyRef = defaults.authorityPolicyRefByRisk[riskClass];
   const authorityPolicy = input.authorityPolicies.find(
     (candidate) => candidate.authorityPolicyRef === authorityPolicyRef,
   );
@@ -256,8 +258,8 @@ export function planNewProjectBootstrap(input: BootstrapPlanningInput): Bootstra
     repositoryRef: request.proposedRepositoryRef,
     lifecycleState: "PROPOSED",
     portfolioRole: request.portfolioRole,
-    projectTypes: [request.projectType],
-    riskClass: request.riskClass,
+    projectTypes: [projectType],
+    riskClass,
     bindings: {
       capabilityPackRefs: requiredCapabilities,
       adapterRefs: [adapterRef],

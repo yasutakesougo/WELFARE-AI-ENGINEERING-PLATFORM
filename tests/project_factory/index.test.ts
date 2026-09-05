@@ -80,6 +80,7 @@ const bootstrapInput = (): BootstrapPlanningInput => ({
     },
     knowledgeApplicabilityPolicyRef: "WAEP_KNOWLEDGE_V1",
   },
+  availableCapabilities: ["TYPESCRIPT", "REACT_FRONTEND", "SPFX_BUILD", "UNIT_TEST"],
   availableAdapterRefs: ["WEB_TS_V1"],
   workers: [
     {
@@ -216,7 +217,7 @@ describe("planNewProjectBootstrap", () => {
       [(input) => { input.request.proposedRepositoryRef = ""; }, "UNKNOWN_REPOSITORY"],
       [(input) => { input.request.projectType = null; }, "UNRESOLVED_PROJECT_TYPE"],
       [(input) => { input.request.riskClass = null; }, "UNRESOLVED_RISK_CLASS"],
-      [(input) => { input.request.requiredCapabilities = [""]; }, "UNRESOLVED_CAPABILITY"],
+      [(input) => { input.availableCapabilities = input.availableCapabilities.filter((item) => item !== "UNIT_TEST"); }, "UNRESOLVED_CAPABILITY"],
       [(input) => { input.availableAdapterRefs = []; }, "UNRESOLVED_ADAPTER"],
       [(input) => { input.workers = []; }, "UNRESOLVED_WORKER"],
       [(input) => { input.authorityPolicies = []; }, "UNRESOLVED_AUTHORITY_POLICY"],

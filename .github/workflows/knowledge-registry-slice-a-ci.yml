@@ -39,7 +39,7 @@ jobs:
         run: npm run typecheck
 
       - name: Focused tests
-        run: npm test -- tests/knowledge_registry/registry.test.ts
+        run: npm test -- tests/knowledge_registry/registry.test.ts tests/knowledge_registry/population.test.ts
 
       - name: Remove expected ephemeral outputs
         run: rm -rf node_modules

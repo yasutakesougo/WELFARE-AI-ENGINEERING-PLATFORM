@@ -20,7 +20,7 @@ const BLOCKED_RULES: Rule[] = [
   { boundary: "R4_DESTRUCTIVE", ruleId: "BLOCK-PRODUCTION-DESTRUCTIVE", pattern: /\b(prod(?:uction)?|live)\b[\s\S]{0,80}\b(drop database|truncate|purge all|delete all|destroy)\b|\b(drop database|truncate|purge all|delete all|destroy)\b[\s\S]{0,80}\b(prod(?:uction)?|live)\b/i }
 ];
 
-const DANGEROUS_HINT = /\b(prod(?:uction)?|live|permission|role|authority|authorization|authentication|identity|personal data|pii|sensitive data|credential|secret|api key|token|password|delete|purge|drop|truncate|destroy|irreversible|paid|billable|billing|cost|charge)\b/i;
+const DANGEROUS_HINT = /\b(prod(?:uction)?|live|permission|role|authority|authorization|authentication|identity|rbac|acl|access|personal data|pii|sensitive data|credential|secret|api key|token|password|delete|purge|drop|truncate|destroy|irreversible|paid|billable|billing|cost|charge)\b/i;
 
 function materialize(input: RiskInput): string {
   return [input.intent ?? "", ...(input.changedFiles ?? []), input.diff ?? ""].join("\n");

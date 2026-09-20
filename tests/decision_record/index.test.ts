@@ -288,4 +288,82 @@ describe("DECISION-RECORD-CONTRACT-V1", () => {
       }),
     ).toBe("AUTHORITY_GAP_CANDIDATE");
   });
+
+  it("P1-1 rejects impossible calendar dates for occurredAt", () => {
+    const merge = record({ occurredAt: "2026-02-30T00:00:00Z" });
+    expect(
+      validatePositiveAuthority({
+        record: merge,
+        provenance: provenance(merge),
+        requiredDecisionType: "MERGE_GO",
+        expectedSubjectRef: SUBJECT,
+      }),
+    ).toBe("AUTHORITY_GAP_CANDIDATE");
+  });
+
+  it("P1-1 rejects timezone-less occurredAt timestamps", () => {
+    const merge = record({ occurredAt: "2026-09-20T00:33:57" });
+    expect(
+      validatePositiveAuthority({
+        record: merge,
+        provenance: provenance(merge),
+        requiredDecisionType: "MERGE_GO",
+        expectedSubjectRef: SUBJECT,
+      }),
+    ).toBe("AUTHORITY_GAP_CANDIDATE");
+  });
+
+  it("P1-1 accepts explicit UTC occurredAt timestamps", () => {
+    const merge = record({ occurredAt: "2026-09-20T00:33:57Z" });
+    expect(
+      validatePositiveAuthority({
+        record: merge,
+        provenance: provenance(merge),
+        requiredDecisionType: "MERGE_GO",
+        expectedSubjectRef: SUBJECT,
+      }),
+    ).toBe("CHRONOLOGY_CONSISTENT");
+  });
+
+  it("P1-1 accepts explicit offset occurredAt timestamps", () => {
+    const merge = record({ occurredAt: "2026-09-20T09:33:57+09:00" });
+    expect(
+      validatePositiveAuthority({
+        record: merge,
+        provenance: provenance(merge),
+        requiredDecisionType: "MERGE_GO",
+        expectedSubjectRef: SUBJECT,
+        observedExecutionAt: "2026-09-20T00:34:01Z",
+        requireDecisionBeforeObservedExecution: true,
+      }),
+    ).toBe("CHRONOLOGY_CONSISTENT");
+  });
+
+  it("P1-1 fails closed on invalid chronology using deterministic offset comparison", () => {
+    const merge = record({ occurredAt: "2026-09-20T09:34:02+09:00" });
+    expect(
+      validatePositiveAuthority({
+        record: merge,
+        provenance: provenance(merge),
+        requiredDecisionType: "MERGE_GO",
+        expectedSubjectRef: SUBJECT,
+        observedExecutionAt: "2026-09-20T00:34:01Z",
+        requireDecisionBeforeObservedExecution: true,
+      }),
+    ).toBe("AUTHORITY_GAP_CANDIDATE");
+  });
+
+  it("P1-1 fails closed when observedExecutionAt is timezone-less", () => {
+    const merge = record({ occurredAt: "2026-09-20T00:33:57Z" });
+    expect(
+      validatePositiveAuthority({
+        record: merge,
+        provenance: provenance(merge),
+        requiredDecisionType: "MERGE_GO",
+        expectedSubjectRef: SUBJECT,
+        observedExecutionAt: "2026-09-20T00:34:01",
+        requireDecisionBeforeObservedExecution: true,
+      }),
+    ).toBe("AUTHORITY_GAP_CANDIDATE");
+  });
 });

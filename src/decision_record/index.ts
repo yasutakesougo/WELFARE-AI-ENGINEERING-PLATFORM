@@ -57,8 +57,78 @@ export interface PositiveAuthorityValidationInput {
   reconciliationConfirmed?: boolean;
 }
 
+/**
+ * Parse an authoritative chronology timestamp into deterministic UTC epoch ms.
+ *
+ * Accepted:
+ * - Explicit UTC (`Z`)
+ * - Explicit numeric offset (`±HH:MM` or `±HHMM`)
+ *
+ * Rejected (fail-closed):
+ * - Timezone-less timestamps
+ * - Impossible calendar dates (no Date.parse overflow)
+ * - Non-ISO / unparseable forms
+ */
+function parseAuthoritativeTimestamp(value: string): number | null {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:?\d{2})$/.exec(
+      value,
+    );
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+  const fraction = match[7] ?? "0";
+  const zone = match[8];
+
+  if (month < 1 || month > 12) {
+    return null;
+  }
+  if (hour > 23 || minute > 59 || second > 59) {
+    return null;
+  }
+
+  const daysInMonth = daysInMonthOf(year, month);
+  if (day < 1 || day > daysInMonth) {
+    return null;
+  }
+
+  let offsetMinutes = 0;
+  if (zone !== "Z") {
+    const zoneMatch = /^([+-])(\d{2}):?(\d{2})$/.exec(zone);
+    if (!zoneMatch) {
+      return null;
+    }
+    const offsetHour = Number(zoneMatch[2]);
+    const offsetMinute = Number(zoneMatch[3]);
+    if (offsetHour > 23 || offsetMinute > 59) {
+      return null;
+    }
+    const sign = zoneMatch[1] === "-" ? -1 : 1;
+    offsetMinutes = sign * (offsetHour * 60 + offsetMinute);
+  }
+
+  const millisecond = Number((fraction + "000").slice(0, 3));
+  // Interpret wall-clock components as UTC, then subtract the explicit offset.
+  return Date.UTC(year, month - 1, day, hour, minute, second, millisecond) - offsetMinutes * 60_000;
+}
+
+function daysInMonthOf(year: number, month: number): number {
+  if (month === 2) {
+    const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    return leap ? 29 : 28;
+  }
+  return [31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]!;
+}
+
 function isValidTimestamp(value: string): boolean {
-  return Number.isFinite(Date.parse(value));
+  return parseAuthoritativeTimestamp(value) !== null;
 }
 
 function provenanceMatchesRecord(
@@ -112,11 +182,16 @@ function positiveAuthorityIsEstablished(
   }
 
   if (input.requireDecisionBeforeObservedExecution) {
-    if (!input.observedExecutionAt || !isValidTimestamp(input.observedExecutionAt)) {
+    const occurredAtMs = parseAuthoritativeTimestamp(record.occurredAt);
+    const observedExecutionAtMs = input.observedExecutionAt
+      ? parseAuthoritativeTimestamp(input.observedExecutionAt)
+      : null;
+
+    if (occurredAtMs === null || observedExecutionAtMs === null) {
       return false;
     }
 
-    if (Date.parse(record.occurredAt) >= Date.parse(input.observedExecutionAt)) {
+    if (occurredAtMs >= observedExecutionAtMs) {
       return false;
     }
   }

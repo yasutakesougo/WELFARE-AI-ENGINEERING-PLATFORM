@@ -68,6 +68,34 @@ describe("Risk Detector Slice A", () => {
     expect(result.riskSignals).toEqual([]);
   });
 
+  it("escalates incomplete RBAC authority evidence to GOVERNED", () => {
+    const result = classifyRisk({ intent: "review RBAC policy", evidenceComplete: false });
+    expect(result.lane).toBe("GOVERNED");
+    expect(result.humanGateRequired).toBe(true);
+    expect(result.blocked).toBe(false);
+    expect(result.classificationBasis).toBe("PRELIMINARY");
+  });
+
+  it("escalates incomplete ACL authority evidence to GOVERNED", () => {
+    const result = classifyRisk({ intent: "review ACL configuration", evidenceComplete: false });
+    expect(result.lane).toBe("GOVERNED");
+    expect(result.humanGateRequired).toBe(true);
+    expect(result.blocked).toBe(false);
+  });
+
+  it("escalates incomplete access authority evidence to GOVERNED", () => {
+    const result = classifyRisk({ intent: "review access policy", evidenceComplete: false });
+    expect(result.lane).toBe("GOVERNED");
+    expect(result.humanGateRequired).toBe(true);
+    expect(result.blocked).toBe(false);
+  });
+
+  it("keeps deterministic rbac authority change GOVERNED with an R2 signal", () => {
+    const result = classifyRisk({ intent: "grant rbac access to service account" });
+    expect(result.lane).toBe("GOVERNED");
+    expect(result.riskSignals.some((signal) => signal.boundary === "R2_AUTHORITY")).toBe(true);
+  });
+
   it("keeps ordinary incomplete evidence FAST", () => {
     const result = classifyRisk({ intent: "rename local helper", evidenceComplete: false });
     expect(result.lane).toBe("FAST");

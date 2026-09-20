@@ -86,6 +86,9 @@ function parseAuthoritativeTimestamp(value: string): number | null {
   const second = Number(match[6]);
   const fraction = match[7] ?? "0";
   const zone = match[8];
+  if (!zone) {
+    return null;
+  }
 
   if (month < 1 || month > 12) {
     return null;

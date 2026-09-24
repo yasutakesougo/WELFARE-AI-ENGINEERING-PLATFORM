@@ -2,11 +2,6 @@ name: Media Gateway GPU Executor POC CI
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/media-gateway-gpu-executor-poc-ci.yml'
-      - 'packages/media-gateway-gpu-executor-poc/**'
-      - 'package.json'
-      - 'tsconfig.json'
 
 permissions:
   contents: read

@@ -1,0 +1,26 @@
+{
+  "name": "@waep/media-gateway-gpu-executor-poc",
+  "private": true,
+  "version": "0.0.0",
+  "description": "MEDIA-GATEWAY-GPU-EXECUTOR-POC-V1 isolated Draft-15 implementation location. Draft-15 authority is local; WAEP durable_run_kernel and security_boundary are non-normative.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src test",
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.2.4"
+  }
+}

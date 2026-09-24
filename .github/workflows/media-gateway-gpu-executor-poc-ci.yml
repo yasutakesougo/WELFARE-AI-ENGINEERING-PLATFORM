@@ -1,0 +1,47 @@
+name: Media Gateway GPU Executor POC CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/media-gateway-gpu-executor-poc-ci.yml'
+      - 'packages/media-gateway-gpu-executor-poc/**'
+      - 'package.json'
+      - 'tsconfig.json'
+
+permissions:
+  contents: read
+
+jobs:
+  media-gateway-gpu-executor-poc-ci:
+    name: media-gateway-gpu-executor-poc-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact implementation HEAD
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Assert exact implementation HEAD
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install POC dependencies without lockfile mutation
+        working-directory: packages/media-gateway-gpu-executor-poc
+        run: npm install --package-lock=false
+
+      - name: POC lint
+        working-directory: packages/media-gateway-gpu-executor-poc
+        run: npm run lint
+
+      - name: POC tests
+        working-directory: packages/media-gateway-gpu-executor-poc
+        run: npm run test
+
+      - name: POC build
+        working-directory: packages/media-gateway-gpu-executor-poc
+        run: npm run build
